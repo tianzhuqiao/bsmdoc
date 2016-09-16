@@ -1,0 +1,484 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="stylesheet" href="bsmdoc.css" type="text/css" />
+<title>bsmdoc example</title>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
+</script>
+<script type="text/javascript" language="javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body>
+<div id="layout-content">
+<div id="toptitle">bsmdoc example<div id="subtitle"><a href='mailto:ben.qiao@feiyilin.com'>ben.qiao@feiyilin.com</a></div></div>
+<div class="nav"> 
+ <div class="blockcontent">
+<ul>
+<li> <a href='index.html '> Home</a> </li>
+<li> <a href='example.html '> Example</a> </li>
+<li> <a href='demo.html '> Demo</a> </li>
+</ul>
+
+</div>
+</div>
+<p> This page shows how to use bsmdoc for the basic formating, link, table, figure, equation, ...... </p>
+<h2> 1  Formating </h2>
+<h3> 1.1  Basic </h3>
+<table class='wikitable'>
+ <caption> basic formating </caption>
+<tr>
+	<th> Description  </th>
+	<th> You type  </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> italic text </td>
+	<td> ''italics''  </td>	<td> <b>italics</b>  </td>
+</tr>
+<tr>
+	<td> bold text  </td>
+	<td> '''bold'''  </td>	<td> <i>bold</i>  </td>
+</tr>
+<tr>
+	<td> bold & italics text  </td>
+	<td> '''''bold & italics'''''  </td>	<td> <i><b>bold & italics</b></i>  </td>
+</tr>
+<tr>
+	<td> mono space  </td>
+	<td> %monospace%  </td>	<td> <tt>monospace</tt>  </td>
+</tr>
+<tr>
+	<td> unicode  </td>
+	<td> &#x6211&#x4eec  </td>	<td> &amp;#x6211;&amp;#x4eec;  </td>
+</tr>
+</table>
+<h3> 1.2  Section </h3>
+<table class='wikitable'>
+<tr>
+	<th> Description  </th>
+	<th> You type </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> Headings of different levels  </td>
+	<td> = level 1<br /> == level 2<br /> === level 3<br /> ==== level 4<br /> ===== level 5  </td>	<td><h1>  level 1 </h1>
+<h2> 2  level 2 </h2>
+<h3> 2.1  level 3 </h3>
+<h4> 2.1.1  level 4 </h4>
+<h5> 2.1.1.1  level 5 </h5>
+</td>
+</tr>
+</table>
+<h3> 2.2  List </h3>
+<table class='wikitable'>
+<tr>
+	<th> Description  </th>
+	<th> You type </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> Unordered list  </td>
+	<td> 
+<pre>
+- start each line
+- with a hyphen \-.
+-- more asterisks gives deeper
+--- and deeper levels.
+- line breaks\\ndon't break levels.
+--- but jumping levels creates empty space.
+any other start ends the list.
+</pre>
+ </td>	<td><ul>
+<li>  start each line </li>
+<li>  with an hyphen -. </li>
+<ul>
+<li>  more asterisks gives deeper </li>
+<ul>
+<li>  and deeper levels. </li>
+</ul>
+</ul>
+<li>  line breaks<br />don't break levels. </li>
+<ul>
+<ul>
+<li>  but jumping levels creates empty space. </li>
+</ul>
+</ul>
+</ul>
+<p> any other start ends the list.  </p>
+</td>
+</tr>
+<tr>
+	<td> Ordered list  </td>
+	<td> 
+<pre>
+* start each line
+* with a period*
+** more asterisks gives deeper
+*** and deeper levels.
+* line breaks\ndon't break levels.
+*** but jumping levels creates empty space.
+any other start ends the list.
+</pre>
+ </td>	<td><ol>
+<li>  <a href='hello.html '>start each line</a> </li>
+<li>  with a period . </li>
+<ol>
+<li>  more asterisks gives deeper </li>
+<ol>
+<li>  and deeper levels. </li>
+</ol>
+</ol>
+<li>  line breaks<br />don't break levels. </li>
+<ol>
+<ol>
+<li>  but jumping levels creates empty space. </li>
+</ol>
+</ol>
+</ol>
+<p> any other start ends the list. </p>
+</td>
+</tr>
+<tr>
+	<td> Combined list  </td>
+	<td> 
+<pre>
+- unordered level 1
+-* ordered item1
+-* ordered item2
+-- unordered item3
+-- unordered item4
+</pre>
+  </td>	<td><ul>
+<li>  unordered level 1 </li>
+<ol>
+<li>  ordered item1 </li>
+<li>  ordered item2 </li>
+</ol>
+<ul>
+<li>  unordered item3 </li>
+<li>  unordered item4 </li>
+</ul>
+</ul>
+</td>
+</tr>
+<tr>
+	<td> More within list  </td>
+	<td> 
+<pre>
+- {unordered level 1
+
+More text here
+
+[bsmdoc.feiyilin.com | bsmdoc]
+}
+-* ordered item2
+</pre>
+  </td>	<td><ul>
+<li> <p> unordered level 1 </p>
+<p> More text here </p>
+<p> <a href='bsmdoc.feiyilin.com '> bsmdoc</a> </p>
+ </li>
+<ol>
+<li>  ordered item2  </li>
+</ol>
+</ul>
+</td>
+</tr>
+<tr>
+	<td> definition list </td>
+	<td> 
+<pre>
+:{Item1}{Definition for Item1}
+:{Can be useful}{for explaining things}
+</pre>
+ </td>	<td><dl>
+<dt>Definition</dt>
+<dd>lists, especially when there are many definitions</dd>
+<dt>Can be useful</dt>
+<dd>for explaining things</dd></dl></td>
+</tr>
+</table>
+<h2> 3  Link </h2>
+<table class='wikitable'>
+<tr>
+	<th> Description </th>
+	<th> You type  </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> Simple link  </td>
+	<td> <pre>[http://bsmedit.sourceforge.net]</pre>  </td>	<td> <a href='http://bsmedit.sourceforge.net'>http://bsmedit.sourceforge.net</a>  </td>
+</tr>
+<tr>
+	<td> link  </td>
+	<td> <pre>[http://bsmedit.sourceforge.net | bsmedit]</pre>  </td>	<td> <a href='http://bsmedit.sourceforge.net '> bsmedit</a>  </td>
+</tr>
+<tr>
+	<td> Email  </td>
+	<td> <pre>[mailto:ben.qiao@feiyilin.com | Ben Qiao]</pre>  </td>	<td> <a href='mailto:ben.qiao@feiyilin.com '> Ben Qiao</a> </td>
+</tr>
+</table>
+<h2> 4  Image </h2>
+<table class='wikitable'>
+<tr>
+	<th> Description </th>
+	<th> You type  </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> Simple image </td>
+	<td> <pre>[[./eqs/454655092.png | formula]]</pre>  </td>	<td> <img src='./eqs/454655092.png ' alt=' formula' />  </td>
+</tr>
+</table>
+<h2> 5  Equation </h2>
+<table class='wikitable'>
+<tr>
+	<th> Description </th>
+	<th> You type  </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> Simple equation  </td>
+	<td> <pre>$f=ma$</pre>  </td>	<td> $f=ma$  </td>
+</tr>
+<tr>
+	<td> Fraction  </td>
+	<td>  <pre>&lt;math&gt; \frac{1}{2}=0.5&lt;/math&gt; </pre>  </td>	<td> $$ \frac{1}{2}=0.5 \nonumber$$ </td>
+</tr>
+<tr>
+	<td> Matrix  </td>
+	<td> 
+<pre>&lt;math&gt;
+\begin{bmatrix}
+0      & \cdots & 0      \\
+\vdots & \ddots & \vdots \\
+0      & \cdots & 0
+\end{bmatrix}
+&lt;/math&gt;</pre>
+  </td>	<td> $$
+\begin{bmatrix}
+0      & \cdots & 0      \\
+\vdots & \ddots & \vdots \\
+0      & \cdots & 0
+\nonumber
+\end{bmatrix}
+$$  </td>
+</tr>
+</table>
+<h2> 6  Table </h2>
+<table class='wikitable'>
+<tr>
+	<th> Description </th>
+	<th> You type  </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> Simple  </td>
+	<td> 
+<pre>
+{{{
+Item1 | item2 | ||
+Item3 | item4 | ||
+}}}
+</pre>
+  </td>	<td><table class='wikitable'>
+<tr>
+	<th> Item1  </th>
+	<th> item2  </th>
+</tr>
+<tr>
+	<td> Item3  </td>
+	<td> item4  </td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+	<td> With title </td>
+	<td> 
+<pre>
+{{{
+{table title}
+Item1 | item2 | ||
+Item3 | item4 | ||
+}}}
+</pre>
+  </td>	<td><table class='wikitable'>
+ <caption> table title </caption>
+<tr>
+	<th> Item1  </th>
+	<th> item2  </th>
+</tr>
+<tr>
+	<td> Item3  </td>
+	<td> item4  </td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<h2> 7  Blocks </h2>
+<h3> 7.1  Simple block </h3>
+<p> You type </p>
+<div class="codeblock"> 
+ <div class="blockcontent">
+<p> 
+{{{</br>
+{infoblock}{Simple block}</br>
+The quick brown fox jumps over the lazy dog.</br>
+}}}
+ </p>
+
+</div>
+</div>
+<p> You get </p>
+<div class="infoblock"> 
+ <div class="blocktitle">Simple block</div>
+ <div class="blockcontent">
+<p> The quick brown fox jumps over the lazy dog. </p>
+
+</div>
+</div>
+<h3> 7.2  Code block </h3>
+<p> For code syntax highlighting, bsmdoc uses <a href='http://pygments.org/docs/quickstart/ '> pygments</a> for parsing. You have to install pygments packages before using this feature. </p>
+<table class='wikitable'>
+<tr>
+	<th> Description </th>
+	<th> You type  </th>	<th> You get </th>
+</tr>
+<tr>
+	<td> Python  </td>
+	<td> 
+<pre>
+{{{
+{bsmcode}{python}
+&lt;raw&gt;
+print "Hello World"
+&lt;/raw&gt;
+}}}
+</pre>
+  </td>	<td><div class="syntax"><pre><span></span><span class="k">print</span> <span class="s2">&quot;Hello World&quot;</span>
+</pre></div>
+</td>
+</tr>
+<tr>
+	<td> Matlab  </td>
+	<td> 
+<pre>
+{{{
+{bsmcode}{matlab}
+&lt;raw&gt;
+fprintf ( 1, 'Hello, world!\n' );
+&lt;/raw&gt;
+}}}
+</pre>
+  </td>	<td><div class="syntax"><pre><span></span><span class="n">fprintf</span> <span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;Hello, world!\n&#39;</span> <span class="p">);</span>
+</pre></div>
+</td>
+</tr>
+<tr>
+	<td> C++ </td>
+	<td> 
+<pre>
+{{{
+{bsmcode}{c++}
+&lt;raw&gt;
+#include <iostream>
+using namespace std;
+
+int main ()
+{
+    cout << "Hello World!";
+    return 0;
+}
+&lt;/raw&gt;
+}}}
+
+</pre>
+ </td>	<td><div class="syntax"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Hello World!&quot;</span><span class="p">;</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</td>
+</tr>
+</table>
+<h2> 8  Options </h2>
+<table class='wikitable'>
+<tr>
+	<th> Option  </th>
+	<th> Description  </th>	<th> Default  </th>
+</tr>
+<tr>
+	<td> title  </td>
+	<td> the title of the file  </td>	<td> filename  </td>
+</tr>
+<tr>
+	<td> doctitle  </td>
+	<td> the title of the doc  </td>	<td></td>
+</tr>
+<tr>
+	<td> subtitle  </td>
+	<td> the subtitle of the doc </td>	<td></td>
+</tr>
+<tr>
+	<td> orderhead </td>
+	<td> order the heading lines </td>	<td> 0  </td>
+</tr>
+<tr>
+	<td> orderheadstart  </td>
+	<td> the start level for ordered header  </td>	<td> 1  </td>
+</tr>
+<tr>
+	<td> utf8conv  </td>
+	<td> convert the doc to UTF8 coding  </td>	<td> 0  </td>
+</tr>
+<tr>
+	<td> utf8convcode  </td>
+	<td> code page for UTF8 converting  </td>	<td> gb2312  </td>
+</tr>
+<tr>
+	<td> eqnsupport  </td>
+	<td> support the latex equation  </td>	<td> 1  </td>
+</tr>
+<tr>
+	<td> eqndir  </td>
+	<td> the equation output directory  </td>	<td> eqs  </td>
+</tr>
+<tr>
+	<td> eqndpi  </td>
+	<td> the dpi for the generated equation image  </td>	<td> 130  </td>
+</tr>
+<tr>
+	<td> eqncache  </td>
+	<td> enqble the equation cache  </td>	<td> 1  </td>
+</tr>
+<tr>
+	<td> eqnpackage  </td>
+	<td> the package to be included  </td>	<td></td>
+</tr>
+<tr>
+	<td> eqnfilepre  </td>
+	<td> the prefix for the equation file name  </td>
+</tr>
+<tr>
+	<td> config  </td>
+	<td> the configure file name  </td>	<td></td>
+</tr>
+<tr>
+	<td> addcss  </td>
+	<td> add more css file links  </td>	<td></td>
+</tr>
+<tr>
+	<td> addjs  </td>
+	<td> add more javascript file links  </td>	<td></td>
+</tr>
+</table>
+<div id="footer"><div id="footer-text">
+Last updated 2016-09-15 21:19:03 Pacific Daylight Time, by <a href=\"http://bsmdoc.feiyilin.com/\">bsmdoc</a>.\
+<a href="./example.bsmdoc">source</a>.
+</div></div>
+</div>
+</body>
+</html>

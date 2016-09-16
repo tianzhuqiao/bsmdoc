@@ -1,0 +1,504 @@
+/* Default css file for jemdoc. */
+
+table#tlayout {
+    border: none;
+    border-collapse: separate;
+    background: white;
+}
+
+body {
+	background: white;
+	font-family:  verdana, helvetica, arial, sans-serif , serif;
+	padding-bottom: 8px;
+	margin: 0;
+}
+
+#layout-content {
+	padding-top: 1.0em;
+	padding-left: 1.0em;
+	padding-right: 1.0em;
+    border: none;
+    background: white;
+    text-align: left;
+    vertical-align: top;
+    WIDTH: auto;
+    HEIGHT: auto;
+    margin-left: auto;
+    margin-right: auto;
+    
+     /* for MATLAB's browser */
+  width: 800px;
+  /* for Mozilla, but the "width" tag overrides it anyway */
+  max-width: 800px;
+  /* for IE */
+ width:expression(document.body.clientWidth > 820 ? "800px": "auto" );
+
+}
+
+#layout-menu td {
+	background: #f4f4f4;
+    vertical-align: top;
+}
+
+#layout-content {
+	padding-top: 0.0em;
+	padding-left: 1.0em;
+	padding-right: 1.0em;
+    border: none;
+    background: white;
+    text-align: left;
+    vertical-align: top;
+}
+
+#layout-menu a {
+	line-height: 1.5em;
+	margin-left: 0.5em;
+}
+
+tt {
+    background: #ffffdd;
+}
+
+pre, tt {
+	font-size: 90%;
+	font-family: monaco, monospace;
+}
+
+a, a > tt {
+	color: #224b8d;
+	text-decoration: none;
+}
+
+a:hover {
+	border-bottom: 1px gray dotted;
+}
+
+#layout-menu a.current:link, #layout-menu a.current:visited {
+	color: #022b6d;
+	border-bottom: 1px gray solid;
+}
+#layout-menu a:link, #layout-menu a:visited, #layout-menu a:hover {
+	color: #527bbd;
+	text-decoration: none;
+}
+#layout-menu a:hover {
+	text-decoration: none;
+}
+
+div.menu-category {
+	border-bottom: 1px solid gray;
+	margin-top: 0.8em;
+	padding-top: 0.2em;
+	padding-bottom: 0.1em;
+	font-weight: bold;
+}
+
+div.menu-item {
+	padding-left: 16px;
+	text-indent: -16px;
+}
+
+div#toptitle {
+    padding-top:0.2em;
+	padding-bottom: 0.2em;
+	margin-bottom: 1.5em;
+	border-bottom: 3px double gray;
+    font-size: 165%;
+    text-align:center;
+    color: #527bbd;
+    font-weight: bold;
+}
+
+/* Reduce space if we begin the page with a title. */
+div#toptitle + h2, div#toptitle + h3 {
+	margin-top: -0.7em;
+}
+
+div#subtitle {
+	margin-top: 0.0em;
+	margin-bottom: 0.0em;
+	padding-top: 0em;
+	padding-bottom: 0.1em;
+    font-size: 45%;
+    text-align:center;
+    font-weight: normal;
+
+}
+
+em {
+	font-style: italic;
+}
+
+strong {
+	font-weight: bold;
+}
+
+
+h1, h2, h3 {
+	color: #527bbd;
+	margin-top: 0.7em;
+	margin-bottom: 0.3em;
+	padding-bottom: 0.2em;
+	line-height: 1.0;
+	padding-top: 0.5em;
+	border-bottom: 1px solid #aaaaaa;
+}
+
+h1 {
+	font-size: 165%;
+}
+
+h2 {
+	padding-top: 0.8em;
+	font-size: 125%;
+}
+
+h2 + h3 {
+    padding-top: 0.2em;
+}
+
+h3 {
+	font-size: 110%;
+	border-bottom: none;
+}
+
+p {
+	margin-top: 0.0em;
+	margin-bottom: 0.8em;
+	padding: 0;
+	line-height: 1.3;
+}
+
+pre {
+	padding: 0;
+	margin: 0;
+}
+
+div#footer {
+	font-size: small;
+	border-top: 1px solid #c0c0c0;
+	padding-top: 0.1em;
+	margin-top: 4.0em;
+	color: #c0c0c0;
+}
+
+div#footer a {
+	color: #80a0b0;
+}
+
+div#footer-text {
+	float: left;
+	padding-bottom: 8px;
+}
+
+ul, ol, dl {
+	margin-top: 0.2em;
+	padding-top: 0;
+	margin-bottom: 0.8em;
+}
+
+dt {
+	margin-top: 0.5em;
+	margin-bottom: 0;
+}
+
+dl {
+	margin-left: 20px;
+}
+
+dd {
+	color: #222222;
+}
+
+dd > *:first-child {
+	margin-top: 0;
+}
+
+ul {
+	list-style-position: outside;
+	list-style-type: square;
+}
+
+p + ul, p + ol {
+	margin-top: -0.5em;
+}
+
+li ul, li ol {
+	margin-top: -0.3em;
+}
+
+ol {
+	list-style-position: outside;
+	list-style-type: decimal;
+}
+
+li p, dd p {
+	margin-bottom: 0.3em;
+}
+
+
+ol ol {
+	list-style-type: lower-alpha;
+}
+
+ol ol ol {
+	list-style-type: lower-roman;
+}
+
+p + div.codeblock {
+	margin-top: -0.6em;
+}
+
+div.codeblock, div.infoblock {
+	margin-right: 0%;
+	margin-top: 1.2em;
+	margin-bottom: 1.3em;
+}
+
+div.blocktitle {
+	font-weight: bold;
+	color: #cd7b62;
+	margin-top: 1.2em;
+	margin-bottom: 0.1em;
+}
+
+div.syntax, div.blockcontent {
+	border: 1px solid silver;
+	padding: 0.3em 0.5em;
+}
+
+div.infoblock > div.blockcontent {
+	background: #ffffee;
+}
+
+div.blockcontent p + ul, div.blockcontent p + ol {
+	margin-top: 0.4em;
+}
+
+div.infoblock p {
+	margin-bottom: 0em;
+}
+
+div.infoblock li p, div.infoblock dd p {
+	margin-bottom: 0.5em;
+}
+
+div.infoblock p + p {
+	margin-top: 0.8em;
+}
+
+div.codeblock > div.blockcontent {
+	background: #f6f6f6;
+}
+
+
+#fwtitle {
+	margin: 2px;
+}
+
+#fwtitle #toptitle {
+	padding-left: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+#layout-content h1:first-child, #layout-content h2:first-child, #layout-content h3:first-child {
+	margin-top: -0.7em;
+}
+
+div#toptitle h1, #layout-content div#toptitle h1 {
+	margin-bottom: 0.0em;
+	padding-bottom: 0.1em;
+	padding-top: 0;
+	margin-top: 0.5em;
+	border-bottom: none;
+}
+
+/* for $equation$*/
+img.eqns {
+	/*padding: 0;
+	padding-left: 0.1em;
+	padding-right: 0.1em;
+	margin: 0;*/
+    vertical-align: middle;
+}
+
+/* for <math>equation</math>*/
+img.eqn {
+	/*padding-left: 2em;
+	padding-top: 0.6em;
+	padding-bottom: 0.2em;
+	margin: 0;*/
+    vertical-align: middle;
+}
+
+table {
+    border: 1px solid silver;
+    border-collapse: collapse;
+    /*color: rgb(0, 0, 0); 
+    border: 1px solid rgb(168, 168, 168); 
+    padding: 0.5em; margin: 0.5em 0pt; 
+    background-color: rgb(255, 255, 255); 
+    font-size: 95%; 
+    vertical-align: middle*/;
+}
+
+td {
+    padding: 2px;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    text-align: left;
+    border: 1px solid gray;
+}
+
+table + table {
+    margin-top: 1em;
+}
+
+tr.heading {
+    font-weight: bold;
+    border-bottom: 2px solid black;
+}
+
+img {
+    border: none;
+}
+
+table.imgtable, table.imgtable td {
+    border: none;
+    text-align: left;
+}
+tr.r1 
+{ 
+    font-weight: bold;
+    background: #f5f298;
+}
+.floatright {
+        float: right; 
+}
+
+.floatleft {
+        float: left; 
+}
+.floatnone {
+        float:none;
+        width:auto
+}
+
+.center {
+        margin-left:auto; 
+        margin-right:auto; 
+        display:block; 
+        text-align:center;
+}
+
+table.wikitable{margin:1em 0;border:1px #aaa solid;background:white;border-collapse:collapse}
+table.wikitable > tr > th,table.wikitable > tr > td,table.wikitable > * > tr > th,table.wikitable > * > tr > td{border:1px #aaa solid;padding:0.2em}
+table.wikitable > tr > th,table.wikitable > * > tr > th,.mw_metadata th{text-align:center;background:white;font-weight:bold}
+table.wikitable > caption,.mw_metadata caption{font-weight:bold}a.sortheader{margin:0 0.3em}
+.wikitable,.thumb,img{page-break-inside:avoid}h2,h3,h4,h5,h6,h7{page-break-after:avoid}p{widows:3;orphans:3}
+table.wikitable{margin:1em 0;background-color:#f9f9f9;border:1px #aaa solid;border-collapse:collapse;color:black}
+table.wikitable > tr > th,table.wikitable > tr > td,table.wikitable > * > tr > th,table.wikitable > * > tr > td{border:1px #aaa solid;padding:0.2em}table.wikitable > tr > th,table.wikitable > * > tr > th{background-color:#f2f2f2;text-align:center}
+table.wikitable > caption{font-weight:bold}
+
+
+.syntax .hll { background-color: #ffffcc }
+.syntax  { background: #f8f8f8; }
+.syntax .c { color: #408080; font-style: italic } /* Comment */
+.syntax .err { border: 1px solid #FF0000 } /* Error */
+.syntax .k { color: #008000; font-weight: bold } /* Keyword */
+.syntax .o { color: #666666 } /* Operator */
+.syntax .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+.syntax .cp { color: #BC7A00 } /* Comment.Preproc */
+.syntax .c1 { color: #408080; font-style: italic } /* Comment.Single */
+.syntax .cs { color: #408080; font-style: italic } /* Comment.Special */
+.syntax .gd { color: #A00000 } /* Generic.Deleted */
+.syntax .ge { font-style: italic } /* Generic.Emph */
+.syntax .gr { color: #FF0000 } /* Generic.Error */
+.syntax .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.syntax .gi { color: #00A000 } /* Generic.Inserted */
+.syntax .go { color: #808080 } /* Generic.Output */
+.syntax .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.syntax .gs { font-weight: bold } /* Generic.Strong */
+.syntax .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.syntax .gt { color: #0040D0 } /* Generic.Traceback */
+.syntax .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.syntax .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.syntax .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.syntax .kp { color: #008000 } /* Keyword.Pseudo */
+.syntax .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.syntax .kt { color: #B00040 } /* Keyword.Type */
+.syntax .m { color: #666666 } /* Literal.Number */
+.syntax .s { color: #BA2121 } /* Literal.String */
+.syntax .na { color: #7D9029 } /* Name.Attribute */
+.syntax .nb { color: #008000 } /* Name.Builtin */
+.syntax .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.syntax .no { color: #880000 } /* Name.Constant */
+.syntax .nd { color: #AA22FF } /* Name.Decorator */
+.syntax .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.syntax .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+.syntax .nf { color: #0000FF } /* Name.Function */
+.syntax .nl { color: #A0A000 } /* Name.Label */
+.syntax .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.syntax .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.syntax .nv { color: #19177C } /* Name.Variable */
+.syntax .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.syntax .w { color: #bbbbbb } /* Text.Whitespace */
+.syntax .mf { color: #666666 } /* Literal.Number.Float */
+.syntax .mh { color: #666666 } /* Literal.Number.Hex */
+.syntax .mi { color: #666666 } /* Literal.Number.Integer */
+.syntax .mo { color: #666666 } /* Literal.Number.Oct */
+.syntax .sb { color: #BA2121 } /* Literal.String.Backtick */
+.syntax .sc { color: #BA2121 } /* Literal.String.Char */
+.syntax .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.syntax .s2 { color: #BA2121 } /* Literal.String.Double */
+.syntax .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.syntax .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.syntax .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.syntax .sx { color: #008000 } /* Literal.String.Other */
+.syntax .sr { color: #BB6688 } /* Literal.String.Regex */
+.syntax .s1 { color: #BA2121 } /* Literal.String.Single */
+.syntax .ss { color: #19177C } /* Literal.String.Symbol */
+.syntax .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.syntax .vc { color: #19177C } /* Name.Variable.Class */
+.syntax .vg { color: #19177C } /* Name.Variable.Global */
+.syntax .vi { color: #19177C } /* Name.Variable.Instance */
+.syntax .il { color: #666666 } /* Literal.Number.Integer.Long */
+
+/*auto-wrap for codeblock*/
+pre {
+white-space: pre-wrap; /* css-3 */
+white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+white-space: -pre-wrap; /* Opera 4-6 */
+white-space: -o-pre-wrap; /* Opera 7 */
+word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
+
+/*tooltip*/
+#text {margin:50px auto; width:500px}
+.hotspot {color:#900; padding-bottom:1px; border-bottom:1px dotted #900; cursor:pointer}
+
+#tt{BORDER: #808080 1px solid; position:absolute; display:block;WIDTH:auto;HEIGHT: auto;background-color:#ffffff}
+
+.nav {
+	BORDER-RIGHT: #999 0px solid; PADDING-RIGHT: 0.8em; BORDER-TOP: #999 0px solid; DISPLAY: inline; PADDING-LEFT: 0.8em; FONT-SIZE: 100%; FLOAT: right; PADDING-BOTTOM: 0.8em; MARGIN: 0px 0px 1em 2em; BORDER-LEFT: #999 2px solid; WIDTH: auto; COLOR: #000; PADDING-TOP: 0.8em; BORDER-BOTTOM: #999 0px solid; HEIGHT: auto
+}
+.nav ul{LIST-STYLE-TYPE: none;	PADDING-RIGHT: 0px; PADDING-LEFT: 10px; PADDING-BOTTOM: 0px; MARGIN: 0px; PADDING-TOP: 0px;	LINE-HEIGHT: 100%; FONT-FAMILY: verdana, helvetica, arial, sans-serif
+}
+
+.nav  A:link {
+	BACKGROUND: none transparent scroll repeat 0% 0%; COLOR: #555; TEXT-DECORATION: underline
+}
+.nav A:visited {
+	BACKGROUND: none transparent scroll repeat 0% 0%; COLOR: #555; TEXT-DECORATION: underline
+}
+.nav A:active {
+	BACKGROUND: none transparent scroll repeat 0% 0%; COLOR: #333; TEXT-DECORATION: underline
+}
+.nav A:hover {
+	BACKGROUND: #e0e0e0; COLOR: #333; TEXT-DECORATION: underline
+}
+.nav > div.blockcontent {
+	background: #ffffff;
+    border: 0px solid silver;
+	padding: 0.0em 0.0em;
+}

@@ -1,0 +1,314 @@
+#bsmdoc: {title} {bsmdoc example}
+#bsmdoc: {doctitle}{bsmdoc example}
+#bsmdoc: {subtitle}{[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]}
+#bsmdoc: {orderhead}
+#bsmdoc: {orderheadstart}{2}
+#bsmdoc: {utf8conv}
+#bsmdoc: {utf8convcode}{gb18030}
+#bsmdoc: {source}
+#bsmdoc: {bsmdoc_conf}{bsmdoc.cfg}
+{{{
+{nav}
+-[index.html | Home]
+-[example.html | Example]
+-[demo.html | Demo]
+#-[convert.html | Online Converter]
+}}}
+This page shows how to use bsmdoc for the basic formating, link, table, figure, equation, ......
+== Formating
+=== Basic
+{{{
+{basic formating}{wikitable}
+Description | You type | You get| ||
+italic text| \'\'italics\'\' | ''italics'' | ||
+bold text | \'\'\'bold\'\'\' | '''bold''' | ||
+bold & italics text | \'\'\'\'\'bold & italics\'\'\'\'\' | '''''bold & italics''''' | ||
+mono space | \%monospace\% |%monospace% | ||
+unicode | ฮารว | <raw>&amp;#x6211;&amp;#x4eec;</raw> | ||
+}}}
+#
+=== Section
+{{{
+Description |You type| You get| ||
+Headings of different levels | \= level 1\n  \=\= level 2\n \=\=\= level 3\n  \=\=\=\= level 4\n \=\=\=\=\= level 5 |
+= level 1
+== level 2
+=== level 3
+==== level 4
+===== level 5| ||
+}}}
+
+=== List
+{{{
+Description |You type| You get| ||
+Unordered list |
+<raw>
+<pre>
+- start each line
+- with a hyphen \-.
+-- more asterisks gives deeper
+--- and deeper levels.
+- line breaks\\ndon't break levels.
+--- but jumping levels creates empty space.
+any other start ends the list.
+</pre>
+</raw>|
+- start each line
+- with an hyphen \-.
+-- more asterisks gives deeper
+--- and deeper levels.
+- line breaks\ndon't break levels.
+--- but jumping levels creates empty space.
+any other start ends the list. | ||
+Ordered list |
+<raw>
+<pre>
+* start each line
+* with a period*
+** more asterisks gives deeper
+*** and deeper levels.
+* line breaks\ndon't break levels.
+*** but jumping levels creates empty space.
+any other start ends the list.
+</pre>
+</raw>|
+* [hello.html |start each line]
+* with a period .
+ ** more asterisks gives deeper
+ *** and deeper levels.
+* line breaks\ndon't break levels.
+*** but jumping levels creates empty space.
+
+any other start ends the list.| ||
+Combined list |
+<raw>
+<pre>
+- unordered level 1
+-* ordered item1
+-* ordered item2
+-- unordered item3
+-- unordered item4
+</pre>
+</raw> |
+- unordered level 1
+-* ordered item1
+-* ordered item2
+-- unordered item3
+-- unordered item4| ||
+More within list |
+<raw>
+<pre>
+- {unordered level 1
+
+More text here
+
+[bsmdoc.feiyilin.com | bsmdoc]
+}
+-* ordered item2
+</pre>
+</raw> |
+- {unordered level 1
+
+More text here
+
+[bsmdoc.feiyilin.com | bsmdoc]
+}
+-* ordered item2 | ||
+definition list|
+<raw>
+<pre>
+:{Item1}{Definition for Item1}
+:{Can be useful}{for explaining things}
+</pre>
+</raw>|
+:{Definition}{lists, especially when there are many definitions}
+:{Can be useful}{for explaining things} | ||
+
+}}}
+== Link
+{{{
+Description| You type | You get| ||
+Simple link | <raw><pre>[http://bsmedit.sourceforge.net]</pre></raw> | [http://bsmedit.sourceforge.net] | ||
+link |<raw><pre>[http://bsmedit.sourceforge.net | bsmedit]</pre></raw> | [http://bsmedit.sourceforge.net | bsmedit] | ||
+Email |<raw><pre>[mailto:ben.qiao@feiyilin.com | Ben Qiao]</pre></raw> | [mailto:ben.qiao@feiyilin.com | Ben Qiao]| ||
+}}}
+== Image
+{{{
+Description| You type | You get| ||
+Simple image|
+<raw><pre>[[./eqs/454655092.png | formula]]</pre></raw> |
+[[./eqs/454655092.png | formula]] | ||
+
+}}}
+== Equation
+{{{
+Description| You type | You get| ||
+Simple equation | <raw><pre>$f=ma$</pre></raw> | $f=ma$ | ||
+Fraction | <raw> <pre>&lt;math&gt; \frac{1}{2}=0.5&lt;/math&gt; </pre></raw> |  <math> \frac{1}{2}=0.5 \nonumber</math>| ||
+Matrix   |
+<raw>
+<pre>&lt;math&gt;
+\begin{bmatrix}
+0      & \cdots & 0      \\
+\vdots & \ddots & \vdots \\
+0      & \cdots & 0
+\end{bmatrix}
+&lt;/math&gt;</pre>
+</raw> |
+<math>
+\begin{bmatrix}
+0      & \cdots & 0      \\
+\vdots & \ddots & \vdots \\
+0      & \cdots & 0
+\nonumber
+\end{bmatrix}
+</math> | ||
+}}}
+== Table
+{{{
+Description| You type | You get| ||
+Simple |
+<raw>
+<pre>
+{{{
+Item1 | item2 | ||
+Item3 | item4 | ||
+}}}
+</pre>
+</raw> |
+{{{
+Item1 | item2 | ||
+Item3 | item4 | ||
+}}} | ||
+With title|
+<raw>
+<pre>
+{{{
+{table title}
+Item1 | item2 | ||
+Item3 | item4 | ||
+}}}
+</pre>
+</raw> |
+{{{
+{table title}
+Item1 | item2 | ||
+Item3 | item4 | ||
+}}} | ||
+
+}}}
+
+== Blocks
+#This `section' features "smart quotes".
+#
+=== Simple block
+You type
+{{{
+{codeblock}
+<raw>
+{{{</br>
+{infoblock}{Simple block}</br>
+The quick brown fox jumps over the lazy dog.</br>
+}}}
+</raw>
+}}}
+You get
+{{{
+{infoblock}{Simple block}
+The quick brown fox jumps over the lazy dog.
+}}}
+=== Code block
+For code syntax highlighting, bsmdoc uses [http://pygments.org/docs/quickstart/ | pygments] for parsing. You have to install pygments packages before using this feature.
+{{{
+Description| You type | You get| ||
+Python |
+<raw>
+<pre>
+{{{
+{bsmcode}{python}
+&lt;raw&gt;
+print "Hello World"
+&lt;/raw&gt;
+}}}
+</pre>
+</raw> |
+{{{
+{bsmcode}{python}
+<raw>
+print "Hello World"
+</raw>
+}}} | ||
+Matlab |
+<raw>
+<pre>
+{{{
+{bsmcode}{matlab}
+&lt;raw&gt;
+fprintf ( 1, 'Hello, world!\n' );
+&lt;/raw&gt;
+}}}
+</pre>
+</raw> |
+{{{
+{bsmcode}{matlab}
+<raw>
+fprintf ( 1, 'Hello, world!\n' );
+</raw>
+}}} | ||
+C++|
+<raw>
+<pre>
+{{{
+{bsmcode}{c++}
+&lt;raw&gt;
+#include <iostream>
+using namespace std;
+
+int main ()
+{
+    cout << "Hello World!";
+    return 0;
+}
+&lt;/raw&gt;
+}}}
+
+</pre>
+</raw>|
+{{{
+{bsmcode}{c++}
+<raw>
+#include <iostream>
+using namespace std;
+
+int main ()
+{
+    cout << "Hello World!";
+    return 0;
+}
+</raw>
+}}}
+
+| ||
+}}}
+
+== Options
+{{{
+Option | Description | Default | ||
+title | the title of the file | filename | ||
+doctitle | the title of the doc |   | ||
+subtitle | the subtitle of the doc|  | ||
+orderhead| order the heading lines| 0 | ||
+orderheadstart | the start level for ordered header | 1 | ||
+utf8conv | convert the doc to UTF8 coding | 0 | ||
+utf8convcode | code page for UTF8 converting | gb2312 | ||
+eqnsupport | support the latex equation | 1 | ||
+eqndir | the equation output directory | eqs | ||
+eqndpi | the dpi for the generated equation image |130 | ||
+eqncache | enqble the equation cache |1 | ||
+eqnpackage | the package to be included |  | ||
+eqnfilepre | the prefix for the equation file name | ||
+config | the configure file name | | ||
+addcss | add more css file links | | ||
+addjs  | add more javascript file links | | ||
+}}}
+
