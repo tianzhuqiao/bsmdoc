@@ -1,273 +1,706 @@
 #!/usr/bin/env python
-# Copyright (C) Tianzhu Qiao (ben.qiao@feiyilin.com).
+# Copyright (C) Tianzhu Qiao (tianzhu.qiao@feiyilin.com).
 
-''' History
-    ==ver 0.1.1 (12/2012)
-     - fix bugs
-    ==Ver 0.1 (11/2012)
-     - first release
-'''
-import sys, re, os, tempfile, time
-from subprocess import *
-import ConfigParser
-import StringIO
-import ply.lex as lex
-
+import sys, re, os, io, time
 try:
-    from pygments import highlight
-    from pygments.lexers import get_lexer_by_name
-    from pygments.formatters import HtmlFormatter
-    pygments_loaded = True
+    from configparser import ConfigParser
+    from io import StringIO
 except ImportError:
-    pygments_loaded = False
+    from ConfigParser import ConfigParser  # ver. < 3.0
+    from StringIO import StringIO
 
+import traceback
+import ply.lex as lex
+import ply.yacc as yacc
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
+def bsmdoc_escape(data):
+    s = re.sub(r'(\\)(.)', r'\2', data)
+    return s
+def bsmdoc_helper(cmds, data, default=None):
+    ldict = lex.get_caller_module_dict(1)
+    fun = ldict.get('bsmdoc_'+cmds[0], 'none')
+    if fun and hasattr(fun, "__call__"):
+        return str(fun(cmds[1:], data))
+    else:
+        print('cannot find commmand "%s".'%("|".join(cmds)))
+    if default:
+        return default
+    else:
+        return data
+# deal with the equation reference: \ref{} or \eqref{}
+def bsmdoc_ref(args, data):
+    return "\\ref{%s}"%data
+bsmdoc_eqref = bsmdoc_ref
+
+def bsmdoc_exec(args, data):
+    try:
+        exec(data, globals())
+    except:
+        print(args, data)
+        traceback.print_exc()
+    return ''
+
+def bsmdoc_pre(args, data):
+    if args and args[0] == 'newlineonly':
+        return "<br>\n".join(data.split("\n"))
+    return "<pre>%s</pre>" % data
+
+def bsmdoc_tag(args, data):
+    if len(args) > 1:
+        return "<%s class='%s'>%s</%s>"%(args[0], ' '.join(args[1:]), data, args[0])
+    elif len(args) == 1:
+        return "<%s>%s</%s>"%(args[0], data, args[0])
+    return data
+
+def bsmdoc_math(args, data):
+    return "<div class='mathjax'>\n$$ %s $$\n</div>" %data
+
+def bsmdoc_div(args, data):
+    data = data.strip()
+    if not args:
+        print('div block requires at least one argument')
+        return data
+    return '<div class="%s">\n%s\n</div>\n' %(" ".join(args), data)
 
 def bsmdoc_highlight(lang, code):
-    global pygments_loaded
-    if pygments_loaded:
-        lexer = get_lexer_by_name(lang, stripall=True)
+    try:
+        from pygments import highlight
+        from pygments.lexers import get_lexer_by_name
+        from pygments.formatters import HtmlFormatter
+        lexer = get_lexer_by_name(lang[0], stripall=True)
         formatter = HtmlFormatter(linenos=False, cssclass="syntax")
-        return highlight(code, lexer, formatter)
-    return code
+        # pygments will replace '&' with '&amp;', which will make the unicode
+        # (e.g., &#xNNNN) shown incorrectly.
+        txt = code.replace('&#x', '^#x')
+        txt = highlight(txt, lexer, formatter)
+        return txt.replace('^#x', '&#x')
+    except ImportError:
+        return code
+
+def bsmdoc_image(args, data):
+    r = '<img src="%s" alt="%s" />'%(data, data)
+    caption = get_option('caption', '')
+    label = get_option('label', '')
+    if len(args) >= 1:
+        caption = args[0]
+    if len(args) >= 2:
+        label = args[1]
+    # add the in-page link
+    tag = ''
+    if label:
+        (tag, prefix, num) = image_next_tag()
+        bsmdoc_setcfg('ANCHOR', label, num)
+        label = 'id="%s"'%label
+        tag = '<span class="tag">%s</span>'%tag
+
+    if caption: # title
+        caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
+        r = r + '\n' + caption
+    return '<div %s class="figure">%s</div>'%(label, r)
+
+@static_vars(notes=[])
+def bsmdoc_footnote(args, data):
+    tag = len(bsmdoc_footnote.notes) + 1
+    src = 'footnote-src-%d'%tag
+    dec = 'footnote-%d'%tag
+    # add the footnote to the list, which will show at the end of the page
+    fn = '<div id="%s">%s <a href="#%s">&#8617;</a></div>'%(dec, data, src)
+    bsmdoc_footnote.notes.append(fn)
+    return '<a name="%s" href="#%s"><sup>%d</sup></a>'%(src, dec, tag)
 
 tokens = (
-    'HEADING', 'NEWLINE', 'COMMENT', 'TEXT', 'BSMCMD',
-    'LISTBULLET', 'BRACEL3', 'BRACER3',
-    'TABLECELL', 'TABLEROW',
-    'BRACKETL', 'BRACKETR', 'BRACKETL2', 'BRACKETR2',
-    'APO5', 'APO3', 'APO2', 'APO',
-    'QUOTE',
-    'BRACEL', 'BRACER',
-    'RAWTEXT',
-    'LISTDEFINITION',
-    'SPACE',
-    'DOLLAR',
-    'MATH'
-    )
+        'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'CFG', 'WORD', 'SPACE',
+        'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
+        'CBLOCK', 'BSTART', 'BEND', 'CMD',
+        'LISTBULLET', 'LISTDEFINITION',
+        'BRACKETL', 'BRACKETR',
+        'BRACEL', 'BRACER',
+        'APO5', 'APO3', 'APO2', 'APO',
+        )
 
 states = (
-    ('block', 'inclusive'),
-)
+        ('bblock', 'inclusive'), # the content in bblock is parsed normally
+        ('cblock', 'exclusive'), # the content cblock is not parsed
+        ('cblock2', 'exclusive'), # the content cblock is not parsed
+        ('table', 'inclusive'), # table {{}}
+        ('link', 'inclusive') # link []
+        )
 
 # Tokens
-t_ignore = "\t"
-t_BRACKETL2 = "\[\["
-t_BRACKETR2 = "\]\]"
-t_BRACKETL = "\["
-t_BRACKETR = "\]"
-t_QUOTE = "\%"
-t_BRACEL = r'\{'
-t_BRACER = r'\}'
+t_ignore = '\t'
+
 t_APO5 = r'\'\'\'\'\''
 t_APO3 = r'\'\'\''
 t_APO2 = r'\'\''
 t_APO = r'\''
-t_SPACE = r'[\ ]+'
-t_TEXT = r'(?:\\.|[^ \$\#\n\\\|\{\}\'\[\]\%])+'
-t_DOLLAR = r'\$'
+#t_WORD = r'(?:\\.|[^ \#\n\\\|\{\}\'\[\]])+'
 
-t_block_TABLEROW = r'\|\|'
-t_TABLECELL = r'\|'
-
+t_cblock_ignore = ''
+t_cblock2_ignore = ''
+lex_input_stack = []
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
-def t_BSMCMD(t):
-    r'\#bsmdoc\:'
+def t_eof(t):
+    if len(lex_input_stack):
+        s = lex_input_stack.pop()
+        t.lexer.input(s['lexdata'])
+        t.lexer.lexpos = s['lexpos']
+        t.lexer.lineno = s['lineno']
+        return t.lexer.token()
+    return None
+# ply uses separate eof function for each state, the default is None.
+# define dummy functions to return to the up-level correctly (e.g., include,
+# makecontent)
+def t_bblock_eof(t):
+    return t_eof(t)
+def t_link_eof(t):
+    return t_eof(t)
+def t_table_eof(t):
+    return t_eof(t)
+
+# CFG should be checked before COMMENT
+def t_CFG(t):
+    r'\#cfg\:(\s)*'
     return t
+def t_INCLUDE(t):
+    r'\#include[ ]+[^\s]+ [ ]*'
+    filename = t.value.strip()
+    filename = filename.replace('#include', '', 1)
+    filename = filename.strip()
+    lex_input_stack.append({'lexdata':t.lexer.lexdata, 'lexpos':t.lexer.lexpos, 'lineno': t.lexer.lineno})
+
+    fp = open(filename, 'rU')
+    t.lexer.input(fp.read())
+    fp.close()
+    return t.lexer.token()
+def t_MAKECONTENT(t):
+    r'\#makecontent[ ]*'
+    c = bsmdoc_getcfg('bsmdoc', 'CONTENT')
+    if c:
+        lex_input_stack.append({'lexdata':t.lexer.lexdata, 'lexpos':t.lexer.lexpos, 'lineno': t.lexer.lineno})
+        t.lexer.input(c)
+        return t.lexer.token()
+    else:
+        # first scan, request the 2nd scan
+        if get_option_int('scan', 1) == 1:
+            set_option('rescan', True)
+        pass
+
 def t_COMMENT(t):
-    r'\#(.)*\n'
-    t.lexer.lineno += t.value.count('\n')
+    r'(?<!\&)\#.*'
+    pass
 
-def t_RAWTEXT(t):
-    r'<raw>(.|\n)*?</raw>'
-    t.lexer.lineno += t.value.count('\n')
-    t.value = t.value[5:-6]
-    return t
-def t_MATH(t):
-    r'<math>(.|\n)*?</math>'
-    t.lexer.lineno += t.value.count('\n')
-    t.value = t.value[6:-7]
-    return t
 def t_HEADING(t):
-    r'^[\ ]*[\=]+'
-    return t
-def t_LISTBULLET(t):
-    r'^[\ ]*[\-\*]+'
-    return t
-def t_LISTDEFINITION(t):
-    r'^[\ ]*[\:]+'
-    return t
-def t_NEWLINE(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)
+    r'^[ ]*[\=]+[ ]*'
     return t
 
-def t_BRACEL3(t):
-    r'^[\ ]*\{\{\{'
-    #print 'start',t.lexer.lineno
-    t.lexer.push_state('block')
+def t_LISTBULLET(t):
+    r'^[ ]*[\-\*]+[ ]*'
     return t
-def t_block_BRACER3(t):
-    r'^[\ ]*\}\}\}'
-    #print t.lexer.lineno
+
+def t_LISTDEFINITION(t):
+    r'^[ ]*[\:]+'
+    return t
+def t_CSTART2(t):
+    r'\$\$'
+    t.lexer.cblock2_start = t.lexer.lexpos-2
+    t.lexer.push_state('cblock2')
+def t_cblock2_CEND(t):
+    r'\$\$'
+    t.value = \
+        t.lexer.lexdata[t.lexer.cblock2_start:t.lexer.lexpos]
+    t.type = 'CBLOCK'
+    t.lexer.lineno += t.value.count('\n')
     t.lexer.pop_state()
     return t
 
+def t_CBLOCK_INLINE(t):
+    r'\$(.)*\$'
+    t.type = 'CBLOCK'
+    return t
+def t_CSTART(t):
+    r'[ ]*\{\%'
+    t.lexer.cblock_start = t.lexer.lexpos
+    t.lexer.cblock_level = 1
+    t.lexer.push_state('cblock')
+
+def t_cblock_CSTART(t):
+    r'[ ]*\{\%'
+    t.lexer.cblock_level += 1
+def t_BSTART(t):
+    r'[ ]*\{\!'
+    t.lexer.push_state('bblock')
+    return t
+
+def t_bblock_BEND(t):
+    r'[ ]*\!\}'
+    t.lexer.pop_state()
+    return t
+
+def t_TSTART(t):
+    r'^[ ]*\{\{'
+    t.lexer.push_state('table')
+    return t
+
+def t_table_TEND(t):
+    r'^[ ]*\}\}'
+    t.lexer.pop_state()
+    return t
+
+def t_table_THEAD(t):
+    r'[\s]*\|\+'
+    return t
+
+def t_table_TROW(t):
+    r'[\s]*\|\-'
+    return t
+
+def t_TCELL(t):
+    r'\|'
+    return t
+
+def t_BRACEL(t):
+    r'\{'
+    return t
+def t_BRACER(t):
+    r'\}'
+    return t
+def t_BRACKETL(t):
+    r'\['
+    t.lexer.push_state('link')
+    return t
+def t_BRACKETR(t):
+    r'\]'
+    t.lexer.pop_state()
+    return t
+# support the latex stylus command, e.g., \ref{}; and the command must have at
+# least 2 characters
+def t_CMD(t):
+    r'\\(\w){2,}'
+    return t
+def t_link_WORD(t):
+    r'(?:\\.|(\+(?!\/))|[^ \+\n\|\{\}\'\[\]])+'
+    s = "<br>".join(t.value.split("\\n"))
+    s = re.sub(r'(---)', '&#8212;', s)
+    s = re.sub(r'(--)', '&#8211;', s)
+    s = re.sub(r'(\\)(.)', r'\2', s)
+    t.value = s
+    return t
+
+def t_NEWPARAGRAPH(t):
+    r'\n(\n)+'
+    t.lexer.lineno += len(t.value)
+    return t
+def t_NEWLINE(t):
+    r'\n'
+    t.lexer.lineno += len(t.value)
+    return t
+def t_SPACE(t):
+    r'[ ]+'
+    return t
+def t_WORD(t):
+    r'(?:\\.|(\!(?!\}))|(?<=\&)\#|[^ \%\!\#\n\|\{\}\'\[\]])+'
+    s = "<br>".join(t.value.split("\\n"))
+    s = re.sub(r'(---)', '&#8212;', s)
+    s = re.sub(r'(--)', '&#8211;', s)
+    s = re.sub(r'(\\)(.)', r'\2', s)
+    t.value = s
+    return t
+
+def t_cblock_CEND(t):
+    r'\%\}'
+    t.lexer.cblock_level -= 1
+    if t.lexer.cblock_level == 0:
+        t.value = \
+            t.lexer.lexdata[t.lexer.cblock_start:t.lexer.lexpos - len(t.value)]
+        t.type = 'CBLOCK'
+        t.lexer.lineno += t.value.count('\n')
+        t.lexer.pop_state()
+        return t
+
+# ignore '{' if it is followed by '-';
+# ignore '-' if it is followed by '}'
+# it still has one problem "{-{--}" will not work; instead we can use '{+ \{\- +}'
+def t_cblock_WORD(t):
+    r'((\{(?!\%))|(\%(?!\}))|[^ \{\%\n])+'
+    pass
+def t_cblock_SPACE(t):
+    r'[ ]+'
+    pass
+def t_cblock_NEWLINE(t):
+    r'[\n]+'
+    pass
+def t_cblock_error(t):
+    print("Illegal character '%s' Line %d" % (t.value[0], t.lexer.lineno))
+    t.lexer.skip(1)
+def t_cblock2_WORD(t):
+    r'((\%(?!\%))|[^ \%\n])+'
+    pass
+def t_cblock2_SPACE(t):
+    r'[ ]+'
+    pass
+def t_cblock2_NEWLINE(t):
+    r'[\n]+'
+    pass
+def t_cblock2_error(t):
+    print("Illegal character '%s' Line %d" % (t.value[0], t.lexer.lineno))
+    t.lexer.skip(1)
 lex.lex(reflags=re.M)
 
-import ply.yacc as yacc
 
 bsmdoc = ''
-orderheaddict = {}
-
-config = ConfigParser.ConfigParser()
-def bsmdoc_getcfg(sec, key):
-    global config
-    if config.has_option(sec, key):
-        return config.get(sec, key)
-    #print '%s %s not founded' %(sec,key)
-    return ''
-def bsmdoc_setcfg(sec, key, val):
-    global config
-    config.set(sec, key, val)
-
-def get_option(key, default):
-    val = bsmdoc_getcfg('DEFAULT', key)
-    if val == '':
-        return str(default)
-    return val
-
-def set_option(key, value):
-    global config
-    if key == 'config':
-        config.read(value)
-    else:
-        bsmdoc_setcfg('DEFAULT', key, str(value))
-
-def get_option_int(key, default):
-    return int(get_option(key, default))
-
-def get_option_bool(key, default):
-    return get_option(key, default).lower() in ("yes", "true", "t", "1")
-
-def p_article(p):
-    'article : blocks'
-    global bsmdoc
-    p[0] = p[1]
-    bsmdoc = bsmdoc + p[0]
-
-def p_blocks0(p):
-    '''blocks : blocks block'''
-    p[0] = p[1] + p[2]
-def p_blocks1(p):
-    '''blocks : block'''
-    p[0] = p[1]
-
-def p_block(p):
-    '''block : bsmcmd
-             | heading
-             | paragraph
-             | listbullet
-             | definition
-             | table
-             | infoblock
-             | newline'''
-    p[0] = p[1]
-
-def p_bsmcmd1(p):
-    '''bsmcmd : bsmcmdstart bracetext bracetext
-              | bsmcmdstart bracetext bracetext NEWLINE'''
-    print p[2], p[3]
-    set_option(p[2], p[3])
-    p[0] = ''
-
-def p_bsmcmd0(p):
-    '''bsmcmd : bsmcmdstart bracetext
-              | bsmcmdstart bracetext NEWLINE'''
-    set_option(p[2], '1')
-    p[0] = ''
-def p_bsmcmdstart(p):
-    '''bsmcmdstart : BSMCMD emptyorspace'''
-    pass
-
-def p_heading(p):
-    '''heading : heading_txt
-               | heading_raw'''
-    p[0] = p[1]
-
+@static_vars(head={}, content=[])
 def header_helper(txt, level):
-    global orderheaddict
+    orderheaddict = header_helper.head
     s = txt
+    pre = ''
+    label = get_option('label', '')
+
     if get_option_bool('orderhead', 0):
         start = get_option_int('orderheadstart', 1)
-        pre = ''
         c = len(level)
         if c >= start:
             for i in range(start, c):
-                if i not in orderheaddict:
-                    orderheaddict[i] = 1
-                pre = pre+str(orderheaddict[i]) + '.'
+                pre = pre+str(orderheaddict.get(i, 1)) + '.'
 
-            if c not in orderheaddict:
-                orderheaddict[c] = 0
-            orderheaddict[c] = orderheaddict[c] + 1
-            pre = pre + str(orderheaddict[c]) + ' '
+            orderheaddict[c] = orderheaddict.get(c, 0) + 1
+            pre = pre + str(orderheaddict[c])
 
             for key in orderheaddict.iterkeys():
                 if key > c:
                     orderheaddict[key] = 0
-        s = pre + s
-    return s
-def p_heading1(p):
-    '''heading_txt : HEADING text'''
-    s = header_helper(p[2], p[1])
-    p[0] = '<h%d> %s </h%d>\n' %(len(p[1]), s, len(p[1]))
-def p_heading0(p):
-    'heading_raw : HEADING'
-    s = header_helper('', p[1])
-    p[0] = '<h%d> %s </h%d>\n' %(len(p[1]), s, len(p[1]))
+            if not label:
+                label = 'sec-' + pre.replace('.', '-')
+            header_helper.content.append([c, pre, s, label])
+        s = pre + ' ' + s
+    if label:
+        bsmdoc_setcfg('ANCHOR', label, pre)
+    return (s, pre, label)
 
-def p_paragraph2(p):
-    '''paragraph : paragraph NEWLINE paragraph'''
-    s1 = p[1]
-    s2 = p[3]
-    if len(p[2]) == 1:
-        p[0] = s1[:-5] + s2[3:]
+@static_vars(counter=0)
+def image_next_tag():
+    if get_option_bool('imagetag', 0):
+        image_next_tag.counter += 1
+        prefix = get_option('imagetagprefix', 'Fig.')
+        num = get_option('imagetagnumprefix', '') + str(image_next_tag.counter)
+        return (str(prefix) + num + '.', prefix, num)
+    return ("", "", "")
+
+@static_vars(counter=0)
+def table_next_tag():
+    if get_option_bool('tabletag', 0):
+        table_next_tag.counter += 1
+        prefix = get_option('tabletagprefix', 'Table.')
+        num = get_option('tabletagnumprefix', '') + str(table_next_tag.counter)
+        return (str(prefix) + num + '.', prefix, num)
+    return ("", "", "")
+
+"""
+article : sections
+
+sections : sections section
+         | section
+
+section : heading
+        | content
+
+heading : HEADING logicline
+
+
+content : content paragraph
+        | content listbullet
+        | content definition
+        | content table
+        | content config
+        | paragraph
+        | listbullet
+        | definition
+        | table
+        | listbullet
+        | config
+
+paragraph : text NEWPARAGRAPH
+          | text
+
+table : TSTART title trows TEND
+      | TSTART title trows TEND NEWLINE
+      | TSTART trows TEND
+      | TSTART trows TEND NEWLINE
+
+trows : trows trow
+      | trow
+
+trow : trowcontent TCELL
+     | trowcontent TCELL rowsep
+
+thead: trowcontent THEAD
+     | trowcontent THEAD rowsep
+
+rowsep : rowsep SPACE
+       | rowsep NEWLINE
+       | SPACE
+       | NEWLINE
+       | NEWPARAGRAPH
+
+trowcontent : trowcontent  sections TCELL
+            | sections TCELL
+
+block : BSTART sections BEND
+      | BSTART bblockarg sections BEND
+      | CBLOCK
+
+bblockarg : bblockarg plaintext TCELL
+          | plaintext TCELL
+
+listbullet : listbullet LISTBULLET logicline
+           | LISTBULLET logicline
+
+definition : definition LISTDEFINITION bracetext bracetext
+           | LISTDEFINITION bracetext bracetext
+
+text : text logicline
+     | logicline
+
+logicline : line
+          | line NEWLINE
+          | italicbold
+          | italicbold NEWLINE
+          | bracetext
+          | bracetext NEWLINE
+
+bracetext : BRACLETL sections BRACLETR
+
+line : line plaintext
+     | line link
+     | plaintext
+     | link
+
+plaintext : plaintext WORD
+     | plaintext SPACE
+     | plaintext APO
+     | WORD
+     | SPACE
+     | APO
+     |
+
+italicbold : APO2 logicline APO2
+      | APO3 logicline APO3
+      | APO5 logicline APO5
+
+link : BRACLETL text BRACKETL
+     | BRACKETL text BRACEL text BRACKETR
+     | BRACKETL2 text BRACKETR2
+     | BRACKETL2 text BRACEL text BRACKETR2
+     | BRACKETL2 text BRACEL text BRACEL text BRACKETR2
+
+cfg : CFG BRACEL WORD BRACER bracetext NEWLINE
+     | CFG BRACEL WORD BRACER
+"""
+
+def p_article(p):
+    '''article : sections'''
+    global bsmdoc
+    bsmdoc = p[1]
+
+def p_sections_multi(p):
+    '''sections : sections section'''
+    p[0] = p[1] + p[2]
+
+def p_sections_single(p):
+    '''sections : section'''
+    p[0] = p[1]
+def p_section(p):
+    '''section : heading
+               | content'''
+    p[0] = p[1]
+
+def p_heading(p):
+    '''heading : heading_start logicline'''
+    (s, pre, label) = header_helper(p[2], p[1].strip())
+    p[0] = '<h%d id="%s">%s</h%d>\n' %(len(p[1]), label, s, len(p[1]))
+def p_heading_start(p):
+    '''heading_start : HEADING'''
+    set_option('label', '')
+    p[0] = p[1]
+
+def p_content_multi(p):
+    '''content : content paragraph
+               | content listbullet
+               | content definition
+               | content table
+               | content block'''
+    p[0] = p[1] + p[2]
+
+def p_content_single(p):
+    '''content : paragraph
+               | listbullet
+               | definition
+               | table
+               | block'''
+    p[0] = p[1]
+
+def p_paragraph_multiple(p):
+    '''paragraph : text NEWPARAGRAPH'''
+    if p[1]:
+        p[0] = '<p> %s </p>' %(p[1])
+        p[0] = bsmdoc_div(['para'], p[0]) + '\n'
     else:
-        p[0] = s1 + s2
+        p[0] = ''
 
-def p_paragraph1(p):
-    '''paragraph : paragraph NEWLINE'''
+def p_paragraph_single(p):
+    '''paragraph : text'''
     p[0] = p[1]
-##def p_paragraph1(p):
-##    '''paragraph : paragraph textwithlink'''
-##    s = p[1]
-##    if len(s)>5 and s[-5:]=='</p>\n':
-##        s = s[:-5]
-##    p[0] = s + '' + p[2] + '</p>\n'
 
-def p_paragraph0(p):
-    '''paragraph : textwithlink'''
-    p[0] = '<p> %s </p>\n' %(p[1])
-def p_listbulletheader1(p):
-    'listbulletheader : space LISTBULLET'
+def table_helper(head, body):
+    if head:
+        head = '<thead>%s</thead>'%head
+    if body:
+        body = '<tbody>%s</tbody>'%body
+    label = get_option('label', '')
+    tag = ''
+    # add the in-page link
+    if label:
+        (tag, prefix, num) = table_next_tag()
+        bsmdoc_setcfg('ANCHOR', label, num)
+        label = 'id="%s"'%label
+        tag = '<span class="tag">%s</span>'%tag
+    caption = get_option('caption', '')
+    if caption:
+        caption = '<caption>%s</caption>'%(tag + ' ' + caption)
+    return '<table %s class=\'table\'>%s\n %s</table>\n'%(label, caption, head+body)
+
+def p_table_title(p):
+    '''table : tstart tbody tend'''
+    p[0] = table_helper('', p[2])
+def p_table(p):
+    '''table : tstart thead tbody tend'''
+    p[0] = table_helper(p[2], p[3])
+
+def p_table_start(p):
+    '''tstart : TSTART'''
+    set_option('caption', '')
+    set_option('label', '')
+    p[0] = ''
+def p_table_end(p):
+    '''tend : TEND
+            | TEND NEWLINE'''
+    #set_option('caption', '')
+    #set_option('label', '')
+    p[0] = ''
+
+def p_trows_multi(p):
+    '''tbody : tbody trow'''
+    p[0] = p[1] + p[2]
+
+def p_trows_single(p):
+    '''tbody : trow'''
+    p[0] = p[1]
+
+def p_trow(p):
+    '''trow : trowcontent TROW
+            | trowcontent TROW rowsep'''
+    p[0] = '<tr>\n%s\n</tr>\n' %(p[1])
+
+def p_thead(p):
+    '''thead : trowcontent THEAD'''
+    # THEAD indicates the current row is header
+    s = p[1]
+    s = s.replace('<td>', '<th>')
+    s = s.replace('</td>', '</th>')
+    p[0] = '<tr>\n%s\n</tr>\n' %(s)
+
+def p_rowsep(p):
+    '''rowsep : rowsep SPACE
+              | rowsep NEWLINE
+              | SPACE
+              | NEWLINE
+              | NEWPARAGRAPH'''
+    p[0] = ''
+def p_trowcontent_multi(p):
+    '''trowcontent : trowcontent sections TCELL'''
+    p[0] = p[1] + '<td>%s</td>' %(p[2])
+
+def p_trowcontent_single(p):
+    '''trowcontent : sections TCELL'''
+    p[0] = '<td>%s</td>' %(p[1])
+
+def p_bblock_cmd(p):
+    """block : CMD"""
+    cmd = p[1]
+    p[0] = bsmdoc_helper([cmd[1:]], '', bsmdoc_escape(cmd))
+def p_bblock_cmd_multi(p):
+    """block : CMD bracetext"""
+    cmd = p[1]
+    p[0] = bsmdoc_helper([cmd[1:]], p[2])
+def p_bblock_cmd_args(p):
+    """block : CMD BRACEL bblockargs BRACER bracetext"""
+    cmd = p[3]
+    cmd.insert(0, p[1][1:])
+    p[0] = bsmdoc_helper(cmd, p[2])
+
+bblock_state = []
+def p_bblock_start(p):
+    """bstart : BSTART"""
+    p[0] = ''
+    bblock_state.append((p[1], p.lineno(1)))
+def p_bblock_end(p):
+    """bend : BEND"""
+    p[0] = ''
+    bblock_state.pop()
+def p_bblock(p):
+    '''block : bstart sections bend
+             | bstart sections bend NEWLINE'''
     p[0] = p[2]
-def p_listbulletheader0(p):
-    'listbulletheader : LISTBULLET'
+
+def p_bblock_arg(p):
+    '''block : bstart bblockargs sections bend
+             | bstart bblockargs sections bend NEWLINE'''
+    cmds = p[2]
+    p[0] = p[3]
+    for c in reversed(cmds):
+        if c:
+            p[0] = bsmdoc_helper(c, p[0])
+
+def p_bblockargs_multi(p):
+    '''bblockargs : bblockargs bblockarg TCELL'''
+    p[0] = p[1]
+    p[0].append(p[2])
+
+def p_bblockargs_single(p):
+    '''bblockargs : bblockarg TCELL'''
+    p[0] = [p[1]]
+
+def p_bblockarg_multi(p):
+    '''bblockarg : bblockarg sections TCELL'''
+    p[0] = p[1]
+    p[0].append(p[2].strip())
+
+def p_bblockarg_single(p):
+    '''bblockarg : sections TCELL'''
+    p[0] = [p[1].strip()]
+
+def p_cblock(p):
+    '''block : CBLOCK'''
     p[0] = p[1]
 
-def p_listbullet3(p):
-    '''listbullet : listbullet listbulletheader brace_begin blocks brace_end
-                  | listbullet listbulletheader brace_begin blocks brace_end NEWLINE'''
+def p_listbullet_multi(p):
+    '''listbullet : listbullet LISTBULLET logicline'''
     s0 = p[1]
-    s = '<li> %s </li>\n' %(p[4])
+    s = '<li> %s </li>\n' %(p[3])
     for i in range(0, len(p[2])):
         if p[2][-i-1] == '-':
             s = '<ul>\n%s</ul>\n' %(s)
         elif p[2][-i-1] == '*':
             s = '<ol>\n%s</ol>\n' %(s)
+    # merge the adjacent list
     for i in range(0, len(p[2])):
         if len(s0) < 6 or len(s) < 5:
             break
@@ -279,46 +712,10 @@ def p_listbullet3(p):
             s = s[5:]
         else:
             break
-
-    p[0] = s0 + s
-def p_listbullet2(p):
-    '''listbullet : listbullet listbulletheader textwithlink NEWLINE
-                  | listbullet listbulletheader textwithlink'''
-    s0 = p[1]
-    s = '<li> %s </li>\n' %(p[3])
-    for i in range(0, len(p[2])):
-        if p[2][-i-1] == '-':
-            s = '<ul>\n%s</ul>\n' %(s)
-        elif p[2][-i-1] == '*':
-            s = '<ol>\n%s</ol>\n' %(s)
-    for i in range(0, len(p[2])):
-        if len(s0) < 6 or len(s) < 5:
-            break
-        if s0[-6:] == '</ul>\n' and s[:5] == '<ul>\n':
-            s0 = s0[:-6]
-            s = s[5:]
-        elif s0[-6:] == '</ol>\n' and s[:5] == '<ol>\n':
-            s0 = s0[:-6]
-            s = s[5:]
-        else:
-            break
-
     p[0] = s0 + s
 
-def p_listbullet1(p):
-    '''listbullet : listbulletheader brace_begin blocks brace_end
-                  | listbulletheader brace_begin blocks brace_end NEWLINE'''
-    s = '<li> %s </li>\n' %(p[3])
-    for i in range(0, len(p[1])):
-        if p[1][-i-1] == '-':
-            s = '<ul>\n%s</ul>\n' %(s)
-        elif p[1][-i-1] == '*':
-            s = '<ol>\n%s</ol>\n' %(s)
-    p[0] = s
-
-def p_listbullet0(p):
-    '''listbullet : listbulletheader textwithlink NEWLINE
-                  | listbulletheader textwithlink'''
+def p_listbullet_single(p):
+    '''listbullet : LISTBULLET logicline'''
     s = '<li> %s </li>\n' %(p[2])
     for i in range(0, len(p[1])):
         if p[1][-i-1] == '-':
@@ -326,309 +723,113 @@ def p_listbullet0(p):
         elif p[1][-i-1] == '*':
             s = '<ol>\n%s</ol>\n' %(s)
     p[0] = s
-
-def p_definition1(p):
+def p_definition_multi(p):
     '''definition : definition LISTDEFINITION bracetext bracetext'''
     p[0] = p[1][:-5]+'\n<dt>%s</dt>\n<dd>%s</dd></dl>'%(p[3], p[4])
-def p_definition0(p):
+
+def p_definition_single(p):
     '''definition : LISTDEFINITION bracetext bracetext'''
     p[0] = '<dl>\n<dt>%s</dt>\n<dd>%s</dd></dl>'%(p[2], p[3])
 
-# table & block
-def p_beginblock(p):
-    '''beginblock : BRACEL3 emptyorspace
-                  | BRACEL3 emptyorspace NEWLINE'''
-    pass
-def p_endblock(p):
-    '''endblock :  BRACER3 emptyorspace'''
-    pass
-def p_table_header(p):
-    '''bracetext : brace_begin textwithlink brace_end emptyorspace
-                 | brace_begin textwithlink brace_end emptyorspace NEWLINE'''
-    p[0] = p[2]
-
-def p_brace_begin(p):
-    '''brace_begin : emptyorspace BRACEL'''
-    p[0] = p[2]
-def p_brace_end(p):
-    '''brace_end : BRACER'''
-    p[0] = p[1]
-def p_infoblock2(p):
-    '''infoblock : beginblock bracetext bracetext blocks endblock'''
-    if p[2] == 'bsmcode' and get_option_bool('pygments_loaded', False):
-        s = p[4]
-        if s[:3] == '<p>' and s[-5:] == '</p>\n':
-            s = s[3:-5]
-        sh = bsmdoc_highlight(p[3], s)
-        p[0] = sh.encode("ISO-8859-1")
-    else:
-        p[0] = '<div class="%s"> \n <div class="blocktitle">%s</div>\n <div class="blockcontent">\n'%(p[2], p[3]) + p[4] + '\n</div>\n</div>\n'
-
-def p_infoblock1(p):
-    '''infoblock : beginblock bracetext blocks endblock'''
-    p[0] = '<div class="%s"> \n <div class="blockcontent">\n'%(p[2]) + p[3] + '\n</div>\n</div>\n'
-
-def p_infoblock0(p):
-    '''infoblock : beginblock blocks endblock'''
-    p[0] = '<div class="infoblock"> \n <div class="blockcontent">\n'+ p[2] + '\n</div>\n</div>\n'
-
-def p_table2(p):
-    '''table : beginblock bracetext bracetext tablerow emptyorspace endblock'''
-    p[0] = '<table class=\'%s\'>\n <caption> %s </caption>\n%s</table>\n'%(p[3], p[2], p[4])
-def p_table1(p):
-    '''table : beginblock bracetext tablerow emptyorspace endblock'''
-    p[0] = '<table class=\'wikitable\'>\n <caption> %s </caption>\n%s</table>\n'%(p[2], p[3])
-
-def p_table0(p):
-    '''table : beginblock tablerow emptyorspace endblock'''
-    p[0] = '<table class=\'wikitable\'>\n'+ p[2] +'</table>\n'
-
-def p_tablerow1(p):
-    '''tablerow : tablerow tablecells TABLEROW emptyorspace NEWLINE'''
-    p[0] = p[1] + '<tr>\n%s\n</tr>\n' %(p[2])
-def p_tablerow0(p):
-    '''tablerow : tablecells TABLEROW emptyorspace NEWLINE'''
-    #first row is the header of the table
-    s = p[1]
-    s = s.replace('<td>', '<th>')
-    s = s.replace('</td>', '</th>')
-    p[0] = '<tr>\n%s\n</tr>\n' %(s)
-
-def p_tablecells3(p):
-    '''tablecells : tablecells emptyorspace TABLECELL emptyorspace'''
-    p[0] = p[1] + '\t<td></td>'
-def p_tablecells2(p):
-    '''tablecells : tablecells blocks TABLECELL emptyorspace'''
-    s = p[2]
-    if s[:3] == '<p>' and s[-5:] == '</p>\n':
-        s = s[3:-5]
-    p[0] = p[1] + '\t<td>%s</td>' %(s)
-def p_tablecells1(p):
-    '''tablecells : emptyorspace TABLECELL emptyorspace'''
-    p[0] = '\t<td></td>\n'
-
-def p_tablecells0(p):
-    '''tablecells : blocks TABLECELL emptyorspace'''
-    s = p[1]
-    if s[:3] == '<p>' and s[-5:] == '</p>\n':
-        s = s[3:-5]
-    p[0] = '\t<td>%s</td>\n' %(s)
-
-def p_textwithlink1(p):
-    '''textwithlink : textwithlink text
-                    | textwithlink link
-                    | textwithlink image
-                    | textwithlink equation'''
-    p[0] = p[1] + '' + p[2]
-def p_textwithlink0(p):
-    '''textwithlink : text
-                    | link
-                    | image
-                    | equation'''
-    p[0] = p[1]
-
-def p_text1(p):
-    '''text : text textelement'''
+def p_text_multi(p):
+    '''text : text logicline'''
     p[0] = p[1] + p[2]
-def p_text0(p):
-    '''text : textelement
-            | italicsorbold
-            | quote'''
-    p[0] = p[1]
-def p_textelement1(p):
-    '''textelement : RAWTEXT'''
-    p[0] = p[1]
-def p_textelement0(p):
-    '''textelement : TEXT
-            | APO
-            | space
-            '''
-    p[0] = "<br />".join(p[1].split("\\n"))
-    #p[0] = p[0].replace('\\','')
-    p[0] = re.sub(r'(---)', '&#8212;', p[0])
-    p[0] = re.sub(r'(--)', '&#8211;', p[0])
-    p[0] = re.sub(r'(\\)(.)', r'\2', p[0])
 
-def p_link1(p):
-    '''link : BRACKETL text TABLECELL text BRACKETR'''
-    p[0] = '<a href=\'%s\'>%s</a>'%(p[2], p[4])
-def p_link0(p):
-    '''link : BRACKETL text BRACKETR'''
-    p[0] = '<a href=\'%s\'>%s</a>'%(p[2], p[2])
-def p_image2(p):
-    '''image : BRACKETL2 text TABLECELL text TABLECELL text BRACKETR2'''
-    p[0] = '<a href=\'%s\'> <img class=\'%s\' src=\'%s\' alt=\'%s\' /></a>'%(p[2], p[6], p[2], p[4])
-def p_image1(p):
-    '''image : BRACKETL2 text TABLECELL text BRACKETR2'''
-    p[0] = '<img src=\'%s\' alt=\'%s\' />'%(p[2], p[4])
-def p_image0(p):
-    '''image : BRACKETL2 text BRACKETR2'''
-    p[0] = '<img src=\'%s\' alt=\'%s\' />'%(p[2], p[2])
+def p_text_single(p):
+    '''text : logicline'''
+    p[0] = p[1]
 
-def p_italicsorbold_bold(p):
-    'italicsorbold : APO2 text APO2'
+def p_logicline(p):
+    '''logicline : line
+                 | bracetext
+                 | line NEWLINE
+                 | bracetext NEWLINE'''
+    p[0] = p[1]
+def p_bracetext(p):
+    '''bracetext : BRACEL sections BRACER'''
+    p[0] = p[2]
+
+def p_line_multi(p):
+    '''line : line plaintext
+            | line link
+            | line italicbold
+            | line block
+            | line config'''
+    p[0] = p[1] + p[2]
+
+def p_line(p):
+    '''line : plaintext
+            | link
+            | italicbold
+            | block
+            | config'''
+    p[0] = p[1]
+
+def p_plaintext_multi(p):
+    '''plaintext : plaintext WORD
+            | plaintext SPACE
+            | plaintext APO'''
+    p[0] = p[1] + p[2]
+
+def p_plaintext_single(p):
+    '''plaintext : WORD
+            | SPACE
+            | APO'''
+    p[0] = p[1]
+def p_plaintext_empty(p):
+    '''plaintext : '''
+    p[0] = ''
+
+def p_italicbold_bold(p):
+    'italicbold : APO2 plaintext APO2'
     p[0] = '<b>' + p[2] + '</b>'
-def p_italicsorbold_italics(p):
-    'italicsorbold : APO3 text APO3'
+def p_italicbold_italics(p):
+    'italicbold : APO3 plaintext APO3'
     p[0] = '<i>' + p[2] + '</i>'
-def p_italicsorbold_both(p):
-    'italicsorbold : APO5 text APO5'
+
+def p_italicbold_both(p):
+    'italicbold : APO5 plaintext APO5'
     p[0] = '<i><b>' + p[2] +'</b></i>'
-def p_quote(p):
-    'quote : QUOTE text QUOTE'
-    p[0] = '<tt>' + p[2] + '</tt>'
 
-def geneq(eq, wl):
-    # First check if there is an existing file.
-    eqdir = get_option('eqdir', './eqs')
-    if not os.path.exists(eqdir):
-        os.makedirs(eqdir)
-    dpi = get_option_int('eqndpi', 130)
-    outname = get_option('eqnfilepre', '') + str(abs(hash(eq)))
-    eqname = os.path.join(eqdir, outname + '.png')
-    eqdepths = {}
-    if get_option_bool('eqncache', 1):
-        try:
-            dc = open(os.path.join(eqdir, '.eqdepthcache'), 'rb')
-            for l in dc:
-                a = l.split()
-                eqdepths[a[0]] = int(a[1])
-            dc.close()
+def p_link_withname(p):
+    '''link : BRACKETL text TCELL text BRACKETR'''
+    p[0] = '<a href=\'%s\'>%s</a>'%(p[2], p[4])
 
-            if os.path.exists(eqname) and eqname in eqdepths:
-                return (eqdepths[eqname], eqname)
-        except IOError:
-            print 'eqdepthcache read failed.'
+def p_link_noname(p):
+    '''link : BRACKETL text BRACKETR'''
+    s = p[2].strip()
+    v = s
+    if s[0] == '#':
+        v = bsmdoc_getcfg('ANCHOR', s[1:])
+        if not v:
+            v = s[1:]
+            # do not find the anchor, wait for the 2nd scan
+            if get_option_int('scan', 1) > 1:
+                print("Line %d: break anchor: %s"%(p.lineno(2), s))
+            set_option('rescan', True)
+    p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
 
-    # Open tex file.
-    tempdir = tempfile.gettempdir()
-    fd, texfile = tempfile.mkstemp('.tex', '', tempdir, True)
-    basefile = texfile[:-4]
-    g = os.fdopen(fd, 'wb')
-
-    preamble = '\documentclass{article}\n'
-    eqnpackages = filter(None, get_option('eqnpackages', '').split(' '))
-    for p in eqnpackages:
-        preamble += '\usepackage{%s}\n' % p
-    #for p in f.texlines:
-         #Replace \{ and \} in p with { and }.
-        # XXX hack.
-    #    preamble += re.sub(r'\\(?=[{}])', '', p + '\n')
-    preamble += '\usepackage{amsmath}\n'
-    preamble += '\pagestyle{empty}\n\\begin{document}\n'
-    g.write(preamble)
-
-    # Write the equation itself.
-    if wl:
-        g.write('\\begin{eqnarray*}%s\\end{eqnarray*}' % eq)
-    else:
-        g.write('$%s$' % eq)
-
-    # Finish off the tex file.
-    g.write('\n\\newpage\n\end{document}')
-    g.close()
-
-    exts = ['.tex', '.aux', '.dvi', '.log']
-    try:
-        # Generate the DVI file
-        latexcmd = 'latex -file-line-error-style -interaction=nonstopmode ' + \
-                 '-output-directory %s %s' % (tempdir, texfile)
-        p = Popen(latexcmd, shell=True, stdout=PIPE)
-        rc = p.wait()
-        if rc != 0:
-            for l in p.stdout.readlines():
-                print '    ' + l.rstrip()
-            exts.remove('.tex')
-            raise Exception('latex error')
-
-        dvifile = basefile + '.dvi'
-        dvicmd = 'dvipng --freetype0 -Q 9 -z 3 --depth -q -T tight -D %i -bg Transparent -o %s %s' % (dpi, eqname, dvifile)
-        # discard warnings, as well.
-        p = Popen(dvicmd, shell=True, stdout=PIPE, stderr=PIPE)
-        rc = p.wait()
-        if rc != 0:
-            print p.stderr.readlines()
-            raise Exception('dvipng error')
-        depth = int(p.stdout.readlines()[-1].split('=')[-1])
-    finally:
-        # Clean up.
-        for ext in exts:
-            g = basefile + ext
-            if os.path.exists(g):
-                os.remove(g)
-
-    # Update the cache if we're using it.
-    if get_option_bool('eqncache', 0) and eqname not in eqdepths:
-        try:
-            dc = open(os.path.join(eqdir, '.eqdepthcache'), 'ab')
-            dc.write(eqname + ' ' + str(depth) + '\n')
-            dc.close()
-        except IOError:
-            print 'eqdepthcache update failed.'
-    return (depth, eqname)
-
-def p_EQUATION1(p):
-    '''equation : MATH'''
-    eqn = p[1]
-    #(depth, fullfn) = geneq(eqn, wl=True)
-    #fullfn = fullfn.replace('\\', '/')
-    #if get_option_bool('eqnsupport', 0):
-    #    p[0] = '<img class="eqn" src=\'%s\' alt=\'%s\' />'%(fullfn, 'equation')
-    #else:
-    #    p[0] = eqn
-    p[0] = "$$" + eqn + "$$"
-def p_EQUATION0(p):
-    '''equation : DOLLAR text DOLLAR'''
-    eqn = p[2]
-    #(depth, fullfn) = geneq(eqn, wl=False)
-    #fullfn = fullfn.replace('\\', '/')
-    #if get_option_bool('eqnsupport', 0):
-    #    p[0] = '<img class="eqns" src=\'%s\' alt=\'%s\' />'%(fullfn, 'equation')
-    #else:
-    #    p[0] = eqn
-    p[0] = "$" + eqn + "$"
-def p_newline(p):
-    'newline : NEWLINE'
+def p_config_multi(p):
+    '''config : CFG BRACEL WORD BRACER bracetext'''
+    set_option(p[3], p[5])
     p[0] = ''
 
-def p_emptyorspace(p):
-    '''emptyorspace : space
-                    | empty'''
+def p_config_single(p):
+    '''config : CFG BRACEL WORD BRACER'''
+    set_option(p[3], '1')
     p[0] = ''
-def p_empty0(p):
-    'empty :'
-    p[0] = ''
-
-def p_space(p):
-    '''space : SPACE'''
-    p[0] = ' '
 
 def p_error(p):
-    print "Syntax error in input!", p
+    if p == None and len(bblock_state):
+        e = bblock_state.pop()
+        print("Error: block (%s) at line %d"%(e[0], e[1]))
+    else:
+        print("Error: ", p)
 
-yacc.yacc()
+yacc.yacc(debug=True)
 
 # generate the html
-def utf8conv(s, code='gb2312'):
-    us = s.decode(code)
-    us = repr(us)
-    us = us[2:-1]
-    r = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
-    m = r.search(us)
-    while m:
-        qb = '&#x' + m.group(1) + ''
-        us = us[:m.start()] + qb + us[m.end():]
-
-        m = r.search(us, m.start())
-    us = us.decode('string_escape')
-    return us
-
-def utf8conv2(s):
-    if get_option_bool('utf8conv', 0):
-        return utf8conv(s, get_option('utf8convcode', 'gb2312'))
-    return s
-
-bsmdoc_conf = """
+bsmdoc_conf = u"""
 [html]
 begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -649,108 +850,201 @@ end = </div>
     </body>
 
 [footer]
-begin = <div id="footer"><div id="footer-text">
-end = </div></div>
-content = Last updated %(UPDATED)s, by <a href=\"http://bsmdoc.feiyilin.com/\">bsmdoc</a>.\
+begin = <div id="footer">
+end = </div>
+content = <div id="footer-text"> Last updated %(UPDATED)s, by
+          <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
 """
+def make_content(content):
+    first_level = 6
+    for c in content:
+        if c[0] < first_level:
+            first_level = c[0]
+    ctxt = []
+    # put the header in '{- -}' block, so bsmdoc will not try to parse it again
+    for c in content:
+        s = '<a href="#%s">%s</a>' %(c[3], c[1] + ' ' + c[2])
+        # % is the variable substitution symbol in ConfigParser;
+        # %% for substitution escape
+        ctxt.append('-'*(c[0] - first_level + 1) + '{%'+ s + '%}')
+    return '\n'.join(ctxt)
+    s0 = ""
+    level_pre = -1
+    for c in content:
+        s = '<li><a href="#%s">%s</a></li>\n' %(c[3], c[1] + ' ' + c[2])
+        if level_pre == -1:
+            for i in range(0, c[0] - first_level + 1):
+                s = '<ul>\n%s' %(s)
+        elif c[0] > level_pre:
+            for i in range(0, c[0] - level_pre):
+                s = '<li><ul>\n' + s
+        elif c[0] < level_pre:
+            for i in range(0, level_pre - c[0]):
+                s = '</ul></li>\n' + s
+        level_pre = c[0]
+        s0 = s0 + s
+    for i in range(0, level_pre - first_level):
+        s0 = s0 + '</ul></li>\n'
+    return s0 + '</ul>'
 
+config = ConfigParser()
+def bsmdoc_getcfg(sec, key):
+    global config
+    if config.has_option(sec, key):
+        return config.get(sec, key)
+    return ''
+def bsmdoc_setcfg(sec, key, val):
+    global config
+    if sec is not 'DEFAULT' and not config.has_section(sec):
+        config.add_section(sec)
+    config.set(sec, key, val)
+
+def get_option(key, default=None):
+    val = bsmdoc_getcfg('DEFAULT', key)
+    if val == '':
+        return str(default)
+    return val
+
+def set_option(key, value):
+    bsmdoc_setcfg('DEFAULT', key, str(value))
+
+def get_option_int(key, default):
+    return int(get_option(key, default))
+
+def get_option_bool(key, default):
+    return get_option(key, default).lower() in ("yes", "true", "t", "1")
 
 def bsmdoc_raw(txt):
     global bsmdoc
     global config
-    global orderheaddict
-    bsmdoc = ''
-    orderheaddict = {}
-    config = ConfigParser.ConfigParser()
-    set_option('eqnsupport', 1)
-    set_option('eqndir', 'eqn')
-    set_option('eqndpi', 130)
-    set_option('eqnenable', 1)
-    set_option('eqncache', 1)
-    set_option('eqnpackage', '')
-    set_option('eqnfilepre', '')
-    set_option('pygments_loaded', pygments_loaded)
-    set_option('source', 0)
+    config = ConfigParser()
+    config.add_section('ANCHOR')
+
     set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
-    set_option('config', 'bsmdoc.cfg')
-
-    #config.readfp(StringIO.StringIO(bsmdoc_conf))
+    set_option('scan', 1)
+    set_option('source', '')
 
     bsmdoc = ''
-    lex.lexer.lineno = 0
-    yacc.parse(txt)
+    lex.lexer.lineno = 1
+    #lex.input(txt)
+    #while True:
+    #    tok = lex.token()
+    #    if not tok:
+    #        break      # No more input
+    #    print(tok)
+    yacc.parse(txt, tracking=True)
+    if get_option_bool('rescan', False):
+        set_option('scan', 2)
+        # 2nd scan to resolve the references
+        image_next_tag.counter = 0
+        table_next_tag.counter = 0
+        header_helper.head = {}
+        bsmdoc_footnote.notes = []
+        if header_helper.content:
+            s = make_content(header_helper.content)
+            s = s.replace('%', '%%')
+            bsmdoc_setcfg('bsmdoc', 'CONTENT', s)
+        header_helper.content = []
+        lex.lexer.lineno = 1
+        #lex.input(txt)
+        #while True:
+        #    tok = lex.token()
+        #    if not tok:
+        #        break      # No more input
+        #    print(tok)
+        yacc.parse(txt, tracking=True)
     return bsmdoc
 
-def bsmdoc_gen(filename):
+def bsmdoc_readfile(filename, encoding=None):
+    if not encoding:
+        try:
+            # encoding is not define, try to detect it
+            import chardet
+            b = min(32, os.path.getsize(filename))
+            raw = open(filename, 'rb').read(b)
+            result = chardet.detect(raw)
+            encoding = result['encoding']
+        except:
+            pass
+    txt = ""
+    fp = io.open(filename, 'r', encoding=encoding)
+    txt = fp.read()
+    fp.close()
+    txt = txt.encode('unicode_escape')
+    txt = txt.decode()
+    r = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
+    m = r.search(txt)
+    while m:
+        qb = '&#x' + m.group(1) + ';'
+        txt = txt[:m.start()] + qb + txt[m.end():]
+        m = r.search(txt, m.start())
+    txt = txt.encode().decode('unicode_escape')
+    return txt
+
+def bsmdoc_gen(filename, encoding=None):
     global bsmdoc
     global config
-    global orderheaddict
-    try:
-        fp = open(filename, 'rU')
-    except:
-        print 'Open file (%s) failed!'%(filename)
-        return
-
-    #try:
-    bsmdoc_raw(fp.read())
-    #except:
-    #    print 'Parse file (%s) failed!'%(filename)
-    #    fp.close()
-    #    return
-    fp.close()
+    txt = bsmdoc_readfile(filename, encoding)
+    bsmdoc_raw(txt)
     config_doc = get_option('bsmdoc_conf', '')
     if config_doc:
-        config.readfp(open(config_doc))
+        txt = bsmdoc_readfile(config_doc)
+        config.readfp(StringIO(txt))
     else:
-        config.readfp(StringIO.StringIO(bsmdoc_conf))
+        config.readfp(StringIO(bsmdoc_conf))
 
     set_option('THISFILE', os.path.basename(filename))
-    outname = os.path.splitext(filename)[0] +'.html'
-    fp = open(outname, 'w')
-    fp.write(bsmdoc_getcfg('html', 'begin') + '\n')
-    fp.write(bsmdoc_getcfg('header', 'begin') + '\n')
-
-    fp.write(bsmdoc_getcfg('header', 'content') + '\n')
+    html = []
+    html.append(bsmdoc_getcfg('html', 'begin'))
+    # header
+    html.append(bsmdoc_getcfg('header', 'begin'))
+    html.append(bsmdoc_getcfg('header', 'content'))
     temp = get_option('addcss', '')
     if temp:
         css = temp.split(' ')
-        for cssitem in css:
-            fp.write('<link rel="stylesheet" href="%s" type="text/css" />\n'%(cssitem))
+        for c in css:
+            html.append('<link rel="stylesheet" href="%s" type="text/css" />'%c)
     temp = get_option('addjs', '')
     if temp:
         js = temp.split(' ')
-        for jsitem in js:
-            fp.write('<script type="text/javascript" language="javascript" src="%s"></script>\n'%(jsitem))
+        for j in js:
+            html.append('<script type="text/javascript" language="javascript" src="%s"></script>'%j)
     temp = get_option('title', '')
-    print temp
     if temp:
-        title = '<title>%s</title>' %(temp)
-        fp.write(utf8conv2(title) + '\n')
-    fp.write(bsmdoc_getcfg('header', 'end') + '\n')
-    fp.write(bsmdoc_getcfg('body', 'begin') + '\n')
-    subtitle = ''
-    temp = get_option('subtitle', '')
-    if temp:
-        subtitle = '<div id="subtitle">%s</div>'%(temp)
-    doctitle = ''
-    temp = get_option('doctitle', '')
-    if temp:
-        doctitle = '<div id="toptitle">%s%s</div>'%(temp, subtitle)
-    fp.write(utf8conv2(doctitle)+'\n')
+        html.append('<title>%s</title>'%(temp))
+    html.append(bsmdoc_getcfg('header', 'end') + '\n')
+    # body
+    html.append(bsmdoc_getcfg('body', 'begin') + '\n')
+    subtitle = get_option('subtitle', '')
+    if subtitle:
+        subtitle = '<div id="subtitle">%s</div>\n'%(subtitle)
+    doctitle = get_option('doctitle', '')
+    if doctitle:
+        doctitle = '<div id="toptitle">%s%s</div>'%(doctitle, subtitle)
+    html.append(doctitle)
 
-    fp.write(utf8conv2(bsmdoc))
-    fp.write(bsmdoc_getcfg('footer', 'begin') + '\n')
-    fp.write(bsmdoc_getcfg('footer', 'content') + '\n')
-    if get_option('source', 0):
-        fp.write('<a href=\"'+filename +'\">source</a>.' + '\n')
+    html.append(bsmdoc)#get_option('BSMDOC'))
+    html.append(bsmdoc_getcfg('footer', 'begin'))
+    if len(bsmdoc_footnote.notes):
+        html.append('<ol>')
+        html.append(os.linesep.join(["<li>%s</li>"%x for x in bsmdoc_footnote.notes]))
+        html.append('</ol>')
 
-    fp.write(bsmdoc_getcfg('footer', 'end') + '\n')
+    if get_option('source', ''):
+        set_option("SOURCE", '<a href="%s">(source)</a>'%filename)
+    html.append(bsmdoc_getcfg('footer', 'content'))
 
-    fp.write(bsmdoc_getcfg('body', 'end') + '\n')
+    html.append(bsmdoc_getcfg('footer', 'end'))
 
-    fp.write(bsmdoc_getcfg('html', 'end') + '\n')
+    html.append(bsmdoc_getcfg('body', 'end'))
+
+    html.append(bsmdoc_getcfg('html', 'end'))
+    outname = os.path.splitext(filename)[0] + '.html'
+    fp = open(outname, 'w')
+    fp.write(os.linesep.join(html))
     fp.close()
     return outname
 
 if __name__ == '__main__':
-    bsmdoc_gen('./example.bsmdoc')
+    for f in sys.argv[1:]:
+        bsmdoc_gen(f)
