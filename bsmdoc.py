@@ -28,7 +28,7 @@ def bsmdoc_helper(cmds, data, default=None):
     if fun and hasattr(fun, "__call__"):
         return str(fun(cmds[1:], data))
     else:
-        print('cannot find commmand "%s".'%("|".join(cmds)))
+        print('Warning: uncannot find commmand "%s".'%("|".join(cmds)))
     if default:
         return default
     else:
@@ -117,35 +117,29 @@ def bsmdoc_footnote(args, data):
 tokens = (
         'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'CFG', 'WORD', 'SPACE',
         'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
-        'CBLOCK', 'BSTART', 'BEND', 'CMD',
+        'RBLOCK', 'BSTART', 'BEND', 'CMD',
         'LISTBULLET', 'LISTDEFINITION',
         'BRACKETL', 'BRACKETR',
         'BRACEL', 'BRACER',
-        'APO5', 'APO3', 'APO2', 'APO',
         )
 
 states = (
-        ('bblock', 'inclusive'), # the content in bblock is parsed normally
-        ('cblock', 'exclusive'), # the content cblock is not parsed
-        ('cblock2', 'exclusive'), # the content cblock is not parsed
-        ('table', 'inclusive'), # table {{}}
-        ('link', 'inclusive') # link []
+        ('fblock', 'inclusive'), # function block (parsed normally)
+        ('rblock', 'exclusive'), # raw block (not parsed)
+        ('equation', 'exclusive'), # equation block (not parsed)
+        ('table', 'inclusive'), # table block
+        ('link', 'inclusive') # link block
         )
 
 # Tokens
 t_ignore = '\t'
+t_rblock_ignore = ''
+t_equation_ignore = ''
 
-t_APO5 = r'\'\'\'\'\''
-t_APO3 = r'\'\'\''
-t_APO2 = r'\'\''
-t_APO = r'\''
-#t_WORD = r'(?:\\.|[^ \#\n\\\|\{\}\'\[\]])+'
-
-t_cblock_ignore = ''
-t_cblock2_ignore = ''
+# input stack to support dynamically changing the input text (e.g., include)
 lex_input_stack = []
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    print("Illegal character '%s' at line %d"%(t.value[0], t.lexer.lineno))
     t.lexer.skip(1)
 
 def t_eof(t):
@@ -156,95 +150,135 @@ def t_eof(t):
         t.lexer.lineno = s['lineno']
         return t.lexer.token()
     return None
+
 # ply uses separate eof function for each state, the default is None.
 # define dummy functions to return to the up-level correctly (e.g., include,
 # makecontent)
-def t_bblock_eof(t):
-    return t_eof(t)
-def t_link_eof(t):
-    return t_eof(t)
-def t_table_eof(t):
-    return t_eof(t)
+t_fblock_eof = t_eof
+t_link_eof = t_eof
+t_table_eof = t_eof
 
 # CFG should be checked before COMMENT
 def t_CFG(t):
     r'\#cfg\:(\s)*'
     return t
+
 def t_INCLUDE(t):
     r'\#include[ ]+[^\s]+ [ ]*'
     filename = t.value.strip()
     filename = filename.replace('#include', '', 1)
     filename = filename.strip()
-    lex_input_stack.append({'lexdata':t.lexer.lexdata, 'lexpos':t.lexer.lexpos, 'lineno': t.lexer.lineno})
+    if os.path.isfile(filename):
+        lex_input_stack.append({'lexdata':t.lexer.lexdata,
+                                'lexpos':t.lexer.lexpos,
+                                'lineno': t.lexer.lineno})
+        t.lexer.input(bsmdoc_readfile(filename))
+        return t.lexer.token()
 
-    fp = open(filename, 'rU')
-    t.lexer.input(fp.read())
-    fp.close()
-    return t.lexer.token()
 def t_MAKECONTENT(t):
     r'\#makecontent[ ]*'
     c = bsmdoc_getcfg('bsmdoc', 'CONTENT')
     if c:
-        lex_input_stack.append({'lexdata':t.lexer.lexdata, 'lexpos':t.lexer.lexpos, 'lineno': t.lexer.lineno})
+        lex_input_stack.append({'lexdata':t.lexer.lexdata,
+                                 'lexpos':t.lexer.lexpos,
+                                 'lineno': t.lexer.lineno})
         t.lexer.input(c)
         return t.lexer.token()
     else:
-        # first scan, request the 2nd scan
+        # if first scan, request the 2nd scan
         if get_option_int('scan', 1) == 1:
             set_option('rescan', True)
-        pass
 
+# comment starts with "#", except "&#"
 def t_COMMENT(t):
     r'(?<!\&)\#.*'
     pass
 
 def t_HEADING(t):
     r'^[ ]*[\=]+[ ]*'
+    t.value = t.value.strip()
     return t
 
 def t_LISTBULLET(t):
     r'^[ ]*[\-\*]+[ ]*'
+    t.value = t.value.strip()
     return t
 
 def t_LISTDEFINITION(t):
     r'^[ ]*[\:]+'
+    t.value = t.value.strip()
     return t
-def t_CSTART2(t):
+
+# shortcut to define the latex equations, does not support nested statement
+def t_EQN(t):
     r'\$\$'
-    t.lexer.cblock2_start = t.lexer.lexpos-2
-    t.lexer.push_state('cblock2')
-def t_cblock2_CEND(t):
+    t.lexer.equation_start = t.lexer.lexpos-2
+    t.lexer.push_state('equation')
+
+def t_equation_EQN(t):
     r'\$\$'
-    t.value = \
-        t.lexer.lexdata[t.lexer.cblock2_start:t.lexer.lexpos]
-    t.type = 'CBLOCK'
+    t.value = t.lexer.lexdata[t.lexer.equation_start:t.lexer.lexpos]
+    t.type = 'RBLOCK'
     t.lexer.lineno += t.value.count('\n')
     t.lexer.pop_state()
     return t
+# everything except '$$'
+def t_equation_WORD(t):
+    r'(?:\\.|(\$(?!\$))|[^\$])+'
+    t.lexer.lineno += t.value.count('\n')
+t_equation_error = t_error
 
-def t_CBLOCK_INLINE(t):
-    r'\$(.)*\$'
-    t.type = 'CBLOCK'
+# shortcuts for inline equation
+def t_INLINE_EQN(t):
+    r'\$[^\$]*\$'
+    t.type = 'RBLOCK'
+    t.lexer.lineno += t.value.count('\n')
     return t
+
+# marks to ignore the parsing, and it supports nested statement ('{${$ $}$}') is
+# valid)
 def t_CSTART(t):
     r'[ ]*\{\%'
-    t.lexer.cblock_start = t.lexer.lexpos
-    t.lexer.cblock_level = 1
-    t.lexer.push_state('cblock')
+    t.lexer.rblock_start = t.lexer.lexpos
+    t.lexer.rblock_level = 1
+    t.lexer.push_state('rblock')
 
-def t_cblock_CSTART(t):
+def t_rblock_CSTART(t):
     r'[ ]*\{\%'
-    t.lexer.cblock_level += 1
+    t.lexer.rblock_level += 1
+
+def t_rblock_CEND(t):
+    r'\%\}'
+    t.lexer.rblock_level -= 1
+    if t.lexer.rblock_level == 0:
+        t.value = \
+            t.lexer.lexdata[t.lexer.rblock_start:t.lexer.lexpos - len(t.value)]
+        t.type = 'RBLOCK'
+        t.lexer.lineno += t.value.count('\n')
+        t.lexer.pop_state()
+        return t
+
+# ignore '{' if it is followed by '%';
+# ignore '%' if it is followed by '}'
+# it still has one problem "{%{%%}" will not work; instead we can use '{! \{\% !}'
+def t_rblock_WORD(t):
+    r'(?:\\.|(\{(?!\%))|(\%(?!\}))|[^\{\%])+'
+    t.lexer.lineno += t.value.count('\n')
+
+t_rblock_error = t_error
+
+# function block
 def t_BSTART(t):
     r'[ ]*\{\!'
-    t.lexer.push_state('bblock')
+    t.lexer.push_state('fblock')
     return t
 
-def t_bblock_BEND(t):
+def t_fblock_BEND(t):
     r'[ ]*\!\}'
     t.lexer.pop_state()
     return t
 
+# table
 def t_TSTART(t):
     r'^[ ]*\{\{'
     t.lexer.push_state('table')
@@ -273,41 +307,49 @@ def t_BRACEL(t):
 def t_BRACER(t):
     r'\}'
     return t
+
+# link (ignore '#' in link, so [#anchor] will work)
 def t_BRACKETL(t):
     r'\['
     t.lexer.push_state('link')
     return t
+
 def t_BRACKETR(t):
     r'\]'
     t.lexer.pop_state()
     return t
+
+def t_link_WORD(t):
+    r'(?:\\.|(\!(?!\}))|(\%(?!\}))|[^ \%\!\n\|\{\}\[\]])+'
+    s = "<br>".join(t.value.split("\\n"))
+    s = re.sub(r'(---)', '&#8212;', s)
+    s = re.sub(r'(--)', '&#8211;', s)
+    s = re.sub(r'(\\)(.)', r'\2', s)
+    t.value = s
+    return t
+
 # support the latex stylus command, e.g., \ref{}; and the command must have at
 # least 2 characters
 def t_CMD(t):
     r'\\(\w){2,}'
     return t
-def t_link_WORD(t):
-    r'(?:\\.|(\+(?!\/))|[^ \+\n\|\{\}\'\[\]])+'
-    s = "<br>".join(t.value.split("\\n"))
-    s = re.sub(r'(---)', '&#8212;', s)
-    s = re.sub(r'(--)', '&#8211;', s)
-    s = re.sub(r'(\\)(.)', r'\2', s)
-    t.value = s
-    return t
 
 def t_NEWPARAGRAPH(t):
-    r'\n(\n)+'
-    t.lexer.lineno += len(t.value)
+    r'\n{2,}'
+    t.lexer.lineno += t.value.count('\n')
     return t
+
 def t_NEWLINE(t):
     r'\n'
-    t.lexer.lineno += len(t.value)
+    t.lexer.lineno += t.value.count('\n')
     return t
+
 def t_SPACE(t):
     r'[ ]+'
     return t
+
 def t_WORD(t):
-    r'(?:\\.|(\!(?!\}))|(?<=\&)\#|[^ \%\!\#\n\|\{\}\'\[\]])+'
+    r'(?:\\.|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \%\!\#\n\|\{\}\[\]])+'
     s = "<br>".join(t.value.split("\\n"))
     s = re.sub(r'(---)', '&#8212;', s)
     s = re.sub(r'(--)', '&#8211;', s)
@@ -315,46 +357,7 @@ def t_WORD(t):
     t.value = s
     return t
 
-def t_cblock_CEND(t):
-    r'\%\}'
-    t.lexer.cblock_level -= 1
-    if t.lexer.cblock_level == 0:
-        t.value = \
-            t.lexer.lexdata[t.lexer.cblock_start:t.lexer.lexpos - len(t.value)]
-        t.type = 'CBLOCK'
-        t.lexer.lineno += t.value.count('\n')
-        t.lexer.pop_state()
-        return t
-
-# ignore '{' if it is followed by '-';
-# ignore '-' if it is followed by '}'
-# it still has one problem "{-{--}" will not work; instead we can use '{+ \{\- +}'
-def t_cblock_WORD(t):
-    r'((\{(?!\%))|(\%(?!\}))|[^ \{\%\n])+'
-    pass
-def t_cblock_SPACE(t):
-    r'[ ]+'
-    pass
-def t_cblock_NEWLINE(t):
-    r'[\n]+'
-    pass
-def t_cblock_error(t):
-    print("Illegal character '%s' Line %d" % (t.value[0], t.lexer.lineno))
-    t.lexer.skip(1)
-def t_cblock2_WORD(t):
-    r'((\%(?!\%))|[^ \%\n])+'
-    pass
-def t_cblock2_SPACE(t):
-    r'[ ]+'
-    pass
-def t_cblock2_NEWLINE(t):
-    r'[\n]+'
-    pass
-def t_cblock2_error(t):
-    print("Illegal character '%s' Line %d" % (t.value[0], t.lexer.lineno))
-    t.lexer.skip(1)
 lex.lex(reflags=re.M)
-
 
 bsmdoc = ''
 @static_vars(head={}, content=[])
@@ -454,10 +457,10 @@ trowcontent : trowcontent  sections TCELL
             | sections TCELL
 
 block : BSTART sections BEND
-      | BSTART bblockarg sections BEND
-      | CBLOCK
+      | BSTART fblockarg sections BEND
+      | RBLOCK
 
-bblockarg : bblockarg plaintext TCELL
+fblockarg : fblockarg plaintext TCELL
           | plaintext TCELL
 
 listbullet : listbullet LISTBULLET logicline
@@ -471,8 +474,6 @@ text : text logicline
 
 logicline : line
           | line NEWLINE
-          | italicbold
-          | italicbold NEWLINE
           | bracetext
           | bracetext NEWLINE
 
@@ -485,15 +486,9 @@ line : line plaintext
 
 plaintext : plaintext WORD
      | plaintext SPACE
-     | plaintext APO
      | WORD
      | SPACE
-     | APO
      |
-
-italicbold : APO2 logicline APO2
-      | APO3 logicline APO3
-      | APO5 logicline APO5
 
 link : BRACLETL text BRACKETL
      | BRACKETL text BRACEL text BRACKETR
@@ -575,7 +570,7 @@ def table_helper(head, body):
     caption = get_option('caption', '')
     if caption:
         caption = '<caption>%s</caption>'%(tag + ' ' + caption)
-    return '<table %s class=\'table\'>%s\n %s</table>\n'%(label, caption, head+body)
+    return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
 
 def p_table_title(p):
     '''table : tstart tbody tend'''
@@ -632,63 +627,63 @@ def p_trowcontent_single(p):
     '''trowcontent : sections TCELL'''
     p[0] = '<td>%s</td>' %(p[1])
 
-def p_bblock_cmd(p):
+def p_fblock_cmd(p):
     """block : CMD"""
     cmd = p[1]
     p[0] = bsmdoc_helper([cmd[1:]], '', bsmdoc_escape(cmd))
-def p_bblock_cmd_multi(p):
+def p_fblock_cmd_multi(p):
     """block : CMD bracetext"""
     cmd = p[1]
     p[0] = bsmdoc_helper([cmd[1:]], p[2])
-def p_bblock_cmd_args(p):
-    """block : CMD BRACEL bblockargs BRACER bracetext"""
+def p_fblock_cmd_args(p):
+    """block : CMD BRACEL fblockargs BRACER bracetext"""
     cmd = p[3]
     cmd.insert(0, p[1][1:])
     p[0] = bsmdoc_helper(cmd, p[2])
 
-bblock_state = []
-def p_bblock_start(p):
+fblock_state = []
+def p_fblock_start(p):
     """bstart : BSTART"""
     p[0] = ''
-    bblock_state.append((p[1], p.lineno(1)))
-def p_bblock_end(p):
+    fblock_state.append((p[1], p.lineno(1)))
+def p_fblock_end(p):
     """bend : BEND"""
     p[0] = ''
-    bblock_state.pop()
-def p_bblock(p):
+    fblock_state.pop()
+def p_fblock(p):
     '''block : bstart sections bend
              | bstart sections bend NEWLINE'''
     p[0] = p[2]
 
-def p_bblock_arg(p):
-    '''block : bstart bblockargs sections bend
-             | bstart bblockargs sections bend NEWLINE'''
+def p_fblock_arg(p):
+    '''block : bstart fblockargs sections bend
+             | bstart fblockargs sections bend NEWLINE'''
     cmds = p[2]
     p[0] = p[3]
     for c in reversed(cmds):
         if c:
             p[0] = bsmdoc_helper(c, p[0])
 
-def p_bblockargs_multi(p):
-    '''bblockargs : bblockargs bblockarg TCELL'''
+def p_fblockargs_multi(p):
+    '''fblockargs : fblockargs fblockarg TCELL'''
     p[0] = p[1]
     p[0].append(p[2])
 
-def p_bblockargs_single(p):
-    '''bblockargs : bblockarg TCELL'''
+def p_fblockargs_single(p):
+    '''fblockargs : fblockarg TCELL'''
     p[0] = [p[1]]
 
-def p_bblockarg_multi(p):
-    '''bblockarg : bblockarg sections TCELL'''
+def p_fblockarg_multi(p):
+    '''fblockarg : fblockarg sections TCELL'''
     p[0] = p[1]
     p[0].append(p[2].strip())
 
-def p_bblockarg_single(p):
-    '''bblockarg : sections TCELL'''
+def p_fblockarg_single(p):
+    '''fblockarg : sections TCELL'''
     p[0] = [p[1].strip()]
 
-def p_cblock(p):
-    '''block : CBLOCK'''
+def p_rblock(p):
+    '''block : RBLOCK'''
     p[0] = p[1]
 
 def p_listbullet_multi(p):
@@ -752,7 +747,6 @@ def p_bracetext(p):
 def p_line_multi(p):
     '''line : line plaintext
             | line link
-            | line italicbold
             | line block
             | line config'''
     p[0] = p[1] + p[2]
@@ -760,36 +754,22 @@ def p_line_multi(p):
 def p_line(p):
     '''line : plaintext
             | link
-            | italicbold
             | block
             | config'''
     p[0] = p[1]
 
 def p_plaintext_multi(p):
     '''plaintext : plaintext WORD
-            | plaintext SPACE
-            | plaintext APO'''
+            | plaintext SPACE'''
     p[0] = p[1] + p[2]
 
 def p_plaintext_single(p):
     '''plaintext : WORD
-            | SPACE
-            | APO'''
+            | SPACE'''
     p[0] = p[1]
 def p_plaintext_empty(p):
     '''plaintext : '''
     p[0] = ''
-
-def p_italicbold_bold(p):
-    'italicbold : APO2 plaintext APO2'
-    p[0] = '<b>' + p[2] + '</b>'
-def p_italicbold_italics(p):
-    'italicbold : APO3 plaintext APO3'
-    p[0] = '<i>' + p[2] + '</i>'
-
-def p_italicbold_both(p):
-    'italicbold : APO5 plaintext APO5'
-    p[0] = '<i><b>' + p[2] +'</b></i>'
 
 def p_link_withname(p):
     '''link : BRACKETL text TCELL text BRACKETR'''
@@ -805,7 +785,7 @@ def p_link_noname(p):
             v = s[1:]
             # do not find the anchor, wait for the 2nd scan
             if get_option_int('scan', 1) > 1:
-                print("Line %d: break anchor: %s"%(p.lineno(2), s))
+                print("Broken anchor '%s' at line %d"%(s, p.lineno(2)))
             set_option('rescan', True)
     p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
 
@@ -820,9 +800,9 @@ def p_config_single(p):
     p[0] = ''
 
 def p_error(p):
-    if p == None and len(bblock_state):
-        e = bblock_state.pop()
-        print("Error: block (%s) at line %d"%(e[0], e[1]))
+    if p == None and len(fblock_state):
+        e = fblock_state.pop()
+        print("Error: unmatched block '%s' at line %d"%(e[0], e[1]))
     else:
         print("Error: ", p)
 
