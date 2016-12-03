@@ -28,7 +28,7 @@ def bsmdoc_helper(cmds, data, default=None):
     if fun and hasattr(fun, "__call__"):
         return str(fun(cmds[1:], data))
     else:
-        print('Warning: uncannot find commmand "%s".'%("|".join(cmds)))
+        print('Warning: cannot find commmand "%s".'%("|".join(cmds)))
     if default:
         return default
     else:
@@ -115,21 +115,21 @@ def bsmdoc_footnote(args, data):
     return '<a name="%s" href="#%s"><sup>%d</sup></a>'%(src, dec, tag)
 
 tokens = (
-        'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'CFG', 'WORD', 'SPACE',
-        'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
-        'RBLOCK', 'BSTART', 'BEND', 'CMD',
-        'LISTBULLET', 'LISTDEFINITION',
-        'BRACKETL', 'BRACKETR',
-        'BRACEL', 'BRACER',
-        )
+    'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'CFG', 'WORD', 'SPACE',
+    'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
+    'RBLOCK', 'BSTART', 'BEND', 'CMD',
+    'LISTBULLET',
+    'BRACKETL', 'BRACKETR',
+    'BRACEL', 'BRACER',
+)
 
 states = (
-        ('fblock', 'inclusive'), # function block (parsed normally)
-        ('rblock', 'exclusive'), # raw block (not parsed)
-        ('equation', 'exclusive'), # equation block (not parsed)
-        ('table', 'inclusive'), # table block
-        ('link', 'inclusive') # link block
-        )
+    ('fblock', 'inclusive'), # function block (parsed normally)
+    ('rblock', 'exclusive'), # raw block (not parsed)
+    ('equation', 'exclusive'), # equation block (not parsed)
+    ('table', 'inclusive'), # table block
+    ('link', 'inclusive') # link block
+)
 
 # Tokens
 t_ignore = '\t'
@@ -180,8 +180,8 @@ def t_MAKECONTENT(t):
     c = bsmdoc_getcfg('bsmdoc', 'CONTENT')
     if c:
         lex_input_stack.append({'lexdata':t.lexer.lexdata,
-                                 'lexpos':t.lexer.lexpos,
-                                 'lineno': t.lexer.lineno})
+                                'lexpos':t.lexer.lexpos,
+                                'lineno': t.lexer.lineno})
         t.lexer.input(c)
         return t.lexer.token()
     else:
@@ -204,11 +204,6 @@ def t_LISTBULLET(t):
     t.value = t.value.strip()
     return t
 
-def t_LISTDEFINITION(t):
-    r'^[ ]*[\:]+'
-    t.value = t.value.strip()
-    return t
-
 # shortcut to define the latex equations, does not support nested statement
 def t_EQN(t):
     r'\$\$'
@@ -222,6 +217,7 @@ def t_equation_EQN(t):
     t.lexer.lineno += t.value.count('\n')
     t.lexer.pop_state()
     return t
+
 # everything except '$$'
 def t_equation_WORD(t):
     r'(?:\\.|(\$(?!\$))|[^\$])+'
@@ -304,6 +300,7 @@ def t_TCELL(t):
 def t_BRACEL(t):
     r'\{'
     return t
+
 def t_BRACER(t):
     r'\}'
     return t
@@ -348,8 +345,10 @@ def t_SPACE(t):
     r'[ ]+'
     return t
 
+# default state, ignore, '!}', '%}', '|', '[', ']', '{', '}',
+# '\n', ' ', '#', '$'
 def t_WORD(t):
-    r'(?:\\.|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \%\!\#\n\|\{\}\[\]])+'
+    r'(?:\\.|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]])+'
     s = "<br>".join(t.value.split("\\n"))
     s = re.sub(r'(---)', '&#8212;', s)
     s = re.sub(r'(--)', '&#8211;', s)
@@ -420,12 +419,10 @@ heading : HEADING logicline
 
 content : content paragraph
         | content listbullet
-        | content definition
         | content table
         | content config
         | paragraph
         | listbullet
-        | definition
         | table
         | listbullet
         | config
@@ -465,9 +462,6 @@ fblockarg : fblockarg plaintext TCELL
 
 listbullet : listbullet LISTBULLET logicline
            | LISTBULLET logicline
-
-definition : definition LISTDEFINITION bracetext bracetext
-           | LISTDEFINITION bracetext bracetext
 
 text : text logicline
      | logicline
@@ -529,7 +523,6 @@ def p_heading_start(p):
 def p_content_multi(p):
     '''content : content paragraph
                | content listbullet
-               | content definition
                | content table
                | content block'''
     p[0] = p[1] + p[2]
@@ -537,7 +530,6 @@ def p_content_multi(p):
 def p_content_single(p):
     '''content : paragraph
                | listbullet
-               | definition
                | table
                | block'''
     p[0] = p[1]
@@ -718,13 +710,6 @@ def p_listbullet_single(p):
         elif p[1][-i-1] == '*':
             s = '<ol>\n%s</ol>\n' %(s)
     p[0] = s
-def p_definition_multi(p):
-    '''definition : definition LISTDEFINITION bracetext bracetext'''
-    p[0] = p[1][:-5]+'\n<dt>%s</dt>\n<dd>%s</dd></dl>'%(p[3], p[4])
-
-def p_definition_single(p):
-    '''definition : LISTDEFINITION bracetext bracetext'''
-    p[0] = '<dl>\n<dt>%s</dt>\n<dd>%s</dd></dl>'%(p[2], p[3])
 
 def p_text_multi(p):
     '''text : text logicline'''
