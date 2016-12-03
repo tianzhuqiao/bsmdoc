@@ -20,7 +20,12 @@ def static_vars(**kwargs):
         return func
     return decorate
 def bsmdoc_escape(data):
-    s = re.sub(r'(\\)(.)', r'\2', data)
+    #s = re.sub(r'(\\)(.)', r'\2', data)
+    s = re.sub(r'(<)', r'&lt;', data)
+    s = re.sub(r'(>)', r'&gt;', s)
+    s = re.sub(r'((\&(?!\#)))', r'&amp;', s)
+    #s = re.sub(r'(---)', '&#8212;', s)
+    #s = re.sub(r'(--)', '&#8211;', s)
     return s
 def bsmdoc_helper(cmds, data, default=None):
     ldict = lex.get_caller_module_dict(1)
@@ -207,7 +212,7 @@ def t_LISTBULLET(t):
 # shortcut to define the latex equations, does not support nested statement
 def t_EQN(t):
     r'\$\$'
-    t.lexer.equation_start = t.lexer.lexpos-2
+    t.lexer.equation_start = t.lexer.lexpos - 2
     t.lexer.push_state('equation')
 
 def t_equation_EQN(t):
@@ -318,11 +323,7 @@ def t_BRACKETR(t):
 
 def t_link_WORD(t):
     r'(?:\\.|(\!(?!\}))|(\%(?!\}))|[^ \%\!\n\|\{\}\[\]])+'
-    s = "<br>".join(t.value.split("\\n"))
-    s = re.sub(r'(---)', '&#8212;', s)
-    s = re.sub(r'(--)', '&#8211;', s)
-    s = re.sub(r'(\\)(.)', r'\2', s)
-    t.value = s
+    t.value = bsmdoc_escape(t.value)
     return t
 
 # support the latex stylus command, e.g., \ref{}; and the command must have at
@@ -349,11 +350,8 @@ def t_SPACE(t):
 # '\n', ' ', '#', '$'
 def t_WORD(t):
     r'(?:\\.|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]])+'
-    s = "<br>".join(t.value.split("\\n"))
-    s = re.sub(r'(---)', '&#8212;', s)
-    s = re.sub(r'(--)', '&#8211;', s)
-    s = re.sub(r'(\\)(.)', r'\2', s)
-    t.value = s
+    t.value = bsmdoc_escape(t.value)
+    t.value = "<br>".join(t.value.split("\\n"))
     return t
 
 lex.lex(reflags=re.M)
@@ -622,7 +620,7 @@ def p_trowcontent_single(p):
 def p_fblock_cmd(p):
     """block : CMD"""
     cmd = p[1]
-    p[0] = bsmdoc_helper([cmd[1:]], '', bsmdoc_escape(cmd))
+    p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd))
 def p_fblock_cmd_multi(p):
     """block : CMD bracetext"""
     cmd = p[1]
