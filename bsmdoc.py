@@ -2,6 +2,7 @@
 # Copyright (C) Tianzhu Qiao (tianzhu.qiao@feiyilin.com).
 
 import sys, re, os, io, time
+import traceback
 try:
     from configparser import ConfigParser
     from io import StringIO
@@ -9,120 +10,14 @@ except ImportError:
     from ConfigParser import ConfigParser  # ver. < 3.0
     from StringIO import StringIO
 
-import traceback
 import ply.lex as lex
 import ply.yacc as yacc
 
-def static_vars(**kwargs):
-    def decorate(func):
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
-    return decorate
-def bsmdoc_escape(data):
-    #s = re.sub(r'(\\)(.)', r'\2', data)
-    s = re.sub(r'(<)', r'&lt;', data)
-    s = re.sub(r'(>)', r'&gt;', s)
-    s = re.sub(r'((\&(?!\#)))', r'&amp;', s)
-    #s = re.sub(r'(---)', '&#8212;', s)
-    #s = re.sub(r'(--)', '&#8211;', s)
-    return s
-def bsmdoc_helper(cmds, data, default=None):
-    ldict = lex.get_caller_module_dict(1)
-    fun = ldict.get('bsmdoc_'+cmds[0], 'none')
-    if fun and hasattr(fun, "__call__"):
-        return str(fun(cmds[1:], data))
-    else:
-        print('Warning: cannot find commmand "%s".'%("|".join(cmds)))
-    if default:
-        return default
-    else:
-        return data
-# deal with the equation reference: \ref{} or \eqref{}
-def bsmdoc_ref(args, data):
-    return "\\ref{%s}"%data
-bsmdoc_eqref = bsmdoc_ref
-
-def bsmdoc_exec(args, data):
-    try:
-        exec(data, globals())
-    except:
-        print(args, data)
-        traceback.print_exc()
-    return ''
-
-def bsmdoc_pre(args, data):
-    if args and args[0] == 'newlineonly':
-        return "<br>\n".join(data.split("\n"))
-    return "<pre>%s</pre>" % data
-
-def bsmdoc_tag(args, data):
-    if len(args) > 1:
-        return "<%s class='%s'>%s</%s>"%(args[0], ' '.join(args[1:]), data, args[0])
-    elif len(args) == 1:
-        return "<%s>%s</%s>"%(args[0], data, args[0])
-    return data
-
-def bsmdoc_math(args, data):
-    return "<div class='mathjax'>\n$$ %s $$\n</div>" %data
-
-def bsmdoc_div(args, data):
-    data = data.strip()
-    if not args:
-        print('div block requires at least one argument')
-        return data
-    return '<div class="%s">\n%s\n</div>\n' %(" ".join(args), data)
-
-def bsmdoc_highlight(lang, code):
-    try:
-        from pygments import highlight
-        from pygments.lexers import get_lexer_by_name
-        from pygments.formatters import HtmlFormatter
-        lexer = get_lexer_by_name(lang[0], stripall=True)
-        formatter = HtmlFormatter(linenos=False, cssclass="syntax")
-        # pygments will replace '&' with '&amp;', which will make the unicode
-        # (e.g., &#xNNNN) shown incorrectly.
-        txt = code.replace('&#x', '^#x')
-        txt = highlight(txt, lexer, formatter)
-        return txt.replace('^#x', '&#x')
-    except ImportError:
-        return code
-
-def bsmdoc_image(args, data):
-    r = '<img src="%s" alt="%s" />'%(data, data)
-    caption = get_option('caption', '')
-    label = get_option('label', '')
-    if len(args) >= 1:
-        caption = args[0]
-    if len(args) >= 2:
-        label = args[1]
-    # add the in-page link
-    tag = ''
-    if label:
-        (tag, prefix, num) = image_next_tag()
-        bsmdoc_setcfg('ANCHOR', label, num)
-        label = 'id="%s"'%label
-        tag = '<span class="tag">%s</span>'%tag
-
-    if caption: # title
-        caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
-        r = r + '\n' + caption
-    return '<div %s class="figure">%s</div>'%(label, r)
-
-@static_vars(notes=[])
-def bsmdoc_footnote(args, data):
-    tag = len(bsmdoc_footnote.notes) + 1
-    src = 'footnote-src-%d'%tag
-    dec = 'footnote-%d'%tag
-    # add the footnote to the list, which will show at the end of the page
-    fn = '<div id="%s">%s <a href="#%s">&#8617;</a></div>'%(dec, data, src)
-    bsmdoc_footnote.notes.append(fn)
-    return '<a name="%s" href="#%s"><sup>%d</sup></a>'%(src, dec, tag)
 
 tokens = (
     'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'CFG', 'WORD', 'SPACE',
     'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
-    'RBLOCK', 'BSTART', 'BEND', 'CMD',
+    'RBLOCK', 'BSTART', 'BEND', 'CMD', 'EQUATION', 'INLINEEQ',
     'LISTBULLET',
     'BRACKETL', 'BRACKETR',
     'BRACEL', 'BRACER',
@@ -212,13 +107,13 @@ def t_LISTBULLET(t):
 # shortcut to define the latex equations, does not support nested statement
 def t_EQN(t):
     r'\$\$'
-    t.lexer.equation_start = t.lexer.lexpos - 2
+    t.lexer.equation_start = t.lexer.lexpos
     t.lexer.push_state('equation')
 
 def t_equation_EQN(t):
     r'\$\$'
-    t.value = t.lexer.lexdata[t.lexer.equation_start:t.lexer.lexpos]
-    t.type = 'RBLOCK'
+    t.value = t.lexer.lexdata[t.lexer.equation_start:t.lexer.lexpos-2]
+    t.type = 'EQUATION'
     t.lexer.lineno += t.value.count('\n')
     t.lexer.pop_state()
     return t
@@ -232,8 +127,9 @@ t_equation_error = t_error
 # shortcuts for inline equation
 def t_INLINE_EQN(t):
     r'\$[^\$]*\$'
-    t.type = 'RBLOCK'
+    t.type = 'INLINEEQ'
     t.lexer.lineno += t.value.count('\n')
+    t.value = t.value[1:-1]
     return t
 
 # marks to ignore the parsing, and it supports nested statement ('{${$ $}$}') is
@@ -346,8 +242,7 @@ def t_SPACE(t):
     r'[ ]+'
     return t
 
-# default state, ignore, '!}', '%}', '|', '[', ']', '{', '}',
-# '\n', ' ', '#', '$'
+# default state, ignore, '!}', '%}', '|', '[', ']', '{', '}', '\n', ' ', '#', '$'
 def t_WORD(t):
     r'(?:\\.|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]])+'
     t.value = bsmdoc_escape(t.value)
@@ -357,15 +252,107 @@ def t_WORD(t):
 lex.lex(reflags=re.M)
 
 bsmdoc = ''
+def bsmdoc_escape(data, *args):
+    #s = re.sub(r'(\\)(.)', r'\2', data)
+    s = re.sub(r'(<)', r'&lt;', data)
+    s = re.sub(r'(>)', r'&gt;', s)
+    #s = re.sub(r'((\&(?!\#)))', r'&amp;', s)
+    #s = re.sub(r'(---)', '&#8212;', s)
+    #s = re.sub(r'(--)', '&#8211;', s)
+    return s
+
+def bsmdoc_helper(cmds, data, default=None):
+    ldict = lex.get_caller_module_dict(1)
+    fun = ldict.get('bsmdoc_'+cmds[0], 'none')
+    if fun and hasattr(fun, "__call__"):
+        return str(eval('fun(data, cmds[1:])'))
+    else:
+        print('Warning: cannot find function "bsmdoc_%s(%s)".'%(cmds[0], ",".join(cmds[1:])))
+    if default:
+        return default
+    else:
+        return data
+
+# deal with the equation reference: \ref{} or \eqref{}
+def bsmdoc_ref(data, args):
+    return "\\ref{%s}"%data
+bsmdoc_eqref = bsmdoc_ref
+
+def bsmdoc_exec(data, args):
+    try:
+        exec(data, globals())
+    except:
+        print(args, data)
+        traceback.print_exc()
+    return ''
+
+def bsmdoc_pre(data, args):
+    if args and args[0] == 'newlineonly':
+        return "<br>\n".join(data.split("\n"))
+    return "<pre>%s</pre>" % data
+
+def bsmdoc_tag(data, args):
+    if len(args) > 1:
+        return "<%s class='%s'>%s</%s>"%(args[0], ' '.join(args[1:]), data, args[0])
+    elif len(args) == 1:
+        return "<%s>%s</%s>"%(args[0], data, args[0])
+    return data
+
+def bsmdoc_math(data, args):
+    if len(args) > 1 and args[0] == 'inline':
+        return '$%s$'%data
+    else:
+        return "<div class='mathjax'>\n$$ %s $$\n</div>" %bsmdoc_escape(data)
+
+def bsmdoc_div(data, args):
+    data = data.strip()
+    if not args:
+        print('div block requires at least one argument')
+        return data
+    return '<div class="%s">\n%s\n</div>\n' %(" ".join(args), data)
+
+def bsmdoc_highlight(code, lang):
+    try:
+        from pygments import highlight
+        from pygments.lexers import get_lexer_by_name
+        from pygments.formatters import HtmlFormatter
+        lexer = get_lexer_by_name(lang[0], stripall=True)
+        formatter = HtmlFormatter(linenos=False, cssclass="syntax")
+        # pygments will replace '&' with '&amp;', which will make the unicode
+        # (e.g., &#xNNNN) shown incorrectly.
+        txt = highlight(code, lexer, formatter)
+        return txt.replace('&amp;#x', '&#x')
+    except ImportError:
+        return code
+
+
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
+
+@static_vars(notes=[])
+def bsmdoc_footnote(data, args):
+    tag = len(bsmdoc_footnote.notes) + 1
+    src = 'footnote-src-%d'%tag
+    dec = 'footnote-%d'%tag
+    # add the footnote to the list, which will show at the end of the page
+    fn = '<div id="%s">%s <a href="#%s">&#8617;</a></div>'%(dec, data, src)
+    bsmdoc_footnote.notes.append(fn)
+    return '<a name="%s" href="#%s"><sup>%d</sup></a>'%(src, dec, tag)
+
 @static_vars(head={}, content=[])
-def header_helper(txt, level):
-    orderheaddict = header_helper.head
+def bsmdoc_header(txt, level):
+    orderheaddict = bsmdoc_header.head
     s = txt
     pre = ''
     label = get_option('label', '')
 
-    if get_option_bool('orderhead', 0):
-        start = get_option_int('orderheadstart', 1)
+    if get_option_bool('head_tag', 0):
+        start = get_option_int('head_tag_start', 1)
         c = len(level)
         if c >= start:
             for i in range(start, c):
@@ -379,7 +366,7 @@ def header_helper(txt, level):
                     orderheaddict[key] = 0
             if not label:
                 label = 'sec-' + pre.replace('.', '-')
-            header_helper.content.append([c, pre, s, label])
+            bsmdoc_header.content.append([c, pre, s, label])
         s = pre + ' ' + s
     if label:
         bsmdoc_setcfg('ANCHOR', label, pre)
@@ -387,21 +374,58 @@ def header_helper(txt, level):
 
 @static_vars(counter=0)
 def image_next_tag():
-    if get_option_bool('imagetag', 0):
+    if get_option_bool('image_tag', 0):
         image_next_tag.counter += 1
-        prefix = get_option('imagetagprefix', 'Fig.')
-        num = get_option('imagetagnumprefix', '') + str(image_next_tag.counter)
+        prefix = get_option('image_tag_prefix', 'Fig.')
+        num = get_option('image_tag_num_prefix', '') + str(image_next_tag.counter)
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
+def bsmdoc_image(data, args):
+    r = '<img src="%s" alt="%s" />'%(data, data)
+    caption = get_option('caption', '')
+    label = get_option('label', '')
+    if len(args) >= 1:
+        caption = args[0]
+    if len(args) >= 2:
+        label = args[1]
+    # add the in-page link
+    tag = ''
+    if label:
+        (tag, prefix, num) = image_next_tag()
+        bsmdoc_setcfg('ANCHOR', label, num)
+        label = 'id="%s"'%label
+        tag = '<span class="tag">%s</span>'%tag
+
+    if caption: # title
+        caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
+        r = r + '\n' + caption
+    return '<div %s class="figure">%s</div>'%(label, r)
 
 @static_vars(counter=0)
 def table_next_tag():
-    if get_option_bool('tabletag', 0):
+    if get_option_bool('table_tag', 0):
         table_next_tag.counter += 1
-        prefix = get_option('tabletagprefix', 'Table.')
-        num = get_option('tabletagnumprefix', '') + str(table_next_tag.counter)
+        prefix = get_option('table_tag_prefix', 'Table.')
+        num = get_option('table_tag_num_prefix', '') + str(table_next_tag.counter)
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
+def bsmdoc_table(head, body):
+    if head:
+        head = '<thead>%s</thead>'%head
+    if body:
+        body = '<tbody>%s</tbody>'%body
+    label = get_option('label', '')
+    tag = ''
+    # add the in-page link
+    if label:
+        (tag, prefix, num) = table_next_tag()
+        bsmdoc_setcfg('ANCHOR', label, num)
+        label = 'id="%s"'%label
+        tag = '<span class="tag">%s</span>'%tag
+    caption = get_option('caption', '')
+    if caption:
+        caption = '<caption>%s</caption>'%(tag + ' ' + caption)
+    return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
 
 """
 article : sections
@@ -511,7 +535,7 @@ def p_section(p):
 
 def p_heading(p):
     '''heading : heading_start logicline'''
-    (s, pre, label) = header_helper(p[2], p[1].strip())
+    (s, pre, label) = bsmdoc_header(p[2], p[1].strip())
     p[0] = '<h%d id="%s">%s</h%d>\n' %(len(p[1]), label, s, len(p[1]))
 def p_heading_start(p):
     '''heading_start : HEADING'''
@@ -536,7 +560,7 @@ def p_paragraph_multiple(p):
     '''paragraph : text NEWPARAGRAPH'''
     if p[1]:
         p[0] = '<p> %s </p>' %(p[1])
-        p[0] = bsmdoc_div(['para'], p[0]) + '\n'
+        p[0] = bsmdoc_div(p[0], ['para']) + '\n'
     else:
         p[0] = ''
 
@@ -544,30 +568,13 @@ def p_paragraph_single(p):
     '''paragraph : text'''
     p[0] = p[1]
 
-def table_helper(head, body):
-    if head:
-        head = '<thead>%s</thead>'%head
-    if body:
-        body = '<tbody>%s</tbody>'%body
-    label = get_option('label', '')
-    tag = ''
-    # add the in-page link
-    if label:
-        (tag, prefix, num) = table_next_tag()
-        bsmdoc_setcfg('ANCHOR', label, num)
-        label = 'id="%s"'%label
-        tag = '<span class="tag">%s</span>'%tag
-    caption = get_option('caption', '')
-    if caption:
-        caption = '<caption>%s</caption>'%(tag + ' ' + caption)
-    return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
-
 def p_table_title(p):
     '''table : tstart tbody tend'''
-    p[0] = table_helper('', p[2])
+    p[0] = bsmdoc_table('', p[2])
+
 def p_table(p):
     '''table : tstart thead tbody tend'''
-    p[0] = table_helper(p[2], p[3])
+    p[0] = bsmdoc_table(p[2], p[3])
 
 def p_table_start(p):
     '''tstart : TSTART'''
@@ -621,6 +628,7 @@ def p_fblock_cmd(p):
     """block : CMD"""
     cmd = p[1]
     p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd))
+
 def p_fblock_cmd_multi(p):
     """block : CMD bracetext"""
     cmd = p[1]
@@ -675,6 +683,12 @@ def p_fblockarg_single(p):
 def p_rblock(p):
     '''block : RBLOCK'''
     p[0] = p[1]
+def p_rblock_eqn(p):
+    '''block : EQUATION'''
+    p[0] = bsmdoc_math(p[1], [])
+def p_rblock_eqn_inline(p):
+    '''block : INLINEEQ'''
+    p[0] = bsmdoc_math(p[1], ['inline'])
 
 def p_listbullet_multi(p):
     '''listbullet : listbullet LISTBULLET logicline'''
@@ -901,13 +915,13 @@ def bsmdoc_raw(txt):
         # 2nd scan to resolve the references
         image_next_tag.counter = 0
         table_next_tag.counter = 0
-        header_helper.head = {}
+        bsmdoc_header.head = {}
         bsmdoc_footnote.notes = []
-        if header_helper.content:
-            s = make_content(header_helper.content)
+        if bsmdoc_header.content:
+            s = make_content(bsmdoc_header.content)
             s = s.replace('%', '%%')
             bsmdoc_setcfg('bsmdoc', 'CONTENT', s)
-        header_helper.content = []
+        bsmdoc_header.content = []
         lex.lexer.lineno = 1
         #lex.input(txt)
         #while True:
