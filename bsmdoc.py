@@ -135,13 +135,13 @@ def t_INLINE_EQN(t):
 # marks to ignore the parsing, and it supports nested statement ('{${$ $}$}') is
 # valid)
 def t_CSTART(t):
-    r'[ ]*\{\%'
+    r'\{\%'
     t.lexer.rblock_start = t.lexer.lexpos
     t.lexer.rblock_level = 1
     t.lexer.push_state('rblock')
 
 def t_rblock_CSTART(t):
-    r'[ ]*\{\%'
+    r'\{\%'
     t.lexer.rblock_level += 1
 
 def t_rblock_CEND(t):
@@ -151,7 +151,6 @@ def t_rblock_CEND(t):
         t.value = \
             t.lexer.lexdata[t.lexer.rblock_start:t.lexer.lexpos - len(t.value)]
         t.type = 'RBLOCK'
-        t.lexer.lineno += t.value.count('\n')
         t.lexer.pop_state()
         return t
 
@@ -166,12 +165,12 @@ t_rblock_error = t_error
 
 # function block
 def t_BSTART(t):
-    r'[ ]*\{\!'
+    r'\{\!'
     t.lexer.push_state('fblock')
     return t
 
 def t_fblock_BEND(t):
-    r'[ ]*\!\}'
+    r'\!\}'
     t.lexer.pop_state()
     return t
 
@@ -225,7 +224,7 @@ def t_link_WORD(t):
 # support the latex stylus command, e.g., \ref{}; and the command must have at
 # least 2 characters
 def t_CMD(t):
-    r'\\(\w){2,}'
+    r'\\(\w)+'
     return t
 
 def t_NEWPARAGRAPH(t):
@@ -244,21 +243,18 @@ def t_SPACE(t):
 
 # default state, ignore, '!}', '%}', '|', '[', ']', '{', '}', '\n', ' ', '#', '$'
 def t_WORD(t):
-    r'(?:\\.|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]])+'
+    r'(?:\\(\W)|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]\\])+'
     t.value = bsmdoc_escape(t.value)
-    t.value = "<br>".join(t.value.split("\\n"))
+    #t.value = "<br>".join(t.value.split("\\n"))
+    t.value = re.sub(r'(\\)(.)', r'\2', t.value)
     return t
 
 lex.lex(reflags=re.M)
 
 bsmdoc = ''
 def bsmdoc_escape(data, *args):
-    #s = re.sub(r'(\\)(.)', r'\2', data)
     s = re.sub(r'(<)', r'&lt;', data)
     s = re.sub(r'(>)', r'&gt;', s)
-    #s = re.sub(r'((\&(?!\#)))', r'&amp;', s)
-    #s = re.sub(r'(---)', '&#8212;', s)
-    #s = re.sub(r'(--)', '&#8211;', s)
     return s
 
 def bsmdoc_helper(cmds, data, default=None):
@@ -299,7 +295,7 @@ def bsmdoc_tag(data, args):
     return data
 
 def bsmdoc_math(data, args):
-    if len(args) > 1 and args[0] == 'inline':
+    if len(args) > 0 and args[0] == 'inline':
         return '$%s$'%data
     else:
         return "<div class='mathjax'>\n$$ %s $$\n</div>" %bsmdoc_escape(data)
@@ -321,7 +317,9 @@ def bsmdoc_highlight(code, lang):
         # pygments will replace '&' with '&amp;', which will make the unicode
         # (e.g., &#xNNNN) shown incorrectly.
         txt = highlight(code, lexer, formatter)
-        return txt.replace('&amp;#x', '&#x')
+        txt = txt.replace('&amp;#x', '&#x')
+        txt = txt.replace('&amp;lt;', '&lt;')
+        return txt.replace('&amp;gt', '&gt;')
     except ImportError:
         return code
 
@@ -627,18 +625,22 @@ def p_trowcontent_single(p):
 def p_fblock_cmd(p):
     """block : CMD"""
     cmd = p[1]
-    p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd))
+    if len(cmd) == 2:
+        v = cmd
+        v = v.replace("\\n", '<br>')
+        p[0] = re.sub(r'(\\)(.)', r'\2', v)
+    else:
+        p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd))
 
 def p_fblock_cmd_multi(p):
     """block : CMD bracetext"""
     cmd = p[1]
     p[0] = bsmdoc_helper([cmd[1:]], p[2])
 def p_fblock_cmd_args(p):
-    """block : CMD BRACEL fblockargs BRACER bracetext"""
+    """block : CMD BRACEL fblockarg BRACER bracetext"""
     cmd = p[3]
     cmd.insert(0, p[1][1:])
-    p[0] = bsmdoc_helper(cmd, p[2])
-
+    p[0] = bsmdoc_helper(cmd, p[5])
 fblock_state = []
 def p_fblock_start(p):
     """bstart : BSTART"""
@@ -683,6 +685,7 @@ def p_fblockarg_single(p):
 def p_rblock(p):
     '''block : RBLOCK'''
     p[0] = p[1]
+
 def p_rblock_eqn(p):
     '''block : EQUATION'''
     p[0] = bsmdoc_math(p[1], [])
@@ -797,7 +800,7 @@ def p_config_single(p):
     p[0] = ''
 
 def p_error(p):
-    if p == None and len(fblock_state):
+    if len(fblock_state):
         e = fblock_state.pop()
         print("Error: unmatched block '%s' at line %d"%(e[0], e[1]))
     else:
