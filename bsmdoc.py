@@ -15,7 +15,7 @@ import ply.yacc as yacc
 
 
 tokens = (
-    'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'CFG', 'WORD', 'SPACE',
+    'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'WORD', 'SPACE',
     'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
     'RBLOCK', 'BSTART', 'BEND', 'CMD', 'EQUATION', 'INLINEEQ',
     'LISTBULLET',
@@ -57,11 +57,6 @@ def t_eof(t):
 t_fblock_eof = t_eof
 t_link_eof = t_eof
 t_table_eof = t_eof
-
-# CFG should be checked before COMMENT
-def t_CFG(t):
-    r'\#cfg\:(\s)*'
-    return t
 
 def t_INCLUDE(t):
     r'\#include[ ]+[^\s]+ [ ]*'
@@ -257,17 +252,23 @@ def bsmdoc_escape(data, *args):
     s = re.sub(r'(>)', r'&gt;', s)
     return s
 
-def bsmdoc_helper(cmds, data, default=None):
+def bsmdoc_helper(cmds, data, default=None, lineno=-1):
     ldict = lex.get_caller_module_dict(1)
     fun = ldict.get('bsmdoc_'+cmds[0], 'none')
     if fun and hasattr(fun, "__call__"):
         return str(eval('fun(data, cmds[1:])'))
     else:
-        print('Warning: cannot find function "bsmdoc_%s(%s)".'%(cmds[0], ",".join(cmds[1:])))
+        print('Warning: cannot find function "bsmdoc_%s(%s) at line %d".'%(cmds[0], ",".join(cmds[1:]), lineno))
     if default:
         return default
     else:
         return data
+
+def bsmdoc_config(data, args):
+    if len(args) <= 0:
+        return
+    set_option(args[0], data)
+    return ""
 
 # deal with the equation reference: \ref{} or \eqref{}
 def bsmdoc_ref(data, args):
@@ -322,8 +323,6 @@ def bsmdoc_highlight(code, lang):
         return txt.replace('&amp;gt', '&gt;')
     except ImportError:
         return code
-
-
 
 def static_vars(**kwargs):
     def decorate(func):
@@ -436,33 +435,29 @@ section : heading
 
 heading : HEADING logicline
 
-
 content : content paragraph
         | content listbullet
         | content table
-        | content config
+        | content block
         | paragraph
         | listbullet
         | table
-        | listbullet
-        | config
+        | block
 
 paragraph : text NEWPARAGRAPH
           | text
 
-table : TSTART title trows TEND
-      | TSTART title trows TEND NEWLINE
-      | TSTART trows TEND
-      | TSTART trows TEND NEWLINE
+table : TSTART thead tbody TEND
+      | TSTART tbody TEND NEWLINE
 
-trows : trows trow
+tbody : tbody trow
       | trow
 
-trow : trowcontent TCELL
-     | trowcontent TCELL rowsep
+trow : vtext TROW
+     | vtext TROW rowsep
 
-thead: trowcontent THEAD
-     | trowcontent THEAD rowsep
+thead: vtext THEAD
+     | vtext THEAD rowsep
 
 rowsep : rowsep SPACE
        | rowsep NEWLINE
@@ -473,12 +468,22 @@ rowsep : rowsep SPACE
 trowcontent : trowcontent  sections TCELL
             | sections TCELL
 
-block : BSTART sections BEND
+block : CMD
+      | CMD bracetext
+      | CMD BRACEL fblockarg sections BRACER
+      | BSTART sections BEND
       | BSTART fblockarg sections BEND
       | RBLOCK
+      | EQUATION
+      | INLINEEQ
+      | BRACLETL text BRACKETL
+      | BRACKETL text BRACEL text BRACKETR
 
-fblockarg : fblockarg plaintext TCELL
-          | plaintext TCELL
+fblockargs : fblolkargs vtext TCELL
+           | vtext TCELL
+
+fblockarg : vtext sections TCELL
+          | sections TCELL
 
 listbullet : listbullet LISTBULLET logicline
            | LISTBULLET logicline
@@ -491,27 +496,17 @@ logicline : line
           | bracetext
           | bracetext NEWLINE
 
-bracetext : BRACLETL sections BRACLETR
+bracetext : BRACEL sections BRACER
 
 line : line plaintext
-     | line link
+     | line block
      | plaintext
-     | link
+     | block
 
 plaintext : plaintext WORD
      | plaintext SPACE
      | WORD
      | SPACE
-     |
-
-link : BRACLETL text BRACKETL
-     | BRACKETL text BRACEL text BRACKETR
-     | BRACKETL2 text BRACKETR2
-     | BRACKETL2 text BRACEL text BRACKETR2
-     | BRACKETL2 text BRACEL text BRACEL text BRACKETR2
-
-cfg : CFG BRACEL WORD BRACER bracetext NEWLINE
-     | CFG BRACEL WORD BRACER
 """
 
 def p_article(p):
@@ -526,6 +521,7 @@ def p_sections_multi(p):
 def p_sections_single(p):
     '''sections : section'''
     p[0] = p[1]
+
 def p_section(p):
     '''section : heading
                | content'''
@@ -534,7 +530,7 @@ def p_section(p):
 def p_heading(p):
     '''heading : heading_start logicline'''
     (s, pre, label) = bsmdoc_header(p[2], p[1].strip())
-    p[0] = '<h%d id="%s">%s</h%d>\n' %(len(p[1]), label, s, len(p[1]))
+    p[0] = '<h%d id="%s">%s</h%d>\n'%(len(p[1]), label, s, len(p[1]))
 def p_heading_start(p):
     '''heading_start : HEADING'''
     set_option('label', '')
@@ -567,11 +563,11 @@ def p_paragraph_single(p):
     p[0] = p[1]
 
 def p_table_title(p):
-    '''table : tstart tbody tend'''
+    '''table : tstart tbody TEND'''
     p[0] = bsmdoc_table('', p[2])
 
 def p_table(p):
-    '''table : tstart thead tbody tend'''
+    '''table : tstart thead tbody TEND'''
     p[0] = bsmdoc_table(p[2], p[3])
 
 def p_table_start(p):
@@ -579,48 +575,36 @@ def p_table_start(p):
     set_option('caption', '')
     set_option('label', '')
     p[0] = ''
-def p_table_end(p):
-    '''tend : TEND
-            | TEND NEWLINE'''
-    #set_option('caption', '')
-    #set_option('label', '')
-    p[0] = ''
 
-def p_trows_multi(p):
+def p_tbody_multi(p):
     '''tbody : tbody trow'''
     p[0] = p[1] + p[2]
 
-def p_trows_single(p):
+def p_tbody_single(p):
     '''tbody : trow'''
     p[0] = p[1]
 
 def p_trow(p):
-    '''trow : trowcontent TROW
-            | trowcontent TROW rowsep'''
-    p[0] = '<tr>\n%s\n</tr>\n' %(p[1])
+    '''trow : vtext TROW
+            | vtext TROW rowsep'''
+    s = ''.join(["<td>%s</td>"%t for t in p[1]])
+    p[0] = '<tr>\n%s\n</tr>\n' %(s)
 
 def p_thead(p):
-    '''thead : trowcontent THEAD'''
+    '''thead : vtext THEAD
+             | vtext THEAD rowsep'''
     # THEAD indicates the current row is header
-    s = p[1]
-    s = s.replace('<td>', '<th>')
-    s = s.replace('</td>', '</th>')
-    p[0] = '<tr>\n%s\n</tr>\n' %(s)
+    s = ["<th>%s</th>"%t for t in p[1]]
+    p[0] = '<tr>\n%s\n</tr>\n' %(''.join(s))
 
 def p_rowsep(p):
     '''rowsep : rowsep SPACE
               | rowsep NEWLINE
+              | rowsep NEWPARAGRAPH
               | SPACE
               | NEWLINE
               | NEWPARAGRAPH'''
     p[0] = ''
-def p_trowcontent_multi(p):
-    '''trowcontent : trowcontent sections TCELL'''
-    p[0] = p[1] + '<td>%s</td>' %(p[2])
-
-def p_trowcontent_single(p):
-    '''trowcontent : sections TCELL'''
-    p[0] = '<td>%s</td>' %(p[1])
 
 def p_fblock_cmd(p):
     """block : CMD"""
@@ -630,17 +614,19 @@ def p_fblock_cmd(p):
         v = v.replace("\\n", '<br>')
         p[0] = re.sub(r'(\\)(.)', r'\2', v)
     else:
-        p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd))
+        p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd), p.lineno(1))
 
 def p_fblock_cmd_multi(p):
     """block : CMD bracetext"""
     cmd = p[1]
-    p[0] = bsmdoc_helper([cmd[1:]], p[2])
-def p_fblock_cmd_args(p):
-    """block : CMD BRACEL fblockarg BRACER bracetext"""
+    p[0] = bsmdoc_helper([cmd[1:]], p[2], lineno=p.lineno(1))
+
+def p_fblock_cmd_args1(p):
+    """block : CMD BRACEL vtext sections BRACER"""
     cmd = p[3]
     cmd.insert(0, p[1][1:])
-    p[0] = bsmdoc_helper(cmd, p[5])
+    p[0] = bsmdoc_helper(cmd, p[4], lineno=p.lineno(1))
+
 fblock_state = []
 def p_fblock_start(p):
     """bstart : BSTART"""
@@ -651,47 +637,64 @@ def p_fblock_end(p):
     p[0] = ''
     fblock_state.pop()
 def p_fblock(p):
-    '''block : bstart sections bend
-             | bstart sections bend NEWLINE'''
+    '''block : bstart sections bend'''
     p[0] = p[2]
 
 def p_fblock_arg(p):
-    '''block : bstart fblockargs sections bend
-             | bstart fblockargs sections bend NEWLINE'''
+    '''block : bstart fblockargs sections bend'''
     cmds = p[2]
     p[0] = p[3]
     for c in reversed(cmds):
         if c:
-            p[0] = bsmdoc_helper(c, p[0])
+            p[0] = bsmdoc_helper(c, p[0], lineno=p.lineno(2))
 
 def p_fblockargs_multi(p):
-    '''fblockargs : fblockargs fblockarg TCELL'''
+    '''fblockargs : fblockargs vtext TCELL'''
     p[0] = p[1]
     p[0].append(p[2])
 
 def p_fblockargs_single(p):
-    '''fblockargs : fblockarg TCELL'''
+    '''fblockargs : vtext TCELL'''
     p[0] = [p[1]]
 
-def p_fblockarg_multi(p):
-    '''fblockarg : fblockarg sections TCELL'''
+# text separated by vertical bar '|'
+def p_vtext_multi(p):
+    '''vtext : vtext sections TCELL'''
     p[0] = p[1]
     p[0].append(p[2].strip())
 
-def p_fblockarg_single(p):
-    '''fblockarg : sections TCELL'''
+def p_vtext_single(p):
+    '''vtext : sections TCELL'''
     p[0] = [p[1].strip()]
 
 def p_rblock(p):
     '''block : RBLOCK'''
     p[0] = p[1]
 
-def p_rblock_eqn(p):
+def p_block_eqn(p):
     '''block : EQUATION'''
     p[0] = bsmdoc_math(p[1], [])
-def p_rblock_eqn_inline(p):
+def p_block_eqn_inline(p):
     '''block : INLINEEQ'''
     p[0] = bsmdoc_math(p[1], ['inline'])
+
+def p_block_link_withname(p):
+    '''block : BRACKETL text TCELL text BRACKETR'''
+    p[0] = '<a href=\'%s\'>%s</a>'%(p[2], p[4])
+
+def p_block_link(p):
+    '''block : BRACKETL text BRACKETR'''
+    s = p[2].strip()
+    v = s
+    if s[0] == '#':
+        v = bsmdoc_getcfg('ANCHOR', s[1:])
+        if not v:
+            v = s[1:]
+            # do not find the anchor, wait for the 2nd scan
+            if get_option_int('scan', 1) > 1:
+                print("Broken anchor '%s' at line %d"%(s, p.lineno(2)))
+            set_option('rescan', True)
+    p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
 
 def p_listbullet_multi(p):
     '''listbullet : listbullet LISTBULLET logicline'''
@@ -736,8 +739,8 @@ def p_text_single(p):
 
 def p_logicline(p):
     '''logicline : line
-                 | bracetext
                  | line NEWLINE
+                 | bracetext
                  | bracetext NEWLINE'''
     p[0] = p[1]
 def p_bracetext(p):
@@ -746,16 +749,12 @@ def p_bracetext(p):
 
 def p_line_multi(p):
     '''line : line plaintext
-            | line link
-            | line block
-            | line config'''
+            | line block'''
     p[0] = p[1] + p[2]
 
 def p_line(p):
     '''line : plaintext
-            | link
-            | block
-            | config'''
+            | block'''
     p[0] = p[1]
 
 def p_plaintext_multi(p):
@@ -769,34 +768,6 @@ def p_plaintext_single(p):
     p[0] = p[1]
 def p_plaintext_empty(p):
     '''plaintext : '''
-    p[0] = ''
-
-def p_link_withname(p):
-    '''link : BRACKETL text TCELL text BRACKETR'''
-    p[0] = '<a href=\'%s\'>%s</a>'%(p[2], p[4])
-
-def p_link_noname(p):
-    '''link : BRACKETL text BRACKETR'''
-    s = p[2].strip()
-    v = s
-    if s[0] == '#':
-        v = bsmdoc_getcfg('ANCHOR', s[1:])
-        if not v:
-            v = s[1:]
-            # do not find the anchor, wait for the 2nd scan
-            if get_option_int('scan', 1) > 1:
-                print("Broken anchor '%s' at line %d"%(s, p.lineno(2)))
-            set_option('rescan', True)
-    p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
-
-def p_config_multi(p):
-    '''config : CFG BRACEL WORD BRACER bracetext'''
-    set_option(p[3], p[5])
-    p[0] = ''
-
-def p_config_single(p):
-    '''config : CFG BRACEL WORD BRACER'''
-    set_option(p[3], '1')
     p[0] = ''
 
 def p_error(p):
