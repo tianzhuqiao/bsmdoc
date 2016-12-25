@@ -266,7 +266,7 @@ def bsmdoc_helper(cmds, data, default=None, lineno=-1):
 
 def bsmdoc_config(data, args):
     if len(args) <= 0:
-        return
+        return ""
     set_option(args[0], data)
     return ""
 
@@ -424,6 +424,53 @@ def bsmdoc_table(head, body):
         caption = '<caption>%s</caption>'%(tag + ' ' + caption)
     return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
 
+def bsmdoc_listbullet(data, args):
+    # data is a list; each item looks like [LISTBULLET, text]
+    dn = []
+    l = ['']*len(data)
+    r = ['']*len(data)
+    # merge the item with previous or next item
+    for i in range(len(data)):
+        d = data[i]
+        # merge to previous item
+        if i==0:
+            # the first item does not have previous item
+            l[i] = d[0]
+        else:
+            # merge with previous item, delete the common prefix
+            c = os.path.commonprefix([data[i-1][0], d[0]])
+            l[i] = d[0][len(c):]
+        # merge with the next item
+        if i==len(data)-1:
+            # the last item
+            r[i] = d[0]
+        else:
+            # delete the common prefix
+            c = os.path.commonprefix([d[0], data[i+1][0]])
+            r[i] = d[0][len(c):]
+    # generate the html tags
+    sall = ''
+    for i in range(len(data)):
+        d = data[i]
+        s = '    '*len(d[0])+'<li>%s</li>\n'%(d[1])
+        sp = ''
+        c = len(d[0]) - len(l[i])
+        for j in range(len(l[i])):
+            sp = sp + ' '*(4*(j+c));
+            if l[i][j] == r'-':
+                sp = sp + "<ul>\n"
+            elif l[i][j] == r'*':
+                sp = sp + "<ol>\n"
+        sn = ''
+        c = len(d[0]) - len(r[i])
+        for j in range(len(r[i])):
+            if r[i][j] == r'-':
+                sn = ' '*(4*(j+c)) + "</ul>\n" + sn
+            elif r[i][j] == r'*':
+                sn = ' '*(4*(j+c)) + "</ol>\n" + sn
+        sall = sall + sp + s + sn
+    return sall
+
 """
 article : sections
 
@@ -436,12 +483,8 @@ section : heading
 heading : HEADING logicline
 
 content : content paragraph
-        | content listbullet
-        | content table
         | content block
         | paragraph
-        | listbullet
-        | table
         | block
 
 paragraph : text NEWPARAGRAPH
@@ -453,31 +496,34 @@ table : TSTART thead tbody TEND
 tbody : tbody trow
       | trow
 
-trow : vtext TROW
-     | vtext TROW rowsep
+trow : vtext TROW rowsep
 
-thead: vtext THEAD
-     | vtext THEAD rowsep
+thead: vtext THEAD rowsep
 
 rowsep : rowsep SPACE
        | rowsep NEWLINE
+       | rowsep NEWPARAGRAPH
        | SPACE
        | NEWLINE
        | NEWPARAGRAPH
+       | empty
 
 trowcontent : trowcontent  sections TCELL
             | sections TCELL
 
-block : CMD
-      | CMD bracetext
-      | CMD BRACEL fblockarg sections BRACER
-      | BSTART sections BEND
+block : BSTART sections BEND
       | BSTART fblockarg sections BEND
       | RBLOCK
       | EQUATION
-      | INLINEEQ
-      | BRACLETL text BRACKETL
-      | BRACKETL text BRACEL text BRACKETR
+      | listbullet
+      | table
+
+inlineblock: CMD
+           | CMD bracetext
+           | CMD BRACEL fblockarg sections BRACER
+           | INLINEEQ
+           | BRACLETL text BRACKETL
+           | BRACKETL text BRACEL text BRACKETR
 
 fblockargs : fblolkargs vtext TCELL
            | vtext TCELL
@@ -507,6 +553,9 @@ plaintext : plaintext WORD
      | plaintext SPACE
      | WORD
      | SPACE
+     | empty
+
+empty :
 """
 
 def p_article(p):
@@ -538,22 +587,18 @@ def p_heading_start(p):
 
 def p_content_multi(p):
     '''content : content paragraph
-               | content listbullet
-               | content table
                | content block'''
     p[0] = p[1] + p[2]
 
 def p_content_single(p):
     '''content : paragraph
-               | listbullet
-               | table
                | block'''
     p[0] = p[1]
 
 def p_paragraph_multiple(p):
     '''paragraph : text NEWPARAGRAPH'''
     if p[1]:
-        p[0] = '<p> %s </p>' %(p[1])
+        p[0] = '<p>%s</p>' %(p[1])
         p[0] = bsmdoc_div(p[0], ['para']) + '\n'
     else:
         p[0] = ''
@@ -562,6 +607,9 @@ def p_paragraph_single(p):
     '''paragraph : text'''
     p[0] = p[1]
 
+def p_block_table(p):
+    '''block : table'''
+    p[0] = p[1]
 def p_table_title(p):
     '''table : tstart tbody TEND'''
     p[0] = bsmdoc_table('', p[2])
@@ -585,16 +633,14 @@ def p_tbody_single(p):
     p[0] = p[1]
 
 def p_trow(p):
-    '''trow : vtext TROW
-            | vtext TROW rowsep'''
-    s = ''.join(["<td>%s</td>"%t for t in p[1]])
+    '''trow : vtext TROW rowsep'''
+    s = ''.join(["<td>%s</td>"%(t.strip()) for t in p[1]])
     p[0] = '<tr>\n%s\n</tr>\n' %(s)
 
 def p_thead(p):
-    '''thead : vtext THEAD
-             | vtext THEAD rowsep'''
+    '''thead : vtext THEAD rowsep'''
     # THEAD indicates the current row is header
-    s = ["<th>%s</th>"%t for t in p[1]]
+    s = ["<th>%s</th>"%(t.strip()) for t in p[1]]
     p[0] = '<tr>\n%s\n</tr>\n' %(''.join(s))
 
 def p_rowsep(p):
@@ -603,39 +649,22 @@ def p_rowsep(p):
               | rowsep NEWPARAGRAPH
               | SPACE
               | NEWLINE
-              | NEWPARAGRAPH'''
+              | NEWPARAGRAPH
+              | empty'''
     p[0] = ''
 
-def p_fblock_cmd(p):
-    """block : CMD"""
-    cmd = p[1]
-    if len(cmd) == 2:
-        v = cmd
-        v = v.replace("\\n", '<br>')
-        p[0] = re.sub(r'(\\)(.)', r'\2', v)
-    else:
-        p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd), p.lineno(1))
-
-def p_fblock_cmd_multi(p):
-    """block : CMD bracetext"""
-    cmd = p[1]
-    p[0] = bsmdoc_helper([cmd[1:]], p[2], lineno=p.lineno(1))
-
-def p_fblock_cmd_args1(p):
-    """block : CMD BRACEL vtext sections BRACER"""
-    cmd = p[3]
-    cmd.insert(0, p[1][1:])
-    p[0] = bsmdoc_helper(cmd, p[4], lineno=p.lineno(1))
 
 fblock_state = []
 def p_fblock_start(p):
     """bstart : BSTART"""
     p[0] = ''
     fblock_state.append((p[1], p.lineno(1)))
+
 def p_fblock_end(p):
     """bend : BEND"""
     p[0] = ''
     fblock_state.pop()
+
 def p_fblock(p):
     '''block : bstart sections bend'''
     p[0] = p[2]
@@ -647,6 +676,28 @@ def p_fblock_arg(p):
     for c in reversed(cmds):
         if c:
             p[0] = bsmdoc_helper(c, p[0], lineno=p.lineno(2))
+
+def p_rblock(p):
+    '''block : RBLOCK'''
+    p[0] = p[1]
+
+def p_block_eqn(p):
+    '''block : EQUATION'''
+    p[0] = bsmdoc_math(p[1], [])
+
+def p_block_listbullet(p):
+    '''block : listbullet'''
+    p[0] = p[1]
+    p[0] = bsmdoc_listbullet(p[1], [])
+
+def p_listbullet_multi(p):
+    '''listbullet : listbullet LISTBULLET logicline'''
+    p[0] = p[1]
+    p[0].append([(p[2].strip()), p[3]])
+
+def p_listbullet_single(p):
+    '''listbullet : LISTBULLET logicline'''
+    p[0] = [[(p[1].strip()), p[2]]]
 
 def p_fblockargs_multi(p):
     '''fblockargs : fblockargs vtext TCELL'''
@@ -667,23 +718,37 @@ def p_vtext_single(p):
     '''vtext : sections TCELL'''
     p[0] = [p[1].strip()]
 
-def p_rblock(p):
-    '''block : RBLOCK'''
-    p[0] = p[1]
+def p_inlineblock_cmd(p):
+    """inlineblock : CMD"""
+    cmd = p[1]
+    if len(cmd) == 2:
+        v = cmd
+        v = v.replace("\\n", '<br>')
+        p[0] = re.sub(r'(\\)(.)', r'\2', v)
+    else:
+        p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd), p.lineno(1))
 
-def p_block_eqn(p):
-    '''block : EQUATION'''
-    p[0] = bsmdoc_math(p[1], [])
-def p_block_eqn_inline(p):
-    '''block : INLINEEQ'''
+def p_inlineblock_cmd_multi(p):
+    """inlineblock : CMD bracetext"""
+    cmd = p[1]
+    p[0] = bsmdoc_helper([cmd[1:]], p[2], lineno=p.lineno(1))
+
+def p_inlineblock_cmd_args(p):
+    """inlineblock : CMD BRACEL vtext sections BRACER"""
+    cmd = p[3]
+    cmd.insert(0, p[1][1:])
+    p[0] = bsmdoc_helper(cmd, p[4], lineno=p.lineno(1))
+
+def p_inlineblock_eqn(p):
+    '''inlineblock : INLINEEQ'''
     p[0] = bsmdoc_math(p[1], ['inline'])
 
-def p_block_link_withname(p):
-    '''block : BRACKETL text TCELL text BRACKETR'''
+def p_inlineblock_link_withname(p):
+    '''inlineblock : BRACKETL sections TCELL sections BRACKETR'''
     p[0] = '<a href=\'%s\'>%s</a>'%(p[2], p[4])
 
-def p_block_link(p):
-    '''block : BRACKETL text BRACKETR'''
+def p_inlineblock_link(p):
+    '''inlineblock : BRACKETL sections BRACKETR'''
     s = p[2].strip()
     v = s
     if s[0] == '#':
@@ -695,39 +760,6 @@ def p_block_link(p):
                 print("Broken anchor '%s' at line %d"%(s, p.lineno(2)))
             set_option('rescan', True)
     p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
-
-def p_listbullet_multi(p):
-    '''listbullet : listbullet LISTBULLET logicline'''
-    s0 = p[1]
-    s = '<li> %s </li>\n' %(p[3])
-    for i in range(0, len(p[2])):
-        if p[2][-i-1] == '-':
-            s = '<ul>\n%s</ul>\n' %(s)
-        elif p[2][-i-1] == '*':
-            s = '<ol>\n%s</ol>\n' %(s)
-    # merge the adjacent list
-    for i in range(0, len(p[2])):
-        if len(s0) < 6 or len(s) < 5:
-            break
-        if s0[-6:] == '</ul>\n' and s[:5] == '<ul>\n':
-            s0 = s0[:-6]
-            s = s[5:]
-        elif s0[-6:] == '</ol>\n' and s[:5] == '<ol>\n':
-            s0 = s0[:-6]
-            s = s[5:]
-        else:
-            break
-    p[0] = s0 + s
-
-def p_listbullet_single(p):
-    '''listbullet : LISTBULLET logicline'''
-    s = '<li> %s </li>\n' %(p[2])
-    for i in range(0, len(p[1])):
-        if p[1][-i-1] == '-':
-            s = '<ul>\n%s</ul>\n' %(s)
-        elif p[1][-i-1] == '*':
-            s = '<ol>\n%s</ol>\n' %(s)
-    p[0] = s
 
 def p_text_multi(p):
     '''text : text logicline'''
@@ -749,25 +781,27 @@ def p_bracetext(p):
 
 def p_line_multi(p):
     '''line : line plaintext
-            | line block'''
+            | line inlineblock'''
     p[0] = p[1] + p[2]
 
 def p_line(p):
     '''line : plaintext
-            | block'''
+            | inlineblock'''
     p[0] = p[1]
 
 def p_plaintext_multi(p):
     '''plaintext : plaintext WORD
-            | plaintext SPACE'''
+                 | plaintext SPACE'''
     p[0] = p[1] + p[2]
 
 def p_plaintext_single(p):
     '''plaintext : WORD
-            | SPACE'''
+                 | SPACE
+                 | empty'''
     p[0] = p[1]
-def p_plaintext_empty(p):
-    '''plaintext : '''
+
+def p_empty(p):
+    '''empty : '''
     p[0] = ''
 
 def p_error(p):
@@ -812,31 +846,10 @@ def make_content(content):
         if c[0] < first_level:
             first_level = c[0]
     ctxt = []
-    # put the header in '{- -}' block, so bsmdoc will not try to parse it again
     for c in content:
-        s = '<a href="#%s">%s</a>' %(c[3], c[1] + ' ' + c[2])
-        # % is the variable substitution symbol in ConfigParser;
-        # %% for substitution escape
-        ctxt.append('-'*(c[0] - first_level + 1) + '{%'+ s + '%}')
+        s = '[#%s'%c[3] + '|{%' + c[1] + ' ' + c[2] + '%}]'
+        ctxt.append('-'*(c[0] - first_level + 1) + s)
     return '\n'.join(ctxt)
-    s0 = ""
-    level_pre = -1
-    for c in content:
-        s = '<li><a href="#%s">%s</a></li>\n' %(c[3], c[1] + ' ' + c[2])
-        if level_pre == -1:
-            for i in range(0, c[0] - first_level + 1):
-                s = '<ul>\n%s' %(s)
-        elif c[0] > level_pre:
-            for i in range(0, c[0] - level_pre):
-                s = '<li><ul>\n' + s
-        elif c[0] < level_pre:
-            for i in range(0, level_pre - c[0]):
-                s = '</ul></li>\n' + s
-        level_pre = c[0]
-        s0 = s0 + s
-    for i in range(0, level_pre - first_level):
-        s0 = s0 + '</ul></li>\n'
-    return s0 + '</ul>'
 
 config = ConfigParser()
 def bsmdoc_getcfg(sec, key):
@@ -844,6 +857,7 @@ def bsmdoc_getcfg(sec, key):
     if config.has_option(sec, key):
         return config.get(sec, key)
     return ''
+
 def bsmdoc_setcfg(sec, key, val):
     global config
     if sec is not 'DEFAULT' and not config.has_section(sec):
@@ -893,6 +907,8 @@ def bsmdoc_raw(txt):
         bsmdoc_footnote.notes = []
         if bsmdoc_header.content:
             s = make_content(bsmdoc_header.content)
+            # % is the variable substitution symbol in ConfigParser;
+            # %% for substitution escape
             s = s.replace('%', '%%')
             bsmdoc_setcfg('bsmdoc', 'CONTENT', s)
         bsmdoc_header.content = []
