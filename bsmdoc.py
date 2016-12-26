@@ -482,16 +482,22 @@ section : heading
 
 heading : HEADING logicline
 
-content : content paragraph
-        | content block
-        | paragraph
+content : content block
         | block
+
+block : BSTART sections BEND
+      | BSTART fblockarg sections BEND
+      | RBLOCK
+      | EQUATION
+      | listbullet
+      | table
+      | paragraph
 
 paragraph : text NEWPARAGRAPH
           | text
 
 table : TSTART thead tbody TEND
-      | TSTART tbody TEND NEWLINE
+      | TSTART tbody TEND
 
 tbody : tbody trow
       | trow
@@ -507,16 +513,6 @@ rowsep : rowsep SPACE
        | NEWLINE
        | NEWPARAGRAPH
        | empty
-
-trowcontent : trowcontent  sections TCELL
-            | sections TCELL
-
-block : BSTART sections BEND
-      | BSTART fblockarg sections BEND
-      | RBLOCK
-      | EQUATION
-      | listbullet
-      | table
 
 inlineblock: CMD
            | CMD bracetext
@@ -545,15 +541,15 @@ logicline : line
 bracetext : BRACEL sections BRACER
 
 line : line plaintext
-     | line block
+     | line inlineblock
      | plaintext
-     | block
+     | inlineblock
 
 plaintext : plaintext WORD
-     | plaintext SPACE
-     | WORD
-     | SPACE
-     | empty
+          | plaintext SPACE
+          | WORD
+          | SPACE
+          | empty
 
 empty :
 """
@@ -586,13 +582,15 @@ def p_heading_start(p):
     p[0] = p[1]
 
 def p_content_multi(p):
-    '''content : content paragraph
-               | content block'''
+    '''content : content block'''
     p[0] = p[1] + p[2]
 
 def p_content_single(p):
-    '''content : paragraph
-               | block'''
+    '''content : block'''
+    p[0] = p[1]
+
+def p_block_paragraph(p):
+    '''block : paragraph'''
     p[0] = p[1]
 
 def p_paragraph_multiple(p):
