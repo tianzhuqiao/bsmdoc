@@ -474,27 +474,23 @@ def bsmdoc_listbullet(data, args):
 """
 article : sections
 
-sections : sections section
-         | section
+sections : sections block
+         | block
 
-section : heading
-        | content
-
-heading : HEADING logicline
-
-content : content block
-        | block
-
-block : BSTART sections BEND
-      | BSTART fblockarg sections BEND
+block : HEADING logicline
+      | paragraph
+      | table
+      | BSTART sections BEND
+      | BSTART blockargs sections BEND
       | RBLOCK
       | EQUATION
       | listbullet
-      | table
-      | paragraph
 
 paragraph : text NEWPARAGRAPH
           | text
+
+blockargs : blolkargs vtext TCELL
+          | vtext TCELL
 
 table : TSTART thead tbody TEND
       | TSTART tbody TEND
@@ -514,19 +510,6 @@ rowsep : rowsep SPACE
        | NEWPARAGRAPH
        | empty
 
-inlineblock: CMD
-           | CMD bracetext
-           | CMD BRACEL fblockarg sections BRACER
-           | INLINEEQ
-           | BRACLETL text BRACKETL
-           | BRACKETL text BRACEL text BRACKETR
-
-fblockargs : fblolkargs vtext TCELL
-           | vtext TCELL
-
-fblockarg : vtext sections TCELL
-          | sections TCELL
-
 listbullet : listbullet LISTBULLET logicline
            | LISTBULLET logicline
 
@@ -540,10 +523,17 @@ logicline : line
 
 bracetext : BRACEL sections BRACER
 
-line : line plaintext
-     | line inlineblock
-     | plaintext
+line : line inlineblock
+     | line plaintext
      | inlineblock
+     | plaintext
+
+inlineblock: CMD
+           | CMD bracetext
+           | CMD BRACEL vtext sections BRACER
+           | INLINEEQ
+           | BRACLETL sections BRACKETL
+           | BRACKETL sections TCELL sections BRACKETR
 
 plaintext : plaintext WORD
           | plaintext SPACE
@@ -560,33 +550,21 @@ def p_article(p):
     bsmdoc = p[1]
 
 def p_sections_multi(p):
-    '''sections : sections section'''
+    '''sections : sections block'''
     p[0] = p[1] + p[2]
 
 def p_sections_single(p):
-    '''sections : section'''
-    p[0] = p[1]
-
-def p_section(p):
-    '''section : heading
-               | content'''
+    '''sections : block'''
     p[0] = p[1]
 
 def p_heading(p):
-    '''heading : heading_start logicline'''
+    '''block : heading_start logicline'''
     (s, pre, label) = bsmdoc_header(p[2], p[1].strip())
     p[0] = '<h%d id="%s">%s</h%d>\n'%(len(p[1]), label, s, len(p[1]))
+
 def p_heading_start(p):
     '''heading_start : HEADING'''
     set_option('label', '')
-    p[0] = p[1]
-
-def p_content_multi(p):
-    '''content : content block'''
-    p[0] = p[1] + p[2]
-
-def p_content_single(p):
-    '''content : block'''
     p[0] = p[1]
 
 def p_block_paragraph(p):
@@ -651,31 +629,39 @@ def p_rowsep(p):
               | empty'''
     p[0] = ''
 
-
 fblock_state = []
-def p_fblock_start(p):
+def p_block_start(p):
     """bstart : BSTART"""
     p[0] = ''
     fblock_state.append((p[1], p.lineno(1)))
 
-def p_fblock_end(p):
+def p_block_end(p):
     """bend : BEND"""
     p[0] = ''
     fblock_state.pop()
 
-def p_fblock(p):
+def p_block(p):
     '''block : bstart sections bend'''
     p[0] = p[2]
 
-def p_fblock_arg(p):
-    '''block : bstart fblockargs sections bend'''
+def p_block_arg(p):
+    '''block : bstart blockargs sections bend'''
     cmds = p[2]
     p[0] = p[3]
     for c in reversed(cmds):
         if c:
             p[0] = bsmdoc_helper(c, p[0], lineno=p.lineno(2))
 
-def p_rblock(p):
+def p_blockargs_multi(p):
+    '''blockargs : blockargs vtext TCELL'''
+    p[0] = p[1]
+    p[0].append(p[2])
+
+def p_blockargs_single(p):
+    '''blockargs : vtext TCELL'''
+    p[0] = [p[1]]
+
+def p_block_raw(p):
     '''block : RBLOCK'''
     p[0] = p[1]
 
@@ -697,24 +683,42 @@ def p_listbullet_single(p):
     '''listbullet : LISTBULLET logicline'''
     p[0] = [[(p[1].strip()), p[2]]]
 
-def p_fblockargs_multi(p):
-    '''fblockargs : fblockargs vtext TCELL'''
-    p[0] = p[1]
-    p[0].append(p[2])
-
-def p_fblockargs_single(p):
-    '''fblockargs : vtext TCELL'''
-    p[0] = [p[1]]
-
 # text separated by vertical bar '|'
 def p_vtext_multi(p):
     '''vtext : vtext sections TCELL'''
     p[0] = p[1]
     p[0].append(p[2].strip())
-
 def p_vtext_single(p):
     '''vtext : sections TCELL'''
     p[0] = [p[1].strip()]
+
+def p_text_multi(p):
+    '''text : text logicline'''
+    p[0] = p[1] + p[2]
+
+def p_text_single(p):
+    '''text : logicline'''
+    p[0] = p[1]
+
+def p_logicline(p):
+    '''logicline : line
+                 | line NEWLINE
+                 | bracetext
+                 | bracetext NEWLINE'''
+    p[0] = p[1]
+def p_bracetext(p):
+    '''bracetext : BRACEL sections BRACER'''
+    p[0] = p[2]
+
+def p_line_multi(p):
+    '''line : line plaintext
+            | line inlineblock'''
+    p[0] = p[1] + p[2]
+
+def p_line(p):
+    '''line : plaintext
+            | inlineblock'''
+    p[0] = p[1]
 
 def p_inlineblock_cmd(p):
     """inlineblock : CMD"""
@@ -758,34 +762,6 @@ def p_inlineblock_link(p):
                 print("Broken anchor '%s' at line %d"%(s, p.lineno(2)))
             set_option('rescan', True)
     p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
-
-def p_text_multi(p):
-    '''text : text logicline'''
-    p[0] = p[1] + p[2]
-
-def p_text_single(p):
-    '''text : logicline'''
-    p[0] = p[1]
-
-def p_logicline(p):
-    '''logicline : line
-                 | line NEWLINE
-                 | bracetext
-                 | bracetext NEWLINE'''
-    p[0] = p[1]
-def p_bracetext(p):
-    '''bracetext : BRACEL sections BRACER'''
-    p[0] = p[2]
-
-def p_line_multi(p):
-    '''line : line plaintext
-            | line inlineblock'''
-    p[0] = p[1] + p[2]
-
-def p_line(p):
-    '''line : plaintext
-            | inlineblock'''
-    p[0] = p[1]
 
 def p_plaintext_multi(p):
     '''plaintext : plaintext WORD
@@ -911,12 +887,6 @@ def bsmdoc_raw(txt):
             bsmdoc_setcfg('bsmdoc', 'CONTENT', s)
         bsmdoc_header.content = []
         lex.lexer.lineno = 1
-        #lex.input(txt)
-        #while True:
-        #    tok = lex.token()
-        #    if not tok:
-        #        break      # No more input
-        #    print(tok)
         yacc.parse(txt, tracking=True)
     return bsmdoc
 
