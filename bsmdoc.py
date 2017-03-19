@@ -251,6 +251,10 @@ def bsmdoc_escape(data, *args):
     s = re.sub(r'(<)', r'&lt;', data)
     s = re.sub(r'(>)', r'&gt;', s)
     return s
+def bsmdoc_unescape(data, *args):
+    s = re.sub(r'(&lt;)', r'<',data)
+    s = re.sub(r'&gt;', r'>', s)
+    return s
 
 def bsmdoc_helper(cmds, data, default=None, lineno=-1):
     ldict = lex.get_caller_module_dict(1)
@@ -276,6 +280,9 @@ def bsmdoc_ref(data, args):
 bsmdoc_eqref = bsmdoc_ref
 
 def bsmdoc_exec(data, args):
+    # check if it only needs to execute the code for the first time
+    if args and args[0] == "firstRunOnly" and get_option_int('scan', 1) > 1:
+        return ''
     try:
         exec(data, globals())
     except:
@@ -317,7 +324,7 @@ def bsmdoc_highlight(code, lang):
         formatter = HtmlFormatter(linenos=False, cssclass="syntax")
         # pygments will replace '&' with '&amp;', which will make the unicode
         # (e.g., &#xNNNN) shown incorrectly.
-        txt = highlight(code, lexer, formatter)
+        txt = highlight(bsmdoc_unescape(code), lexer, formatter)
         txt = txt.replace('&amp;#x', '&#x')
         txt = txt.replace('&amp;lt;', '&lt;')
         return txt.replace('&amp;gt', '&gt;')
@@ -348,8 +355,8 @@ def bsmdoc_header(txt, level):
     pre = ''
     label = get_option('label', '')
 
-    if get_option_bool('head_tag', 0):
-        start = get_option_int('head_tag_start', 1)
+    if get_option_bool('heading_number', 0):
+        start = get_option_int('heading_number_start', 1)
         c = len(level)
         if c >= start:
             for i in range(start, c):
@@ -406,6 +413,7 @@ def table_next_tag():
         num = get_option('table_tag_num_prefix', '') + str(table_next_tag.counter)
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
+
 def bsmdoc_table(head, body):
     if head:
         head = '<thead>%s</thead>'%head
@@ -629,11 +637,15 @@ def p_rowsep(p):
               | empty'''
     p[0] = ''
 
+# function block supports embedded block, remember the current block level
+# to print the error message correspondingly when error occurs.
 fblock_state = []
 def p_block_start(p):
     """bstart : BSTART"""
     p[0] = ''
     fblock_state.append((p[1], p.lineno(1)))
+    set_option('caption', '')
+    set_option('label', '')
 
 def p_block_end(p):
     """bend : BEND"""
@@ -663,7 +675,7 @@ def p_blockargs_single(p):
 
 def p_block_raw(p):
     '''block : RBLOCK'''
-    p[0] = p[1]
+    p[0] = bsmdoc_escape(p[1])
 
 def p_block_eqn(p):
     '''block : EQUATION'''
