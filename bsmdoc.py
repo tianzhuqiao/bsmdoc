@@ -308,7 +308,7 @@ def bsmdoc_math(data, args):
     if len(args) > 0 and args[0] == 'inline':
         return '$%s$'%bsmdoc_escape(data)
     else:
-        return "<div class='mathjax'>\n$$ %s $$\n</div>" %bsmdoc_escape(data)
+        return "<div class='mathjax'>\n$$%s$$\n</div>" %bsmdoc_escape(data)
 
 def bsmdoc_div(data, args):
     data = data.strip()
@@ -729,7 +729,9 @@ def p_logicline(p):
 def p_logicline_newline(p):
     '''logicline : line NEWLINE
                  | bracetext NEWLINE'''
-    p[0] = p[1] + ' '
+    p[0] = p[1].strip()
+    if p[0]:
+        p[0] = p[0] + ' '
 def p_bracetext(p):
     '''bracetext : BRACEL sections BRACER'''
     p[0] = p[2]
@@ -823,7 +825,8 @@ end= </html>
 begin = <head>
     <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-end = </head>
+end = <title>%(TITLE)s</title>
+    </head>
 content = <link rel="stylesheet" href="bsmdoc.css" type="text/css" />
 
 [body]
@@ -969,12 +972,9 @@ def bsmdoc_gen(filename, encoding=None):
         js = temp.split(' ')
         for j in js:
             html.append('<script type="text/javascript" language="javascript" src="%s"></script>'%j)
-    temp = get_option('title', '')
-    if temp:
-        html.append('<title>%s</title>'%(temp))
-    html.append(bsmdoc_getcfg('header', 'end') + '\n')
+    html.append(bsmdoc_getcfg('header', 'end'))
     # body
-    html.append(bsmdoc_getcfg('body', 'begin') + '\n')
+    html.append(bsmdoc_getcfg('body', 'begin'))
     subtitle = get_option('subtitle', '')
     if subtitle:
         subtitle = '<div id="subtitle">%s</div>\n'%(subtitle)
@@ -982,7 +982,6 @@ def bsmdoc_gen(filename, encoding=None):
     if doctitle:
         doctitle = '<div id="toptitle">%s%s</div>'%(doctitle, subtitle)
     html.append(doctitle)
-
     html.append(bsmdoc)
     html.append(bsmdoc_getcfg('footer', 'begin'))
     if len(bsmdoc_footnote.notes):
@@ -1001,7 +1000,7 @@ def bsmdoc_gen(filename, encoding=None):
     html.append(bsmdoc_getcfg('html', 'end'))
     outname = os.path.splitext(filename)[0] + '.html'
     fp = open(outname, 'w')
-    fp.write(os.linesep.join(html))
+    fp.write('\n'.join(html))
     fp.close()
     return outname
 

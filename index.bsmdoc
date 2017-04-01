@@ -1,15 +1,12 @@
 \config{title|bsmdoc -- another technical html doc generator}
-\config{doctitle|bsmdoc -- another technical html doc generator}
-\config{subtitle|[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]}
+#\config{doctitle|bsmdoc -- another technical html doc generator}
+#\config{subtitle|[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]}
 \config{heading_numbering|1}
 \config{image_numbering|1}
 \config{table_numbering|1}
 \config{source|1}
 \config{bsmdoc_conf|bsmdoc.cfg}
 
-{!div|content||
-#makecontent
-!}
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
 def bsmdoc_highlight(code, lang):
@@ -30,6 +27,17 @@ def bsmdoc_highlight(code, lang):
     except ImportError:
         return code
 %}!}
+
+{!div|toptitle||
+bsmdoc -- another technical html doc generator
+{!div|subtitle||
+[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]
+!}
+!}
+
+{!div|content||
+#makecontent
+!}
 
 = Why bsmdoc?
 bsmdoc is a tool to help you to generate technical html files easily.
@@ -224,17 +232,17 @@ Each item of a list can expand to multiple line as long as they are embraced wit
 Text between \tag{code|\[} and \tag{code|\]} will be rendered as link block.
 
 {!div|bs-example||
-[http://bsmedit.sourceforge.net]
+[http://bsmedit.feiyilin.com]
 !}{!div|bs-example-src||highlight|bsmdoc||{%
-[http://bsmedit.sourceforge.net].
+[http://bsmedit.feiyilin.com].
 %}!}
 
 Link text can be customized with "\tag{code|\|}"
 
 {!div|bs-example||
-[http://bsmedit.sourceforge.net | bsmedit]
+[http://bsmedit.feiyilin.com | bsmedit]
 !}{!div|bs-example-src||highlight|bsmdoc||{%
-[http://bsmedit.sourceforge.net | bsmedit].
+[http://bsmedit.feiyilin.com | bsmedit].
 %}!}
 
 Or email
@@ -936,7 +944,7 @@ Then you can include the \tag{code|pie.svg} in your html file
 !}
 %}!}
 
-= Inline block
+== Inline function block
 The difference between \tag{code|function block} and \tag{code|inline function block} is similar to the \tag{code|equation block} and \tag{code|inline equation block}. In other words, the output of the inline block can be embedded in the paragraph. The syntax is similar to the $\LaTeX$ macro:
 {!div|bs-example||highlight|bsmdoc||{%
 \command{arg0|arg1|argN|content}
@@ -951,42 +959,46 @@ In general, the blocks defined above section can also be used as inline block. F
 %}
 !}
 
-
-
 bsmdoc define the \tag{code|config} block to configure the bsmdoc itself. It adds one item in the system configuration table, and output empty string to the html file. Thus, it will not directly update the html docs, although the other blocks may rely on such configurations to control their behaviors. The syntax is
 {!div|bs-example||highlight|bsmdoc||{%
 \config{option|value}}
 %}!}
 
-The options used by the default block function implementation
-{{
-option | description | default | |+
-title | the title of the file | filename ||-
-doctitle | the title of the doc | ''  ||-
-subtitle | the subtitle of the doc| '' ||-
-heading_numbering| order the headings| 0 ||-
-heading_numbering_start | the start level for ordered heading| 1 ||-
-image_numbering | show the number of images| 0 ||-
-table_numbering | show the number of tables| 0 ||-
-bsmdoc_config | the configure file name | '' ||-
-source | show the link to bsmdoc source | 0 ||-
-addcss | add more css file links | '' ||-
-addjs  | add more javascript file links | '' ||-
-}}
+#The options used by the default block function implementation
+#{{
+#option | description | default | |+
+#title | the title of the file | filename ||-
+#doctitle | the title of the doc | ''  ||-
+#subtitle | the subtitle of the doc| '' ||-
+#heading_numbering| order the headings| 0 ||-
+#heading_numbering_start | the start level for ordered heading| 1 ||-
+#image_numbering | show the number of images| 0 ||-
+#table_numbering | show the number of tables| 0 ||-
+#bsmdoc_conf | the configure file name | '' ||-
+#source | show the link to bsmdoc source | 0 ||-
+#addcss | add more css file links | '' ||-
+#addjs  | add more javascript file links | '' ||-
+#}}
 
 = Input redirection
-bsmdoc can automatically generate the content with all the sections
-{!div|bs-example||highlight|bsmdoc||{%
+bsmdoc can automatically generate the content list with
+
+{!div|bs-example-src||highlight|bsmdoc||{%
 #makecontent
 %}!}
 
+Only the sections with automatic numbering will be included in the content list.
+
 When the doc becomes large, you can split your doc into several docs and includes them in the top doc with the "\tag{code|\#include}" directive. For example, suppose you are writing a book, and have created \tag{code|chappter1.bsmdoc}, \tag{code|chapter2.bsmdoc}, .... Then, you can include all the chapters in your \tag{code|book.bsmdoc}
-{!div|bs-example||highlight|bsmdoc||{%
+
+{!div|bs-example-src||highlight|bsmdoc||{%
 #include chapter1.bsmdoc
 #include chapter2.bsmdoc
 %}!}
 
-= Html template
+It is equivalent to replace the line "\tag{code|\#include chapter1.bsmdoc} with the content in the file "\tag{code|chappter1.bsmdoc}.
+
+= HTML template
 
 By default, bsmdoc uses the following template to generate the html file, which defines 4 sections (i.e., \tag{code|html}, \tag{code|header}, \tag{code|body}, \tag{code|footer})
 
@@ -994,14 +1006,15 @@ By default, bsmdoc uses the following template to generate the html file, which 
 [html]
 begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 end= </html>
 
 [header]
 begin = <head>
     <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-end = </head>
+end = <title>%(TITLE)s</title>
+</head>
 content = <link rel="stylesheet" href="bsmdoc.css" type="text/css" />
 
 [body]
@@ -1017,18 +1030,66 @@ content = <div id="footer-text"> Last updated %(UPDATED)s, by
           <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
 %}!}
 
-The \tag{code|\%(UPDATED)s} macro will be replaced with the time when the html file is generated. \tag{code|\%(SOURCE)s}) will be replace with the bsmdoc filename. It is easy to create a macro
+bsmdoc uses [https://docs.python.org/2/library/configparser.html|ConfigParser] to parse the configurations. Thus, \tag{code|\%()s} will be resolved to the corresponding configuration values. The configuration name is case insensitive. For example,
+- {\tag{code|\%(TITLE)s} will be replaced with "\tag{code|my html title}", if you config the title with
+{!div|bs-example-src||highlight|bsmdoc||{%
+\config{title|my html title}
+%}!}}
+- \tag{code|\%(UPDATED)s} will be replaced with the time when the html file is generated.
+- \tag{code|\%(SOURCE)s}) will be replaced with the bsmdoc filename.
+It is easy to create a configuration
 - {define the macro content, e.g.,
-{!div|bs-example||highlight|bsmdoc||{%
+{!div|bs-example-src||highlight|bsmdoc||{%
 \config{MYMACRO|...}
 %}!}}
-- {use the macro in the template
-{!div|bs-example||highlight|bsmdoc||{%
+- {use the configuration in the template
+{!div|bs-example-src||highlight|bsmdoc||{%
 ...%(MYMACRO}s...
 %}!}}
 
-To use the customized template, you can generate a configuration file to define the above 4 sections. Then, tell bsmdoc to use the customized template with command
-{!div|bs-example||highlight|bsmdoc||{%
+To use the customized template, you can generate a configuration file to define the above four sections. Then, tell bsmdoc to use the customized template with command
+{!div|bs-example-src||highlight|bsmdoc||{%
 \config{bsmdoc_conf|configure_file_path}
 %}!}
+
+bsmdoc defines "\tag{code|addcss}" configuration to insert additional \tag{code|css} in the html file without change the html template
+
+{!div|bs-example-src||highlight|bsmdoc||{%
+\config{addcss|mycss.css}
+%}!}
+
+To insert multiple css, separate the multiple css files with white-space
+{!div|bs-example-src||highlight|bsmdoc||{%
+\config{addcss|mycss.css mycss2.css}
+%}!}
+
+Similarly, bsmdoc also defines the "\tag{code|addjs}" configuration to include javascripts in the html file
+{!div|bs-example-src||highlight|bsmdoc||{%
+\config{addcss|myjs.js myjs2.js}
+%}!}
+
+There are two ways to define doc title. The first one is to use the \tag{code|toptitle} configuration. For example, the following line will define the top title
+{!div|bs-example||highlight|html||{%
+<div class="toptitle">
+    bsmdoc -- another technical html doc generator
+    <div class="subtitle">
+        <a href='mailto:ben.qiao@feiyilin.com'>ben.qiao@feiyilin.com</a>
+    </div>
+</div>
+%}!}
+{!div|bs-example-src||highlight|bsmdoc||{%
+\config{doctitle|bsmdoc -- another technical html doc generator}
+\config{subtitle|[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]}
+%}!}
+
+It is easy to see that it is equivalent to the following code
+{!div|bs-example-src||highlight|bsmdoc||{%
+{!div|toptitle||
+bsmdoc -- another technical html doc generator
+{!div|subtitle||
+[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]
+!}
+!}
+%}!}
+
 

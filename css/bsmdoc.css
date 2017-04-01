@@ -66,7 +66,8 @@ a sup {
   text-decoration:none;
 }
 
-div#toptitle {
+div#toptitle,
+.toptitle {
     padding-top:0.2em;
 	padding-bottom: 0.2em;
 	margin-bottom: 1.5em;
@@ -76,7 +77,8 @@ div#toptitle {
     font-weight: bold;
 }
 
-div#subtitle {
+div#subtitle,
+.subtitle {
 	margin-top: 0.0em;
 	margin-bottom: 0.0em;
 	padding-top: 0em;
