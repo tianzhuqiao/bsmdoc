@@ -1,5 +1,5 @@
-\config{title|bsmdoc brief introduction}
-\config{doctitle|bsmdoc brief introduction}
+\config{title|bsmdoc -- another technical html doc generator}
+\config{doctitle|bsmdoc -- another technical html doc generator}
 \config{subtitle|[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]}
 \config{heading_numbering|1}
 \config{image_numbering|1}
@@ -32,26 +32,22 @@ def bsmdoc_highlight(code, lang):
 %}!}
 
 = Why bsmdoc?
-bsmdoc is a tool to help you generate technical html files easily.
+bsmdoc is a tool to help you to generate technical html files easily.
 
-There are many ways to generate html files. From my experience, typing the html tags directly may not be a good use of our time. Otherwise, you may end up spending a lot of time on finding a mismatched \tag{code|tag} in the html file. Besides that straightforward method, there are many tools that can help to generate html documents from various formats. In this case, there is no need to manually check the html tags anymore, since they are automatically generated and "guarantee" to be correct. Most of them try to make a comprehensive and complicated tool (so that no one (like me) wants/dares to make any changes easily). Such tool may meet most requirements, and contain many features (and many of them may never be used by many users); however, once you need some missing feature, it is almost impossible to simply update the tool by yourself.
+There are many ways to generate html files. Typing the html tags directly may not be a good use of our time. Otherwise, you may end up spending a lot of time on finding a mismatched \tag{code|tag} in the html file. Besides that straightforward method, there are many tools that can help to generate html documents from various formats. In this case, there is no need to manually check the html tags anymore, since they are automatically generated and "guarantee" to be correct. Most of them try to make a comprehensive and complicated tool (so that no one (like me) wants/dares to make any changes easily). Such tool may meet most requirements, and contain many features (and many of them may never be used by many users); however, once you need some missing feature, it is almost impossible to simply update the tool by yourself.
 
-bsmdoc believes that there is simple way to generate html files. It is a light-weighted tool, which keeps the 'core' as small as possible. Thus, it may only provide some very basic features, but allow each user to extend the tool for his/her own requirements in a straightforward way.
+bsmdoc believes that there is a simple way to generate html files. It is a light-weighted tool, which keeps the 'core' as small as possible. Thus, it only provides some very basic features, but allow each user to extend the tool for his/her own requirements in a straightforward way.
 
 Furthermore, bsmdoc wants to provide you a way to write the doc in a \tag{code|single} file. You can always type your doc in a text editor, generate the images with Matlab, write your equation with $Latex$ and export the images files... But, with bsmdoc, you can finish all these steps in just a single file.
 
 However, if you know nothing about python or some basic programming skill, bsmdoc may not be ideal for you, unless the very limited pre-defined features is what you want.
 
-#Besides [http://www.python.org|Python], bsmdoc depends on the following packages:
-#
-#- [http://www.dabeaz.com/ply/|PLY]
-#- [http://pygments.org/|Pygments]
-
 bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, etc.). We will show the basic blocks in the following sections, as well as the way to extend the existing blocks.
 
 == Hello World
 * Download [https://github.com/tianzhuqiao/bsmdoc|bsmdoc]
-* {Create a file (e.g., helloworld.bsmdoc) with content
+*- bsmdoc depends on package [http://www.dabeaz.com/ply/|PLY]
+* {Create a file (e.g., \tag{code|helloworld.bsmdoc}) with content
 {!highlight|bsmdoc||{%
 = hello world!
 %}!}
@@ -107,7 +103,7 @@ bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, 
 ====== level 6
 %}!}
 
-heading block must start at a new line. In other words, \tag{code|=} (e.g., in a paragraph) will be viewed as normal equal sign if it is not at the start of a line.
+As you have seen, heading block must start at a new line. In other words, \tag{code|=} (e.g., in a paragraph) will be viewed as normal equal sign if it is not at the start of a line.
 bsmdoc supports all 6 heading levels as shown above. However, we don't think anyone needs all these 6 levels (remember, [http://www.feynmanlectures.caltech.edu/|"The Feynman Lectures on Physics"] only uses 2 levels).
 
 heading text can spread to multiple lines as long as they are enclosed by "\tag{code|\{\}}", as shown in the following example. Actually, "\tag{code|\{\}}" also define a basic block in bsmdoc. And basically it is allowed to put everything in it. Thus it is quite flexible to define the heading text.
@@ -116,28 +112,28 @@ heading text can spread to multiple lines as long as they are enclosed by "\tag{
 # the structure of this doc
 \config{heading_numbering|0}
 = {multiple\n
- line\n
- heading}
+line\n
+heading}
 = {multiple
- line
- heading}
+line
+heading}
 \config{heading_numbering|1}
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 = {multiple\n
- line\n
- heading}
+line\n
+heading}
 = {multiple
- line
- heading}
+line
+heading}
 %}!}
 
-One can add an anchor to a heading block with command "\tag{code|label}", which can be referenced to as a normal [#sec-link|link] "\tag{code|\[\#label\]}".
+One can add a label to a heading block with command "\tag{code|label}", so that the heading block can be referenced to as a normal in-page [#sec-link|link].
 {!div|bs-example||
 \config{heading_numbering|0}
-= {section with anchor\config{label|sec-label}}
+= {section with label\config{label|sec-label}}
 \config{heading_numbering|1}
 !}{!div|bs-example-src||highlight|bsmdoc||{%
-= {section with anchor\config{label|sec-label}}
+= {section with label\config{label|sec-label}}
 %}!}
 
 By default, the heading block will not be automatically numbered. To turn on the automatic numbering.
@@ -277,7 +273,7 @@ The footnote block will automatically create index for each footnote. Same as th
 
 {!exec|firstRunOnly||{%
 import os.path
-if not os.path.isfile("scatter.svg"):
+if not os.path.isfile("image/scatter.svg"):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -290,7 +286,7 @@ if not os.path.isfile("scatter.svg"):
     area = np.pi * (15 * np.random.rand(N))**2  # 0 to 15 point radii
 
     plt.scatter(x, y, s=area, c=colors, alpha=0.5)
-    plt.savefig("scatter.svg")
+    plt.savefig("image/scatter.svg")
 %}!}
 
 Image block is a standard [#sec-funblock|function block]. It syntax is
@@ -303,36 +299,35 @@ image_file_path
 So, include a image is as easy as
 
 {!div|bs-example|| image||
-./scatter.svg
+./image/scatter.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
-./scatter.svg
+./image/scatter.svg
 !}
 %}!}
 
 You can add optional caption to image block
 {!div|bs-example||image||
 \config{caption|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
 \config{caption|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 !}
 %}!}
 
 Sometimes, you may need to reference to an image in your text. To do this, you need
-\config{image_numbering_prefix|}
 * { add label to an image
 {!div|bs-example||image||
 \config{label|img-scatter}
 \config{caption|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
 \config{label|img-scatter}
 \config{caption|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 !}
 %}!}
 }
@@ -357,13 +352,13 @@ As you have seen, the image block can automatically add the numbering to the ima
 \config{image_numbering_prefix|Image }
 \config{label|img-scatter2}
 \config{caption|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
 \config{image_numbering_prefix|Image }
 \config{label|img-scatter2}
 \config{caption|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 !}
 %}!}
 
@@ -447,7 +442,7 @@ The content in each column of each row can be anything defined above, for exampl
 
 {!exec|firstRunOnly||{%
 import os.path
-if not os.path.isfile("scatter_s.svg"):
+if not os.path.isfile("image/scatter_s.svg"):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -460,17 +455,17 @@ if not os.path.isfile("scatter_s.svg"):
     area = np.pi * (15 * np.random.rand(N))**2  # 0 to 15 point radii
     plt.axis('off')
     plt.scatter(x, y, s=area, c=colors, alpha=0.5)
-    plt.savefig("scatter_s.svg")
+    plt.savefig("image/scatter_s.svg")
 %}!}
 {!div|bs-example||
 {{
 item1 | $E=MC^2$ ||-
-[http://bsmdoc.feiyilin.com|bsmdoc] | \image{image-left|scatter_s.svg} ||-
+[http://bsmdoc.feiyilin.com|bsmdoc] | \image{image-left|image/scatter_s.svg} ||-
 }}
 !}{!div|bs-example-src ||highlight|bsmdoc||{%
 {{
 item1 | $E=MC^2$ ||-
-[http://bsmdoc.feiyilin.com|bsmdoc] | \image{image-right|scatter_s.svg} ||-
+[http://bsmdoc.feiyilin.com|bsmdoc] | \image{image-left|image/scatter_s.svg} ||-
 }}
 %}!}
 
@@ -885,7 +880,7 @@ def bsmdoc_highlight(code, lang):
 Besides defining the function block, the \tag{code|exec} block can also be used to execute arbitrary python code (be careful!). One application is to embed the python code to generate the figure with [http://matplotlib.org/|matplotlib] package,
 {!exec|firstRunOnly||{%
 import os.path
-if not os.path.isfile("pie.svg"):
+if not os.path.isfile("image/pie.svg"):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -904,7 +899,7 @@ if not os.path.isfile("pie.svg"):
     for r, bar in zip(radii, bars):
         bar.set_facecolor(plt.cm.viridis(r / 10.))
         bar.set_alpha(0.5)
-    plt.savefig("pie.svg")
+    plt.savefig("image/pie.svg")
 %}!}
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
@@ -928,16 +923,16 @@ if not os.path.isfile("pie.svg"):
     for r, bar in zip(radii, bars):
         bar.set_facecolor(plt.cm.viridis(r / 10.))
         bar.set_alpha(0.5)
-    plt.savefig("pie.svg")
+    plt.savefig("image/pie.svg")
 %}!}
 %}!}
 
 Then you can include the \tag{code|pie.svg} in your html file
 {!div|bs-example|| image||
-./pie.svg
+./image/pie.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
-./pie.svg
+./image/pie.svg
 !}
 %}!}
 

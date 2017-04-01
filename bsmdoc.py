@@ -1,13 +1,14 @@
+#!python3
 #!/usr/bin/env python
 # Copyright (C) Tianzhu Qiao (tianzhu.qiao@feiyilin.com).
 
 import sys, re, os, io, time
 import traceback
 try:
-    from configparser import ConfigParser
+    from configparser import SafeConfigParser
     from io import StringIO
 except ImportError:
-    from ConfigParser import ConfigParser  # ver. < 3.0
+    from ConfigParser import SafeConfigParser  # ver. < 3.0
     from StringIO import StringIO
 
 import ply.lex as lex
@@ -252,7 +253,7 @@ def bsmdoc_escape(data, *args):
     s = re.sub(r'(>)', r'&gt;', s)
     return s
 def bsmdoc_unescape(data, *args):
-    s = re.sub(r'(&lt;)', r'<',data)
+    s = re.sub(r'(&lt;)', r'<', data)
     s = re.sub(r'&gt;', r'>', s)
     return s
 
@@ -262,7 +263,8 @@ def bsmdoc_helper(cmds, data, default=None, lineno=-1):
     if fun and hasattr(fun, "__call__"):
         return str(eval('fun(data, cmds[1:])'))
     else:
-        print('Warning: cannot find function "bsmdoc_%s(%s) at line %d".'%(cmds[0], ",".join(cmds[1:]), lineno))
+        f = 'bsmdoc_%s(%s)' %(cmds[0], ",".join(cmds[1:]))
+        print('Warning: undefined function block "%s" at line %d.'%(f, lineno))
     if default:
         return default
     else:
@@ -329,7 +331,8 @@ def bsmdoc_highlight(code, lang):
         txt = txt.replace('&amp;lt;', '&lt;')
         return txt.replace('&amp;gt', '&gt;')
     except ImportError:
-        return code
+        print("warning: pygments package not installed.")
+        return bsmdoc_pre(code, [])
 
 def static_vars(**kwargs):
     def decorate(func):
@@ -365,7 +368,7 @@ def bsmdoc_header(txt, level):
             orderheaddict[c] = orderheaddict.get(c, 0) + 1
             pre = pre + str(orderheaddict[c])
 
-            for key in orderheaddict.iterkeys():
+            for key in orderheaddict.keys():
                 if key > c:
                     orderheaddict[key] = 0
             if not label:
@@ -391,22 +394,17 @@ def bsmdoc_image(data, args):
     r = '<img src="%s" alt="%s" />'%(data, data)
     caption = get_option('caption', '')
     label = get_option('label', '')
-    #if len(args) >= 1:
-    #    caption = args[0]
-    #if len(args) >= 2:
-    #    label = args[1]
-    # add the in-page link
     tag = ''
     if label:
         (tag, prefix, num) = image_next_tag()
-        if get_option_int('scan', 1) ==1 and bsmdoc_getcfg('ANCHOR', label):
+        if get_option_int('scan', 1) == 1 and bsmdoc_getcfg('ANCHOR', label):
             print('Warning: duplicated label %s".'%(label))
 
         bsmdoc_setcfg('ANCHOR', label, num)
         label = 'id="%s"'%label
         tag = '<span class="tag">%s</span>'%tag
 
-    if caption: # title
+    if caption:
         caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
         r = r + '\n' + caption
     cls = 'figure'
@@ -443,14 +441,13 @@ def bsmdoc_table(head, body):
 
 def bsmdoc_listbullet(data, args):
     # data is a list; each item looks like [LISTBULLET, text]
-    dn = []
     l = ['']*len(data)
     r = ['']*len(data)
     # merge the item with previous or next item
     for i in range(len(data)):
         d = data[i]
         # merge to previous item
-        if i==0:
+        if i == 0:
             # the first item does not have previous item
             l[i] = d[0]
         else:
@@ -458,7 +455,7 @@ def bsmdoc_listbullet(data, args):
             c = os.path.commonprefix([data[i-1][0], d[0]])
             l[i] = d[0][len(c):]
         # merge with the next item
-        if i==len(data)-1:
+        if i == len(data)-1:
             # the last item
             r[i] = d[0]
         else:
@@ -473,7 +470,7 @@ def bsmdoc_listbullet(data, args):
         sp = ''
         c = len(d[0]) - len(l[i])
         for j in range(len(l[i])):
-            sp = sp + ' '*(4*(j+c));
+            sp = sp + ' '*(4*(j+c))
             if l[i][j] == r'-':
                 sp = sp + "<ul>\n"
             elif l[i][j] == r'*':
@@ -852,7 +849,7 @@ def make_content(content):
         ctxt.append('-'*(c[0] - first_level + 1) + s)
     return '\n'.join(ctxt)
 
-config = ConfigParser()
+config = SafeConfigParser()
 def bsmdoc_getcfg(sec, key):
     global config
     if config.has_option(sec, key):
@@ -883,12 +880,9 @@ def get_option_bool(key, default):
 def bsmdoc_raw(txt):
     global bsmdoc
     global config
-    config = ConfigParser()
-    config.add_section('ANCHOR')
-
+    config = SafeConfigParser()
     set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
     set_option('scan', 1)
-    set_option('source', '')
 
     bsmdoc = ''
     lex.lexer.lineno = 1
@@ -900,7 +894,7 @@ def bsmdoc_raw(txt):
     #    print(tok)
     yacc.parse(txt, tracking=True)
     if get_option_bool('rescan', False):
-        set_option('scan', 2)
+        set_option('scan', get_option_int('scan', 1)+1)
         # 2nd scan to resolve the references
         image_next_tag.counter = 0
         table_next_tag.counter = 0
@@ -915,7 +909,9 @@ def bsmdoc_raw(txt):
         bsmdoc_header.content = []
         lex.lexer.lineno = 1
         # reset all the global options
-        config.remove_section('DEFAULT')
+        for k, v in config.items('DEFAULT'):
+            if k not in ['scan', 'updated']:
+                config.remove_option('DEFAULT', k)
         yacc.parse(txt, tracking=True)
     return bsmdoc
 
@@ -987,7 +983,7 @@ def bsmdoc_gen(filename, encoding=None):
         doctitle = '<div id="toptitle">%s%s</div>'%(doctitle, subtitle)
     html.append(doctitle)
 
-    html.append(bsmdoc)#get_option('BSMDOC'))
+    html.append(bsmdoc)
     html.append(bsmdoc_getcfg('footer', 'begin'))
     if len(bsmdoc_footnote.notes):
         html.append('<ol>')

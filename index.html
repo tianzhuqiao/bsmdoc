@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="bsmdoc.css" type="text/css" />
+<link rel="stylesheet" href="css/bsmdoc.css" type="text/css" />
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
 tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
@@ -17,14 +17,14 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 </script>
 <script type="text/javascript" language="javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 <script src=https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js></script>
-<script src="bsmdoc.js"></script>
-<title>bsmdoc brief introduction</title>
+<script src="js/bsmdoc.js"></script>
+<title>bsmdoc -- another technical html doc generator</title>
 </head>
 
 <body class="nomathjax">
 <div id="layout-content">
 
-<div id="toptitle">bsmdoc brief introduction<div id="subtitle"><a href='mailto:ben.qiao@feiyilin.com'>ben.qiao@feiyilin.com</a></div>
+<div id="toptitle">bsmdoc -- another technical html doc generator<div id="subtitle"><a href='mailto:ben.qiao@feiyilin.com'>ben.qiao@feiyilin.com</a></div>
 </div>
 <div class="para">
 <p>       </p>
@@ -52,15 +52,15 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 </div>
  <h1 id="sec-1">1 Why bsmdoc? </h1>
 <div class="para">
-<p>bsmdoc is a tool to help you generate technical html files easily.</p>
+<p>bsmdoc is a tool to help you to generate technical html files easily.</p>
 </div>
 
 <div class="para">
-<p>There are many ways to generate html files. From my experience, typing the html tags directly may not be a good use of our time. Otherwise, you may end up spending a lot of time on finding a mismatched <code>tag</code> in the html file. Besides that straightforward method, there are many tools that can help to generate html documents from various formats. In this case, there is no need to manually check the html tags anymore, since they are automatically generated and "guarantee" to be correct. Most of them try to make a comprehensive and complicated tool (so that no one (like me) wants/dares to make any changes easily). Such tool may meet most requirements, and contain many features (and many of them may never be used by many users); however, once you need some missing feature, it is almost impossible to simply update the tool by yourself.</p>
+<p>There are many ways to generate html files. Typing the html tags directly may not be a good use of our time. Otherwise, you may end up spending a lot of time on finding a mismatched <code>tag</code> in the html file. Besides that straightforward method, there are many tools that can help to generate html documents from various formats. In this case, there is no need to manually check the html tags anymore, since they are automatically generated and "guarantee" to be correct. Most of them try to make a comprehensive and complicated tool (so that no one (like me) wants/dares to make any changes easily). Such tool may meet most requirements, and contain many features (and many of them may never be used by many users); however, once you need some missing feature, it is almost impossible to simply update the tool by yourself.</p>
 </div>
 
 <div class="para">
-<p>bsmdoc believes that there is simple way to generate html files. It is a light-weighted tool, which keeps the 'core' as small as possible. Thus, it may only provide some very basic features, but allow each user to extend the tool for his/her own requirements in a straightforward way.</p>
+<p>bsmdoc believes that there is a simple way to generate html files. It is a light-weighted tool, which keeps the 'core' as small as possible. Thus, it only provides some very basic features, but allow each user to extend the tool for his/her own requirements in a straightforward way.</p>
 </div>
 
 <div class="para">
@@ -71,10 +71,6 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 <p>However, if you know nothing about python or some basic programming skill, bsmdoc may not be ideal for you, unless the very limited pre-defined features is what you want.</p>
 </div>
 
-  <div class="para">
-<p> </p>
-</div>
-
 <div class="para">
 <p>bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, etc.). We will show the basic blocks in the following sections, as well as the way to extend the existing blocks.</p>
 </div>
@@ -82,7 +78,10 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 <h2 id="sec-1-1">1.1 Hello World </h2>
 <ol>
     <li>Download <a href='https://github.com/tianzhuqiao/bsmdoc'>bsmdoc</a> </li>
-    <li>Create a file (e.g., helloworld.bsmdoc) with content <div class="syntax"><pre><span></span><span class="nt">=</span><span class="gh"> hello world!</span>
+    <ul>
+        <li>bsmdoc depends on package <a href='http://www.dabeaz.com/ply/'>PLY</a> </li>
+    </ul>
+    <li>Create a file (e.g., <code>helloworld.bsmdoc</code>) with content <div class="syntax"><pre><span></span><span class="nt">=</span><span class="gh"> hello world!</span>
 </pre></div>
   </li>
     <li>Compile the file <div class="syntax"><pre><span></span>&gt; bsmdoc.py helloworld.bsmdoc
@@ -133,27 +132,27 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 </pre></div>
 </div>
 <div class="para">
-<p>heading block must start at a new line. In other words, <code>=</code> (e.g., in a paragraph) will be viewed as normal equal sign if it is not at the start of a line. bsmdoc supports all 6 heading levels as shown above. However, we don't think anyone needs all these 6 levels (remember, <a href='http://www.feynmanlectures.caltech.edu/'>"The Feynman Lectures on Physics"</a> only uses 2 levels).</p>
+<p>As you have seen, heading block must start at a new line. In other words, <code>=</code> (e.g., in a paragraph) will be viewed as normal equal sign if it is not at the start of a line. bsmdoc supports all 6 heading levels as shown above. However, we don't think anyone needs all these 6 levels (remember, <a href='http://www.feynmanlectures.caltech.edu/'>"The Feynman Lectures on Physics"</a> only uses 2 levels).</p>
 </div>
 
 heading text can spread to multiple lines as long as they are enclosed by "<code>{}</code>", as shown in the following example. Actually, "<code>{}</code>" also define a basic block in bsmdoc. And basically it is allowed to put everything in it. Thus it is quite flexible to define the heading text. <div class="bs-example">
-<h1 >multiple<br>  line<br>  heading </h1>
-<h1 >multiple  line  heading </h1>
+<h1 >multiple<br> line<br> heading </h1>
+<h1 >multiple line heading </h1>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">=</span><span class="gh"> {multiple\n</span>
-<span class="gh"> line\n</span>
-<span class="gh"> heading}</span>
+<span class="gh">line\n</span>
+<span class="gh">heading}</span>
 <span class="nt">=</span><span class="gh"> {multiple</span>
-<span class="gh"> line</span>
-<span class="gh"> heading}</span>
+<span class="gh">line</span>
+<span class="gh">heading}</span>
 </pre></div>
 </div>
-One can add an anchor to a heading block with command "<code>label</code>", which can be referenced to as a normal <a href='#sec-link'>link</a> "<code>[#label]</code>". <div class="bs-example">
-<h1 id="sec-label">section with anchor </h1>
+One can add a label to a heading block with command "<code>label</code>", so that the heading block can be referenced to as a normal in-page <a href='#sec-link'>link</a>. <div class="bs-example">
+<h1 id="sec-label">section with label </h1>
 </div>
 <div class="bs-example-src">
-<div class="syntax"><pre><span></span><span class="nt">=</span><span class="gh"> {section with anchor\config{label|sec-label}</span>}
+<div class="syntax"><pre><span></span><span class="nt">=</span><span class="gh"> {section with label\config{label|sec-label}</span>}
 </pre></div>
 </div>
 By default, the heading block will not be automatically numbered. To turn on the automatic numbering. <div class="bs-example">
@@ -347,35 +346,35 @@ image_file_path
 </div>
 
 <div class="bs-example">
-<div  class="figure"><img src=" ./scatter.svg " alt=" ./scatter.svg " /></div>
+<div  class="figure"><img src=" ./image/scatter.svg " alt=" ./image/scatter.svg " /></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
-./scatter.svg
+./image/scatter.svg
 <span class="nt">!}</span>
 </pre></div>
 </div>
 You can add optional caption to image block <div class="bs-example">
-<div  class="figure"><img src="  ./scatter.svg " alt="  ./scatter.svg " />
+<div  class="figure"><img src="  ./image/scatter.svg " alt="  ./image/scatter.svg " />
 <div class="caption"> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
 <span class="nt">\config{caption</span>|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 <span class="nt">!}</span>
 </pre></div>
 </div>
-Sometimes, you may need to reference to an image in your text. To do this, you need  <ol>
+Sometimes, you may need to reference to an image in your text. To do this, you need <ol>
     <li> add label to an image <div class="bs-example">
-<div id="img-scatter" class="figure"><img src="   ./scatter.svg " alt="   ./scatter.svg " />
+<div id="img-scatter" class="figure"><img src="   ./image/scatter.svg " alt="   ./image/scatter.svg " />
 <div class="caption"><span class="tag">Fig.1.</span> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
 <span class="nt">\config{label</span>|img-scatter}
 <span class="nt">\config{caption</span>|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 <span class="nt">!}</span>
 </pre></div>
 </div>
@@ -403,7 +402,7 @@ Fig. [#img-scatter] shows a scatter diagram
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{image_numbering_prefix</span>|Image <span class="nt">}</span>
 </pre></div>
 <div class="bs-example">
-<div id="img-scatter2" class="figure"><img src="    ./scatter.svg " alt="    ./scatter.svg " />
+<div id="img-scatter2" class="figure"><img src="    ./image/scatter.svg " alt="    ./image/scatter.svg " />
 <div class="caption"><span class="tag">Image 2.</span> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
@@ -411,7 +410,7 @@ Fig. [#img-scatter] shows a scatter diagram
 <span class="nt">\config{image_numbering_prefix</span>|Image }
 <span class="nt">\config{label</span>|img-scatter2}
 <span class="nt">\config{caption</span>|Example scatter image}
-./scatter.svg
+./image/scatter.svg
 <span class="nt">!}</span>
 </pre></div>
 </div>
@@ -516,14 +515,14 @@ The content in each column of each row can be anything defined above, for exampl
 <td>item1</td><td>$E=MC^2$</td>
 </tr>
 <tr>
-<td><a href='http://bsmdoc.feiyilin.com'>bsmdoc</a></td><td><div  class="image-left"><img src="scatter_s.svg" alt="scatter_s.svg" /></div></td>
+<td><a href='http://bsmdoc.feiyilin.com'>bsmdoc</a></td><td><div  class="image-left"><img src="image/scatter_s.svg" alt="image/scatter_s.svg" /></div></td>
 </tr>
 </tbody></table>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 <span class="nf">item1 </span>|<span class="nf"> $E=MC^2$ </span>|<span class="k">|-</span>
-<span class="nt">[http://bsmdoc.feiyilin.com</span>|<span class="s">bsmdoc</span><span class="nt">]</span><span class="nf"> </span>|<span class="nf"> \image{image-right</span>|<span class="nf">scatter_s.svg} </span>|<span class="k">|-</span>
+<span class="nt">[http://bsmdoc.feiyilin.com</span>|<span class="s">bsmdoc</span><span class="nt">]</span><span class="nf"> </span>|<span class="nf"> \image{image-left</span>|<span class="nf">image/scatter_s.svg} </span>|<span class="k">|-</span>
 <span class="nt">}}</span>
 </pre></div>
 </div>
@@ -1009,16 +1008,16 @@ Besides defining the function block, the <code>exec</code> block can also be use
     <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">bar</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">radii</span><span class="p">,</span> <span class="n">bars</span><span class="p">):</span>
         <span class="n">bar</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="n">r</span> <span class="o">/</span> <span class="mf">10.</span><span class="p">))</span>
         <span class="n">bar</span><span class="o">.</span><span class="n">set_alpha</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pie.svg&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;image/pie.svg&quot;</span><span class="p">)</span>
 <span class="nt">%}!}</span>
 </pre></div>
 </div>
 Then you can include the <code>pie.svg</code> in your html file <div class="bs-example">
-<div  class="figure"><img src=" ./pie.svg " alt=" ./pie.svg " /></div>
+<div  class="figure"><img src=" ./image/pie.svg " alt=" ./image/pie.svg " /></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
-./pie.svg
+./image/pie.svg
 <span class="nt">!}</span>
 </pre></div>
 </div>
@@ -1141,7 +1140,7 @@ To use the customized template, you can generate a configuration file to define 
 <ol>
 <li><div id="footnote-1">This is the footnote <a href="#footnote-src-1">&#8617;</a></div></li>
 </ol>
-<div id="footer-text"> Last updated 2017-03-31 23:09:50 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a>.</div>
+<div id="footer-text"> Last updated 2017-04-01 15:13:03 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a>.</div>
 </div>
 </div>
 </body>
