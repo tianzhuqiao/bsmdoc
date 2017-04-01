@@ -304,7 +304,7 @@ def bsmdoc_tag(data, args):
 
 def bsmdoc_math(data, args):
     if len(args) > 0 and args[0] == 'inline':
-        return '$%s$'%data
+        return '$%s$'%bsmdoc_escape(data)
     else:
         return "<div class='mathjax'>\n$$ %s $$\n</div>" %bsmdoc_escape(data)
 
@@ -355,8 +355,8 @@ def bsmdoc_header(txt, level):
     pre = ''
     label = get_option('label', '')
 
-    if get_option_bool('heading_number', 0):
-        start = get_option_int('heading_number_start', 1)
+    if get_option_bool('heading_numbering', 0):
+        start = get_option_int('heading_numbering_start', 1)
         c = len(level)
         if c >= start:
             for i in range(start, c):
@@ -374,28 +374,34 @@ def bsmdoc_header(txt, level):
         s = pre + ' ' + s
     if label:
         bsmdoc_setcfg('ANCHOR', label, pre)
-    return (s, pre, label)
+        label = 'id="%s"'%label
+
+    return '<h%d %s>%s</h%d>\n'%(len(level), label, s, len(level))
 
 @static_vars(counter=0)
 def image_next_tag():
-    if get_option_bool('image_tag', 0):
+    if get_option_bool('image_numbering', 0):
         image_next_tag.counter += 1
-        prefix = get_option('image_tag_prefix', 'Fig.')
-        num = get_option('image_tag_num_prefix', '') + str(image_next_tag.counter)
+        prefix = get_option('image_numbering_prefix', 'Fig.')
+        num = get_option('image_numbering_num_prefix', '') + str(image_next_tag.counter)
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
+
 def bsmdoc_image(data, args):
     r = '<img src="%s" alt="%s" />'%(data, data)
     caption = get_option('caption', '')
     label = get_option('label', '')
-    if len(args) >= 1:
-        caption = args[0]
-    if len(args) >= 2:
-        label = args[1]
+    #if len(args) >= 1:
+    #    caption = args[0]
+    #if len(args) >= 2:
+    #    label = args[1]
     # add the in-page link
     tag = ''
     if label:
         (tag, prefix, num) = image_next_tag()
+        if get_option_int('scan', 1) ==1 and bsmdoc_getcfg('ANCHOR', label):
+            print('Warning: duplicated label %s".'%(label))
+
         bsmdoc_setcfg('ANCHOR', label, num)
         label = 'id="%s"'%label
         tag = '<span class="tag">%s</span>'%tag
@@ -403,14 +409,17 @@ def bsmdoc_image(data, args):
     if caption: # title
         caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
         r = r + '\n' + caption
-    return '<div %s class="figure">%s</div>'%(label, r)
+    cls = 'figure'
+    if args:
+        cls = args[0]
+    return '<div %s class="%s">%s</div>'%(label, cls, r)
 
 @static_vars(counter=0)
 def table_next_tag():
-    if get_option_bool('table_tag', 0):
+    if get_option_bool('table_numbering', 0):
         table_next_tag.counter += 1
-        prefix = get_option('table_tag_prefix', 'Table.')
-        num = get_option('table_tag_num_prefix', '') + str(table_next_tag.counter)
+        prefix = get_option('table_numbering_prefix', 'Table.')
+        num = get_option('table_numbering_num_prefix', '') + str(table_next_tag.counter)
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
 
@@ -478,6 +487,9 @@ def bsmdoc_listbullet(data, args):
                 sn = ' '*(4*(j+c)) + "</ol>\n" + sn
         sall = sall + sp + s + sn
     return sall
+
+def bsmdoc_anchor(data, args):
+    return '<a name="%s"><sup>&#x2693;</sup></a>'%(data)
 
 """
 article : sections
@@ -567,8 +579,7 @@ def p_sections_single(p):
 
 def p_heading(p):
     '''block : heading_start logicline'''
-    (s, pre, label) = bsmdoc_header(p[2], p[1].strip())
-    p[0] = '<h%d id="%s">%s</h%d>\n'%(len(p[1]), label, s, len(p[1]))
+    p[0] = bsmdoc_header(p[2], p[1].strip())
 
 def p_heading_start(p):
     '''heading_start : HEADING'''
@@ -675,7 +686,7 @@ def p_blockargs_single(p):
 
 def p_block_raw(p):
     '''block : RBLOCK'''
-    p[0] = bsmdoc_escape(p[1])
+    p[0] = p[1]
 
 def p_block_eqn(p):
     '''block : EQUATION'''
@@ -700,6 +711,7 @@ def p_vtext_multi(p):
     '''vtext : vtext sections TCELL'''
     p[0] = p[1]
     p[0].append(p[2].strip())
+
 def p_vtext_single(p):
     '''vtext : sections TCELL'''
     p[0] = [p[1].strip()]
@@ -714,10 +726,13 @@ def p_text_single(p):
 
 def p_logicline(p):
     '''logicline : line
-                 | line NEWLINE
-                 | bracetext
-                 | bracetext NEWLINE'''
+                 | bracetext'''
     p[0] = p[1]
+
+def p_logicline_newline(p):
+    '''logicline : line NEWLINE
+                 | bracetext NEWLINE'''
+    p[0] = p[1] + ' '
 def p_bracetext(p):
     '''bracetext : BRACEL sections BRACER'''
     p[0] = p[2]
@@ -804,7 +819,7 @@ bsmdoc_conf = u"""
 [html]
 begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 end= </html>
 
 [header]
@@ -899,6 +914,8 @@ def bsmdoc_raw(txt):
             bsmdoc_setcfg('bsmdoc', 'CONTENT', s)
         bsmdoc_header.content = []
         lex.lexer.lineno = 1
+        # reset all the global options
+        config.remove_section('DEFAULT')
         yacc.parse(txt, tracking=True)
     return bsmdoc
 

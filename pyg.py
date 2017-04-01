@@ -10,6 +10,7 @@ from pygments.token import Text, Comment, Operator, Keyword, Name, String, \
     Number, Punctuation, Generic, Other
 from pygments.util import get_bool_opt, ClassNotFound
 from pygments.lexers.python import PythonLexer
+from pygments.lexers.markup import TexLexer
 
 _all__ =['bLexer']
 class bLexer(RegexLexer):
@@ -29,6 +30,7 @@ class bLexer(RegexLexer):
             (r'\!\}', Name.Tag, "#pop"),
             (r'(exec)(\|\|)(\{\%)', bygroups(Name.Function, Text, Name.Tag), 'pythonblock'),
             (r'(exec)(\|)(firstRunOnly)(\|\|)(\{\%)', bygroups(Name.Function,Text,Name.Tag, Text, Name.Tag), 'pythonblock'),
+            (r'(math)(\|\|)(\{\%)', bygroups(Name.Function, Text, Name.Tag), 'texblock'),
             (r'((?<=\{\!)[^|\n]*)(\|)', bygroups(Name.Function, Text)),
             (r'((?<=\|\|)[^|\n]*)(\|)', bygroups(Name.Function, Text)),
             (r'([^|\n]*)(\|\|)', bygroups(Name.Tag,Text)),
@@ -43,6 +45,13 @@ class bLexer(RegexLexer):
             # match every thing except "%}"
             (r'([^\%\}]|(\%(?!\}))|((?<!\%)\}))*(?=\%\})', using(PythonLexer)),
             ],
+        'texblock':[
+            # highlight with python lexer
+            # end
+            (r'\%\}', Name.Tag, '#pop'),
+            # match every thing except "%}"
+            (r'([^\%\}]|(\%(?!\}))|((?<!\%)\}))*(?=\%\})', using(TexLexer)),
+            ],
         'cmdblock':[
             (r'\{', Name.Tag, "#push"),
             (r'\}', Name.Tag, "#pop"),
@@ -53,6 +62,15 @@ class bLexer(RegexLexer):
         'rawblock': [
             (r'\{\%', Name.Tag, "#push"),
             (r'\%\}', Name.Tag, "#pop"),
+            (r'.', Text),
+            ],
+        'tableblock': [
+            (r'\{\{', Name.Tag, "#push"),
+            (r'\}\}', Name.Tag, "#pop"),
+            (r'\|\+', Keyword ),
+            (r'\|\-', Keyword ),
+            include('section'),
+            (r'([^\|\n]*)(\|)', bygroups(Name.Function, Text)),
             (r'.', Text),
             ],
         'section': [
@@ -66,16 +84,16 @@ class bLexer(RegexLexer):
             (r'^(={1,6})(.+\n)', bygroups(Name.Tag, Generic.Heading)),
             # bullet
             (r'^([\-\*]+)(\s*\{[^\}]*\})', bygroups(Name.Tag, Name.Tag)),
-            (r'^([\-\*]+)(.*\n)', bygroups(Name.Tag, Name.Tag)),
+            (r'^([\-\*]+)([^\n]*\n)', bygroups(Name.Tag, Name.Tag)),
             # equation
             (r'\$\$.*\$\$', Name.Tag),
             (r'\$[^\$]*\$', Name.Tag),
             # raw block
             (r'\{\%', Name.Tag, "rawblock"),
             # function block
-            #(r'(\{\!)([^|]*||)', bygroups(Name.Tag, Generic.Heading)),
             (r'\{\!', Name.Tag, "funblock"),
-            #(r'\{\!|\!\}|\{\%|\%\}|\}\}|\{\{', Name.Tag),
+            # table
+            (r'\{\{', Name.Tag, 'tableblock'),
             # command
             #(r'(\\\w+)({)([^|]*|)(.*)(})', bygroups(Name.Tag,Name.Tag,Name.Tag, Text, Name.Tag)),
             (r'(\\\w+)({)', bygroups(Name.Function,Name.Tag), 'cmdblock'),
