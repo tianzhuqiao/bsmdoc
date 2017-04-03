@@ -670,7 +670,7 @@ def p_block_arg(p):
     p[0] = p[3]
     for c in reversed(cmds):
         if c:
-            p[0] = bsmdoc_helper(c, p[0], lineno=p.lineno(2))
+            p[0] = bsmdoc_helper(c, p[0].strip(), lineno=p.lineno(2))
 
 def p_blockargs_multi(p):
     '''blockargs : blockargs vtext TCELL'''

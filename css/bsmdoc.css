@@ -267,7 +267,12 @@ ul {
 	list-style-position: outside;
 	list-style-type: circle;
 }
-
+ul ul {
+	list-style-type: disc;
+}
+ul ul ul {
+	list-style-type: circle;
+}
 p + ul, p + ol {
 	margin-top: -0.5em;
 }
