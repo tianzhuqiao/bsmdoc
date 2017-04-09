@@ -5,8 +5,47 @@
 \config{image_numbering|1}
 \config{table_numbering|1}
 \config{source|1}
-\config{bsmdoc_conf|bsmdoc.cfg}
+#\config{bsmdoc_conf|bsmdoc.cfg}
 
+{!config||{%
+[html]
+begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+end= </html>
+
+[header]
+begin = <head>
+    <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+end = <title>%(TITLE)s</title>
+    </head>
+content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css" />
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+          tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+          processClass: "mathjax",
+          ignoreClass: "tex2jax_ignore|nomathjax"
+      });
+      MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
+    </script>
+    <script type="text/javascript" language="javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script src=https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js></script>
+    <script src="js/bsmdoc.js"></script>
+
+[body]
+begin = <body class="nomathjax">
+    <div id="layout-content">
+end = </div>
+    </body>
+
+[footer]
+begin = <div id="footer">
+end = </div>
+content = <div id="footer-text"> Last updated %(UPDATED)s, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
+%}!}
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
 def bsmdoc_highlight(code, lang):
@@ -842,6 +881,7 @@ def bsmdoc_del(args, content):
 %}!}
 
 You can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library
+
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
 def bsmdoc_highlight(code, lang):
@@ -862,6 +902,7 @@ def bsmdoc_highlight(code, lang):
 %}!}
 
 It may work fine to compile most of your docs, until one day it fails and python complains indefinite loop. The problem here is that the above definition assumes such code will only be called once. But it is not always true for bsmdoc. As mentioned before, bsmdoc may scan the doc multiple times to solve the late-defined references. Thus, when bsmdoc executes the above code second time, \tag{code|bsmdoc_highlight_raw} will not refer to the original \tag{code|bsmdoc_highlight}, instead, it will also point to the local defined copy. The definition will be equivalent to
+
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
@@ -876,6 +917,7 @@ def bsmdoc_highlight(code, lang):
 It is apparently an indefinite loop.
 
 Several techniques can be used to solve this problem. For example, you can always define the whole function by yourself, instead of calling the original function in some branches. Or you may check if the local function has been defined
+
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
 try:
@@ -891,6 +933,7 @@ except NameError:
 %}!}
 
 Or you can tell bsmdoc to execute the code for the first scan only
+
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
@@ -903,6 +946,7 @@ def bsmdoc_highlight(code, lang):
 %}!}
 
 Besides defining the function block, the \tag{code|exec} block can also be used to execute arbitrary python code (be careful!). One application is to embed the python code to generate the figure with [http://matplotlib.org/|matplotlib] package,
+
 {!exec|firstRunOnly||{%
 import os.path
 if not os.path.isfile("image/pie.svg"):
@@ -953,6 +997,7 @@ if not os.path.isfile("pie.svg"):
 %}!}
 
 Then you can include the \tag{code|pie.svg} in your html file
+
 {!div|bs-example|| image||
 ./image/pie.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
@@ -970,6 +1015,7 @@ The difference between \tag{code|function block} and \tag{code|inline function b
 %}!}
 
 In general, the blocks defined in the above section can also be used as inline block. For example
+
 {!div|bs-example||highlight|html||
 \tag{code|content}
 \pre{content}
@@ -981,6 +1027,7 @@ In general, the blocks defined in the above section can also be used as inline b
 !}
 
 bsmdoc defines a special inline function block for configuration (\tag{code|{%\config{}%}}). It adds a configuration item to bsmdoc's global configuration table, and output empty string to the html file. Thus, it will not directly update the html docs, although the other blocks may rely on such configurations to control their behaviors. The syntax is
+
 {!div|bs-example||highlight|bsmdoc||{%
 \config{option|value}}
 %}!}
@@ -1059,7 +1106,23 @@ To use the customized template, you can generate a configuration file to define 
 \config{bsmdoc_conf|configure_file_path}
 %}!}
 
+Using a separate configuration file seems not compatible with our goal to include everything in a single file, although sometimes it may be convenient (for example, to use the same configuration file for multiple docs). bsmdoc also provides a way to include the customized template in your doc, for example
+
+{!div|bs-example||highlight|ini||{%
+{!config||{%
+[html]
+begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+end= </html>
+...
+%}!}
+%}!}
+
+In this case, "\tag{code|config}" function block is called without any argument. And its content should have a INI file structure.
+
 bsmdoc uses [https://docs.python.org/2/library/configparser.html|ConfigParser] to parse the configurations. Thus, \tag{code|\%()s} will be resolved to the corresponding configuration values. The configuration name is case insensitive. For example,
+
 - {\tag{code|\%(TITLE)s} will be replaced with "\tag{code|my html title}", if you config the title with
 {!div|bs-example-src||highlight|bsmdoc||{%
 \config{title|my html title}
@@ -1068,6 +1131,7 @@ bsmdoc uses [https://docs.python.org/2/library/configparser.html|ConfigParser] t
 - \tag{code|\%(SOURCE)s} will be replaced with the bsmdoc filename.
 
 It is easy to create a configuration by
+
 - {define the macro content, e.g.,
 {!div|bs-example-src||highlight|bsmdoc||{%
 \config{MYMACRO|...}
@@ -1085,16 +1149,19 @@ bsmdoc defines "\tag{code|addcss}" configuration to insert additional \tag{code|
 %}!}
 
 To insert multiple css, separate the multiple css files with white-space
+
 {!div|bs-example-src||highlight|bsmdoc||{%
 \config{addcss|mycss.css mycss2.css}
 %}!}
 
 Similarly, bsmdoc also defines the "\tag{code|addjs}" configuration to include javascripts in the html file
+
 {!div|bs-example-src||highlight|bsmdoc||{%
 \config{addcss|myjs.js myjs2.js}
 %}!}
 
 There are two ways to define doc title. The first one is to use the \tag{code|toptitle} configuration. For example, the following line will define the top title
+
 {!div|bs-example||highlight|html||{%
 <div class="toptitle">
     bsmdoc -- another technical html doc generator
@@ -1109,6 +1176,7 @@ There are two ways to define doc title. The first one is to use the \tag{code|to
 %}!}
 
 It is easy to see that it is equivalent to the following code
+
 {!div|bs-example-src||highlight|bsmdoc||{%
 {!div|toptitle||
 bsmdoc -- another technical html doc generator

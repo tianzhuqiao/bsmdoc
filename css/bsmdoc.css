@@ -809,6 +809,8 @@ table th[class*="col-"] {
   padding: 0;
   margin-top: 0;
   margin-bottom: 0;
+  /*word-break: normal;
+  white-space: nowrap;*/
   background-color: transparent;
   border: 0;
 }

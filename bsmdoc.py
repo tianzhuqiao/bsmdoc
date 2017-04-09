@@ -271,9 +271,14 @@ def bsmdoc_helper(cmds, data, default=None, lineno=-1):
         return data
 
 def bsmdoc_config(data, args):
-    if len(args) <= 0:
-        return ""
-    set_option(args[0], data)
+    try:
+        if len(args) <= 0:
+            config.readfp(StringIO(data))
+        else:
+            set_option(args[0], data)
+    except:
+        print("error: bsmdoc_config('%s',%s)"% (data, args))
+        traceback.print_exc()
     return ""
 
 # deal with the equation reference: \ref{} or \eqref{}
@@ -886,7 +891,8 @@ def bsmdoc_raw(txt):
     config = SafeConfigParser()
     set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
     set_option('scan', 1)
-
+    set_option('title', '')
+    set_option('source', '')
     bsmdoc = ''
     lex.lexer.lineno = 1
     #lex.input(txt)
@@ -913,7 +919,7 @@ def bsmdoc_raw(txt):
         lex.lexer.lineno = 1
         # reset all the global options
         for k, v in config.items('DEFAULT'):
-            if k not in ['scan', 'updated']:
+            if k not in ['scan', 'updated', 'title', 'source']:
                 config.remove_option('DEFAULT', k)
         yacc.parse(txt, tracking=True)
     return bsmdoc
@@ -947,14 +953,13 @@ def bsmdoc_readfile(filename, encoding=None):
 def bsmdoc_gen(filename, encoding=None):
     global bsmdoc
     global config
+    config.readfp(StringIO(bsmdoc_conf))
     txt = bsmdoc_readfile(filename, encoding)
     bsmdoc_raw(txt)
     config_doc = get_option('bsmdoc_conf', '')
     if config_doc:
         txt = bsmdoc_readfile(config_doc)
         config.readfp(StringIO(txt))
-    else:
-        config.readfp(StringIO(bsmdoc_conf))
 
     set_option('THISFILE', os.path.basename(filename))
     html = []
