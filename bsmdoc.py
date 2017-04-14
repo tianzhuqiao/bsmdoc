@@ -382,9 +382,9 @@ def bsmdoc_header(txt, level):
         s = pre + ' ' + s
     if label:
         bsmdoc_setcfg('ANCHOR', label, pre)
-        label = 'id="%s"'%label
+        label = ' id="%s"'%label
 
-    return '<h%d %s>%s</h%d>\n'%(len(level), label, s, len(level))
+    return '<h%d%s>%s</h%d>\n'%(len(level), label, s, len(level))
 
 @static_vars(counter=0)
 def image_next_tag():
@@ -445,50 +445,70 @@ def bsmdoc_table(head, body):
     return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
 
 def bsmdoc_listbullet(data, args):
-    # data is a list; each item looks like [LISTBULLET, text]
-    l = ['']*len(data)
-    r = ['']*len(data)
-    # merge the item with previous or next item
-    for i in range(len(data)):
+    def listbullet(stack):
+        l = r = ""
+        for j in range(len(t)):
+            if t[j] == r'-':
+                l = l + "<ul>\n"
+                r = "</ul>\n" + r
+            elif t[j] == r'*':
+                l = l + "<ol>\n"
+                r = "</ol>\n" + r
+        c = ''
+        while len(stack):
+            item = stack.pop()
+            c = "<li>%s</li>\n"%item[1]+c
+        return l+c+r
+
+    if len(data) == 0:
+        return ""
+    html = ""
+    # the current listbullet level
+    t = data[0][0]
+    # hold all the items with the current level
+    stack = [data[0]]
+    # next item
+    i = 1
+    while i < len(data):
         d = data[i]
-        # merge to previous item
-        if i == 0:
-            # the first item does not have previous item
-            l[i] = d[0]
+        if d[0] == t:
+            # same level as the current one, add to the list
+            stack.append(d)
+            i = i + 1
         else:
-            # merge with previous item, delete the common prefix
-            c = os.path.commonprefix([data[i-1][0], d[0]])
-            l[i] = d[0][len(c):]
-        # merge with the next item
-        if i == len(data)-1:
-            # the last item
-            r[i] = d[0]
-        else:
-            # delete the common prefix
-            c = os.path.commonprefix([d[0], data[i+1][0]])
-            r[i] = d[0][len(c):]
-    # generate the html tags
-    sall = ''
-    for i in range(len(data)):
-        d = data[i]
-        s = '    '*len(d[0])+'<li>%s</li>\n'%(d[1])
-        sp = ''
-        c = len(d[0]) - len(l[i])
-        for j in range(len(l[i])):
-            sp = sp + ' '*(4*(j+c))
-            if l[i][j] == r'-':
-                sp = sp + "<ul>\n"
-            elif l[i][j] == r'*':
-                sp = sp + "<ol>\n"
-        sn = ''
-        c = len(d[0]) - len(r[i])
-        for j in range(len(r[i])):
-            if r[i][j] == r'-':
-                sn = ' '*(4*(j+c)) + "</ul>\n" + sn
-            elif r[i][j] == r'*':
-                sn = ' '*(4*(j+c)) + "</ol>\n" + sn
-        sall = sall + sp + s + sn
-    return sall
+            # the top level is the prefix, which means d is the child item of
+            # the previous item
+            c = os.path.commonprefix([t, d[0]])
+            if c == t:
+                j = i
+                # the number of child items
+                cnt = 0
+                while c and j < len(data):
+                    cj = os.path.commonprefix([data[j][0], t])
+                    if cj != c or data[j][0] == t:
+                        # the last child item
+                        break
+                    # remove the prefix
+                    data[j][0] = data[j][0][len(c):]
+                    cnt = cnt + 1
+                    j = j+1
+                # data[i:i+cnt] is data[i-1]'s children
+                tmp = bsmdoc_listbullet(data[i:i+cnt], args)
+                i = j
+                # update the previous item text
+                item = stack.pop()
+                item[1] = item[1] + tmp
+                stack.append(item)
+            else:
+                # not the prefix of the current level, which means the previous
+                # listbullet ends; and start the new one
+
+                html = html+listbullet(stack)
+                stack = [d]
+                t = d[0]
+                i = i+1
+
+    return html+listbullet(stack)
 
 def bsmdoc_anchor(data, args):
     return '<a name="%s"><sup>&#x2693;</sup></a>'%(data)
@@ -581,7 +601,7 @@ def p_sections_single(p):
 
 def p_heading(p):
     '''block : heading_start logicline'''
-    p[0] = bsmdoc_header(p[2], p[1].strip())
+    p[0] = bsmdoc_header(p[2].strip(), p[1].strip())
 
 def p_heading_start(p):
     '''heading_start : HEADING'''
@@ -590,13 +610,19 @@ def p_heading_start(p):
 
 def p_block_paragraph(p):
     '''block : paragraph'''
-    p[0] = p[1]
-
+    # add <P> tag to any text which is not in a function block and ended with
+    # '\n'
+    if len(fblock_state) == 0 and p[1].endswith('\n'):
+        p[0] = '<p>%s</p>' %(p[1].strip())
+        p[0] = bsmdoc_div(p[0], ['para']) + '\n'
+    else:
+        p[0] = p[1]
 def p_paragraph_multiple(p):
     '''paragraph : text NEWPARAGRAPH'''
     if p[1]:
-        p[0] = '<p>%s</p>' %(p[1])
-        p[0] = bsmdoc_div(p[0], ['para']) + '\n'
+        p[0] = p[1]+ '\n'
+        #'<p>%s</p>' %(p[1])
+        #p[0] = bsmdoc_div(p[0], ['para'])
     else:
         p[0] = ''
 
@@ -736,7 +762,7 @@ def p_logicline_newline(p):
                  | bracetext NEWLINE'''
     p[0] = p[1].strip()
     if p[0]:
-        p[0] = p[0] + ' '
+        p[0] = p[0] + ' \n'
 def p_bracetext(p):
     '''bracetext : BRACEL sections BRACER'''
     p[0] = p[2]
@@ -889,6 +915,7 @@ def bsmdoc_raw(txt):
     global bsmdoc
     global config
     config = SafeConfigParser()
+    config.readfp(StringIO(bsmdoc_conf))
     set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
     set_option('scan', 1)
     set_option('title', '')
@@ -921,6 +948,7 @@ def bsmdoc_raw(txt):
         for k, v in config.items('DEFAULT'):
             if k not in ['scan', 'updated', 'title', 'source']:
                 config.remove_option('DEFAULT', k)
+        config.readfp(StringIO(bsmdoc_conf))
         yacc.parse(txt, tracking=True)
     return bsmdoc
 
@@ -953,7 +981,6 @@ def bsmdoc_readfile(filename, encoding=None):
 def bsmdoc_gen(filename, encoding=None):
     global bsmdoc
     global config
-    config.readfp(StringIO(bsmdoc_conf))
     txt = bsmdoc_readfile(filename, encoding)
     bsmdoc_raw(txt)
     config_doc = get_option('bsmdoc_conf', '')
