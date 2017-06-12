@@ -1,5 +1,4 @@
-function isScrolledIntoView(elem)
-{
+function isScrolledIntoView(elem) {
     var docViewTop = $(window).scrollTop();
     var docViewBottom = docViewTop + $(window).height();
 
@@ -25,32 +24,28 @@ var simplePopup = (function() {
             'z-index': '100',
         });
         var thispopup = this
-    MathJax.Hub.Queue(function () {
-        $container.on('mouseover', thispopup.pattern, {thispopup:thispopup}, thispopup.mouseover);
-        $container.on('mouseout', thispopup.pattern,  {thispopup:thispopup}, thispopup.mouseout);
-    });
-this.showTooltip = false;
+        $container.on('mouseover', thispopup.pattern, {thispopup:thispopup}, thispopup.mouseOver);
+        $container.on('mouseout', thispopup.pattern,  {thispopup:thispopup}, thispopup.mouseOut);
+        this.showTooltip = false;
     };
+
     simplePopup.showTooltipNow = function(thispopup) {
         thispopup.showTooltip = true;
         thispopup.tooltip.stop(true, true);
-        //$tooltip.append($root.clone());
         thispopup.tooltip.css({
             top: 0,
         });
         thispopup.tooltip.fadeIn();
-
     };
-    simplePopup.prototype.keepvisible = function(e)
-    {
-        var thispopup = e.data.thispopup;
 
+    simplePopup.prototype.keepVisible = function(e) {
+        var thispopup = e.data.thispopup;
         thispopup.tooltip.stop();
         thispopup.tooltip.css({
-            'opacity':'initial'  //problem here if opacity is set in render method
+            'opacity':'initial'
         });
     };
-    simplePopup.prototype.mouseover = function(e) {
+    simplePopup.prototype.mouseOver = function(e) {
         var thispopup = e.data.thispopup;
         var a = e.currentTarget;
         var $number = $(a.hash);
@@ -61,8 +56,8 @@ this.showTooltip = false;
             })
             thispopup.target = false;
         }
-
         if(isScrolledIntoView($root)) {
+            // if the element is visible, highlight it by changing its background
             thispopup.target = $root;
             $root.css({
                 'background':'#ffa',
@@ -70,12 +65,9 @@ this.showTooltip = false;
         } else {
             thispopup.showTooltip = true;
             var $container = $(document.body);
-            var bounds = $(a).offset();
-            var containerBounds = $container.offset();
-            thispopup.tooltip.bind('mouseover', {thispopup:thispopup}, thispopup.keepvisible);
-            thispopup.tooltip.bind('mouseout',  {thispopup:thispopup}, thispopup.mouseout);
+            thispopup.tooltip.bind('mouseover', {thispopup:thispopup}, thispopup.keepVisible);
+            thispopup.tooltip.bind('mouseout',  {thispopup:thispopup}, thispopup.mouseOut);
             thispopup.tooltip.stop(true, true);
-            //thispopup.tooltip.append($root.clone());
             thispopup.tooltip.html($root.html());
             thispopup.tooltip.css({
                 top: 0,
@@ -83,15 +75,13 @@ this.showTooltip = false;
             thispopup.tooltip.fadeIn();
         }
     }
-    simplePopup.prototype.mouseout = function(e) {
+
+    simplePopup.prototype.mouseOut = function(e) {
         var thispopup = e.data.thispopup;
         thispopup.tooltip.stop(true, true);
         thispopup.tooltip.fadeOut(function () {
             thispopup.tooltip.empty();
         });
-        var a = e.currentTarget;
-        var $number = $(a.hash);
-        var $root = $number.closest('div');
         if(thispopup.target) {
             thispopup.target.css({
                 'background':'#fff',
@@ -101,9 +91,10 @@ this.showTooltip = false;
     }
     return simplePopup;
 })();
-$( document ).ready(function() {
-var sp = new simplePopup('a[href*="mjx-eqn-"]');
-var spimg = new simplePopup('a[href*="img-"]');
-var spimg = new simplePopup('a[href*="tbl-"]');
-var footnote = new simplePopup('a[href*="footnote-"]');
+
+$( window ).load(function() {
+    new simplePopup('a[href*="mjx-eqn-"]');
+    new simplePopup('a[href*="img-"]');
+    new simplePopup('a[href*="tbl-"]');
+    new simplePopup('a[href*="footnote-"]');
 });
