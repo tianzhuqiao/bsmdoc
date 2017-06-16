@@ -1,4 +1,4 @@
-#!python3
+#!python
 #!/usr/bin/env python
 # Copyright (C) Tianzhu Qiao (tianzhu.qiao@feiyilin.com).
 
@@ -60,7 +60,7 @@ t_link_eof = t_eof
 t_table_eof = t_eof
 
 def t_INCLUDE(t):
-    r'\#include[ ]+[^\s]+ [ ]*'
+    r'\#include[ ]+[^\s]+[\s]*'
     filename = t.value.strip()
     filename = filename.replace('#include', '', 1)
     filename = filename.strip()
@@ -69,8 +69,10 @@ def t_INCLUDE(t):
                                 'lexpos':t.lexer.lexpos,
                                 'lineno': t.lexer.lineno})
         t.lexer.input(bsmdoc_readfile(filename))
+        t.lexer.lineno = 1
         return t.lexer.token()
-
+    else:
+        print("can't not find %s"%filename)
 def t_MAKECONTENT(t):
     r'\#makecontent[ ]*'
     c = bsmdoc_getcfg('bsmdoc', 'CONTENT')
@@ -303,10 +305,9 @@ def bsmdoc_pre(data, args):
     return "<pre>%s</pre>" % data
 
 def bsmdoc_tag(data, args):
-    if len(args) > 1:
-        return "<%s class='%s'>%s</%s>"%(args[0], ' '.join(args[1:]), data, args[0])
-    elif len(args) == 1:
-        return "<%s>%s</%s>"%(args[0], data, args[0])
+    if len(args) >= 1:
+        style = bsmdoc_style_(args[1:])
+        return "<%s %s>%s</%s>"%(args[0], style, data, args[0])
     return data
 
 def bsmdoc_math(data, args):
@@ -320,7 +321,8 @@ def bsmdoc_div(data, args):
     if not args:
         print('div block requires at least one argument')
         return data
-    return '<div class="%s">\n%s\n</div>\n' %(" ".join(args), data)
+    style = bsmdoc_style_(args)
+    return '<div %s>\n%s\n</div>\n' %(style, data)
 
 def bsmdoc_highlight(code, lang):
     try:
@@ -395,6 +397,20 @@ def image_next_tag():
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
 
+def bsmdoc_style_(args, default_class=None):
+    style = []
+    style_class = []
+    for a in args:
+        if '=' not in a:
+            style_class.append(a)
+        else:
+            style.append(a)
+    if not style_class and default_class:
+        style_class.append(default_class)
+    if style_class:
+        style.append('class="%s"'%(' '.join(style_class)))
+    return ' '.join(style)
+
 def bsmdoc_image(data, args):
     r = '<img src="%s" alt="%s" />'%(data, data)
     caption = get_option('caption', '')
@@ -412,10 +428,28 @@ def bsmdoc_image(data, args):
     if caption:
         caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
         r = r + '\n' + caption
-    cls = 'figure'
-    if args:
-        cls = args[0]
-    return '<div %s class="%s">%s</div>'%(label, cls, r)
+    style = bsmdoc_style_(args, 'figure')
+    return '<div %s %s>%s</div>'%(label, style, r)
+
+def bsmdoc_video(data, args):
+    r = '<video controls><source src="%s">Your browser does not support the video tag.</video>'%(data)
+    caption = get_option('caption', '')
+    label = get_option('label', '')
+    tag = ''
+    if label:
+        (tag, prefix, num) = image_next_tag()
+        if get_option_int('scan', 1) == 1 and bsmdoc_getcfg('ANCHOR', label):
+            print('Warning: duplicated label %s".'%(label))
+
+        bsmdoc_setcfg('ANCHOR', label, num)
+        label = 'id="%s"'%label
+        tag = '<span class="tag">%s</span>'%tag
+
+    if caption:
+        caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
+        r = r + '\n' + caption
+    style = bsmdoc_style_(args, 'video')
+    return '<div %s %s>%s</div>'%(label, style, r)
 
 @static_vars(counter=0)
 def table_next_tag():
@@ -605,16 +639,17 @@ def p_heading(p):
 
 def p_heading_start(p):
     '''heading_start : HEADING'''
+    global header_level
     set_option('label', '')
     p[0] = p[1]
+    header_level = len(fblock_state)
 
 def p_block_paragraph(p):
     '''block : paragraph'''
     # add <P> tag to any text which is not in a function block and ended with
     # '\n'
-    if len(fblock_state) == 0 and p[1].endswith('\n'):
-        p[0] = '<p>%s</p>' %(p[1].strip())
-        p[0] = bsmdoc_div(p[0], ['para']) + '\n'
+    if len(fblock_state) == header_level and p[1].endswith('\n'):
+        p[0] = '<p>%s</p>\n' %(p[1].strip())
     else:
         p[0] = p[1]
 def p_paragraph_multiple(p):
@@ -679,16 +714,19 @@ def p_rowsep(p):
 # function block supports embedded block, remember the current block level
 # to print the error message correspondingly when error occurs.
 fblock_state = []
+header_level = 0
 def p_block_start(p):
     """bstart : BSTART"""
     p[0] = ''
-    fblock_state.append((p[1], p.lineno(1)))
+    fblock_state.append((p[1], p.lineno(1), header_level))
     set_option('caption', '')
     set_option('label', '')
 
 def p_block_end(p):
     """bend : BEND"""
+    global header_level
     p[0] = ''
+    header_level = fblock_state[-1][2]
     fblock_state.pop()
 
 def p_block(p):
