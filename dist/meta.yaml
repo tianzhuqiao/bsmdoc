@@ -1,0 +1,21 @@
+package:
+  name: bsmdoc
+  version: "0.0.1"
+
+source:
+  path: ..
+  #git_rev: 0.0.1
+  #git_url: https://github.com/tianzhuqiao/bsmdoc.git
+
+requirements:
+  build:
+    - python
+    - ply
+  run:
+    - python
+
+
+about:
+  home: http://bsmdoc.feiyilin.com
+  license: MIT
+  license_file: LICENSE
