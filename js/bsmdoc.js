@@ -16,12 +16,15 @@ var simplePopup = (function() {
         $container.append(this.tooltip);
         this.tooltip.css({
             'background': '#ffa',
-            'border' : '3px solid #A0A090',
+            'border' : '2px solid #A0A090',
             'padding': '3px 8px 3px 8px',
             'display': 'none',
             'width': '100%',
             'position': 'fixed',
             'z-index': '100',
+            '-webkit-box-sizing': 'border-box',
+            '-moz-box-sizing': 'border-box',
+            'box-sizing': 'border-box',
         });
         var thispopup = this
         $container.on('mouseover', thispopup.pattern, {thispopup:thispopup}, thispopup.mouseOver);

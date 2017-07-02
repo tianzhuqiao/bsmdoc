@@ -1,1 +1,1 @@
-[bsmdoc website](http://bsmdoc.feiyilin.com)
+[bsmdoc bsmdoc -- another technical html doc generator](http://bsmdoc.feiyilin.com)

@@ -48,11 +48,13 @@ a {
   display:inline-block;
   line-height:1.1em;
   text-decoration:none;
+  color: #2A6EA6;
 }
 
 a:hover {
 	border-bottom: 1px gray dotted;
 }
+
 
 .toptitle {
     padding-top:0.2em;
@@ -195,13 +197,10 @@ code {
 
 ul {
     list-style-position: outside;
-    list-style-type: circle;
 }
 ul ul {
-    list-style-type: disc;
 }
 ul ul ul {
-    list-style-type: circle;
 }
 p + ul, p + ol {
 	margin-top: -0.5em;
@@ -216,10 +215,6 @@ ol {
 	list-style-type: decimal;
 }
 
-li p, dd p {
-	margin-bottom: 0.3em;
-}
-
 ol ol {
 	list-style-type: lower-alpha;
 }
@@ -232,14 +227,16 @@ p + div.codeblock {
 	margin-top: -0.6em;
 }
 
-img {
+img, video {
     border: none;
     margin: auto;
     display: block;
     max-width: 100%;
     max-height: 100%;
 }
-
+.figure, .video {
+    margin: 20px 20px;
+}
 .caption {
     text-align: center;
     font-family: Arial;
@@ -330,6 +327,12 @@ table {
     background-color: transparent;
     border-spacing: 0;
     border-collapse: collapse;
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #eee;
+}
+
+table tr:nth-child(odd) td{
+    background:#eee;
 }
 
 td,
@@ -497,3 +500,43 @@ table th[class*="col-"] {
     padding-right: 45px;
 }
 
+.info {
+  padding: 20px;
+  margin: 20px 0;
+  padding: 45px 15px 15px;
+  margin: 0 -15px 15px;
+  border: 1px solid #eee;
+  border-left-width: 5px;
+  border-radius: 3px;
+  border-left-color: #1b809e;
+  position: relative;
+}
+.info h4 {
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+.info p:last-child {
+  margin-bottom: 0;
+}
+.info code {
+  border-radius: 3px;
+}
+
+.info + .info {
+  margin-top: -5px;
+}
+
+.info h4 {
+  color: #1b809e;
+}
+.info:after {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #1b809e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    content: "Note";
+}

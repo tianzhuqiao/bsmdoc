@@ -288,12 +288,16 @@ def bsmdoc_ref(data, args):
     return "\\ref{%s}"%data
 bsmdoc_eqref = bsmdoc_ref
 
+_bsmdoc_exec_rtn = ''
 def bsmdoc_exec(data, args):
     # check if it only needs to execute the code for the first time
     if args and args[0] == "firstRunOnly" and get_option_int('scan', 1) > 1:
         return ''
     try:
+        global _bsmdoc_exec_rtn
+        _bsmdoc_exec_rtn = ''
         exec(data, globals())
+        return _bsmdoc_exec_rtn
     except:
         print(args, data)
         traceback.print_exc()
