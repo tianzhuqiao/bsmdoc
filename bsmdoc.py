@@ -49,6 +49,7 @@ def t_eof(t):
         t.lexer.input(s['lexdata'])
         t.lexer.lexpos = s['lexpos']
         t.lexer.lineno = s['lineno']
+        bsmdoc_setcfg('bsmdoc', 'filename', s['filename'])
         return t.lexer.token()
     return None
 
@@ -67,9 +68,11 @@ def t_INCLUDE(t):
     if os.path.isfile(filename):
         lex_input_stack.append({'lexdata':t.lexer.lexdata,
                                 'lexpos':t.lexer.lexpos,
-                                'lineno': t.lexer.lineno})
+                                'lineno': t.lexer.lineno,
+                                'filename': bsmdoc_getcfg('bsmdoc', 'filename')})
         t.lexer.input(bsmdoc_readfile(filename))
         t.lexer.lineno = 1
+        bsmdoc_setcfg('bsmdoc', 'filename', filename)
         return t.lexer.token()
     else:
         print("can't not find %s"%filename)
@@ -79,8 +82,11 @@ def t_MAKECONTENT(t):
     if c:
         lex_input_stack.append({'lexdata':t.lexer.lexdata,
                                 'lexpos':t.lexer.lexpos,
-                                'lineno': t.lexer.lineno})
+                                'lineno': t.lexer.lineno,
+                                'filename': bsmdoc_getcfg('bsmdoc', 'filename')})
         t.lexer.input(c)
+        t.lexer.lineno = 1
+        bsmdoc_setcfg('bsmdoc', 'filename', 'CONTENT')
         return t.lexer.token()
     else:
         # if first scan, request the 2nd scan
@@ -259,37 +265,55 @@ def bsmdoc_unescape(data, *args):
     s = re.sub(r'&gt;', r'>', s)
     return s
 
-def bsmdoc_helper(cmds, data, default=None, lineno=-1):
+def bsmdoc_info_(msg, **kwargs):
+    lineno = kwargs.get('lineno', -1)
+    filename = kwargs.get('filename', '')
+    info = msg
+    if lineno != -1:
+        info = "%d %s"%(lineno, info)
+    if filename:
+        info = ' '.join([filename, info])
+    print(info)
+
+def bsmdoc_error_(msg, **kwargs):
+    bsmdoc_info_('error: '+msg, **kwargs)
+
+def bsmdoc_warning_(msg, **kwargs):
+    bsmdoc_info_('warning: '+msg, **kwargs)
+
+def bsmdoc_helper(cmds, data, default=None, lineno=-1, inline=False):
+    kwargs = {'lineno': lineno, 'inline': inline,
+              'filename':bsmdoc_getcfg('bsmdoc', 'filename')}
     ldict = lex.get_caller_module_dict(1)
     fun = ldict.get('bsmdoc_'+cmds[0], 'none')
     if fun and hasattr(fun, "__call__"):
-        return str(eval('fun(data, cmds[1:])'))
+        return str(eval('fun(data, cmds[1:], **kwargs)'))
     else:
         f = 'bsmdoc_%s(%s)' %(cmds[0], ",".join(cmds[1:]))
-        print('Warning: undefined function block "%s" at line %d.'%(f, lineno))
+        bsmdoc_warning_('undefined function block "%s".'%(f))
     if default:
         return default
     else:
         return data
 
-def bsmdoc_config(data, args):
+def bsmdoc_config(data, args, **kwargs):
     try:
         if len(args) <= 0:
             config.readfp(StringIO(data))
         else:
             set_option(args[0], data)
     except:
-        print("error: bsmdoc_config('%s',%s)"% (data, args))
         traceback.print_exc()
+        bsmdoc_error_("bsmdoc_config('%s',%s)"% (data, args), **kwargs)
     return ""
 
 # deal with the equation reference: \ref{} or \eqref{}
-def bsmdoc_ref(data, args):
+def bsmdoc_ref(data, args, **kwargs):
     return "\\ref{%s}"%data
 bsmdoc_eqref = bsmdoc_ref
 
 _bsmdoc_exec_rtn = ''
-def bsmdoc_exec(data, args):
+def bsmdoc_exec(data, args, **kwargs):
     # check if it only needs to execute the code for the first time
     if args and args[0] == "firstRunOnly" and get_option_int('scan', 1) > 1:
         return ''
@@ -299,28 +323,28 @@ def bsmdoc_exec(data, args):
         exec(data, globals())
         return _bsmdoc_exec_rtn
     except:
-        print(args, data)
         traceback.print_exc()
+        bsmdoc_error_("bsmdoc_exec('%s',%s)"% (data, args), **kwargs)
     return ''
 
-def bsmdoc_pre(data, args):
+def bsmdoc_pre(data, args, **kwargs):
     if args and args[0] == 'newlineonly':
         return "<br>\n".join(data.split("\n"))
     return "<pre>%s</pre>" % data
 
-def bsmdoc_tag(data, args):
+def bsmdoc_tag(data, args, **kwargs):
     if len(args) >= 1:
         style = bsmdoc_style_(args[1:])
         return "<%s %s>%s</%s>"%(args[0], style, data, args[0])
     return data
 
-def bsmdoc_math(data, args):
+def bsmdoc_math(data, args, **kwargs):
     if len(args) > 0 and args[0] == 'inline':
         return '$%s$'%bsmdoc_escape(data)
     else:
         return "<div class='mathjax'>\n$$%s$$\n</div>" %bsmdoc_escape(data)
 
-def bsmdoc_div(data, args):
+def bsmdoc_div(data, args, **kwargs):
     data = data.strip()
     if not args:
         print('div block requires at least one argument')
@@ -328,7 +352,7 @@ def bsmdoc_div(data, args):
     style = bsmdoc_style_(args)
     return '<div %s>\n%s\n</div>\n' %(style, data)
 
-def bsmdoc_highlight(code, lang):
+def bsmdoc_highlight(code, lang, **kwargs):
     try:
         from pygments import highlight
         from pygments.lexers import get_lexer_by_name
@@ -342,7 +366,7 @@ def bsmdoc_highlight(code, lang):
         txt = txt.replace('&amp;lt;', '&lt;')
         return txt.replace('&amp;gt', '&gt;')
     except ImportError:
-        print("warning: pygments package not installed.")
+        bsmdoc_warning_("pygments package not installed.", **kwargs)
         return bsmdoc_pre(code, [])
 
 def static_vars(**kwargs):
@@ -353,7 +377,7 @@ def static_vars(**kwargs):
     return decorate
 
 @static_vars(notes=[])
-def bsmdoc_footnote(data, args):
+def bsmdoc_footnote(data, args, **kwargs):
     tag = len(bsmdoc_footnote.notes) + 1
     src = 'footnote-src-%d'%tag
     dec = 'footnote-%d'%tag
@@ -363,7 +387,7 @@ def bsmdoc_footnote(data, args):
     return '<a name="%s" href="#%s"><sup>%d</sup></a>'%(src, dec, tag)
 
 @static_vars(head={}, content=[])
-def bsmdoc_header(txt, level):
+def bsmdoc_header(txt, level, **kwargs):
     orderheaddict = bsmdoc_header.head
     s = txt
     pre = ''
@@ -415,15 +439,38 @@ def bsmdoc_style_(args, default_class=None):
         style.append('class="%s"'%(' '.join(style_class)))
     return ' '.join(style)
 
-def bsmdoc_image(data, args):
-    r = '<img src="%s" alt="%s" />'%(data, data)
+def bsmdoc_image(data, args, **kwargs):
+    inline = kwargs.get('inline', False)
+    style = bsmdoc_style_(args, '')
+    r = '<img %s src="%s" alt="%s" />'%(style, data, data)
+    if inline:
+        return r
     caption = get_option('caption', '')
     label = get_option('label', '')
     tag = ''
     if label:
         (tag, prefix, num) = image_next_tag()
         if get_option_int('scan', 1) == 1 and bsmdoc_getcfg('ANCHOR', label):
-            print('Warning: duplicated label %s".'%(label))
+            bsmdoc_warning_('duplicated label %s".'%(label), **kwargs)
+
+        bsmdoc_setcfg('ANCHOR', label, num)
+        label = 'id="%s"'%label
+        tag = '<span class="tag">%s</span>'%tag
+    if caption:
+        caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
+        r = r + '\n' + caption
+    return '<div %s class="figure">%s</div>'%(label, r)
+
+def bsmdoc_video(data, args, **kwargs):
+    style = bsmdoc_style_(args, '')
+    r = '<video controls %s><source src="%s">Your browser does not support the video tag.</video>'%(style, data)
+    caption = get_option('caption', '')
+    label = get_option('label', '')
+    tag = ''
+    if label:
+        (tag, prefix, num) = image_next_tag()
+        if get_option_int('scan', 1) == 1 and bsmdoc_getcfg('ANCHOR', label):
+            bsmdoc_warning_('duplicated label %s".'%(label), **kwargs)
 
         bsmdoc_setcfg('ANCHOR', label, num)
         label = 'id="%s"'%label
@@ -432,28 +479,7 @@ def bsmdoc_image(data, args):
     if caption:
         caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
         r = r + '\n' + caption
-    style = bsmdoc_style_(args, 'figure')
-    return '<div %s %s>%s</div>'%(label, style, r)
-
-def bsmdoc_video(data, args):
-    r = '<video controls><source src="%s">Your browser does not support the video tag.</video>'%(data)
-    caption = get_option('caption', '')
-    label = get_option('label', '')
-    tag = ''
-    if label:
-        (tag, prefix, num) = image_next_tag()
-        if get_option_int('scan', 1) == 1 and bsmdoc_getcfg('ANCHOR', label):
-            print('Warning: duplicated label %s".'%(label))
-
-        bsmdoc_setcfg('ANCHOR', label, num)
-        label = 'id="%s"'%label
-        tag = '<span class="tag">%s</span>'%tag
-
-    if caption:
-        caption = '<div class="caption">%s</div>'%(tag + ' ' + caption)
-        r = r + '\n' + caption
-    style = bsmdoc_style_(args, 'video')
-    return '<div %s %s>%s</div>'%(label, style, r)
+    return '<div %s class="video">%s</div>'%(label, r)
 
 @static_vars(counter=0)
 def table_next_tag():
@@ -482,7 +508,7 @@ def bsmdoc_table(head, body):
         caption = '<caption>%s</caption>'%(tag + ' ' + caption)
     return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
 
-def bsmdoc_listbullet(data, args):
+def bsmdoc_listbullet(data, args, **kwargs):
     def listbullet(stack):
         l = r = ""
         for j in range(len(t)):
@@ -548,7 +574,7 @@ def bsmdoc_listbullet(data, args):
 
     return html+listbullet(stack)
 
-def bsmdoc_anchor(data, args):
+def bsmdoc_anchor(data, args, **kwargs):
     return '<a name="%s"><sup>&#x2693;</sup></a>'%(data)
 
 """
@@ -827,18 +853,19 @@ def p_inlineblock_cmd(p):
         v = v.replace("\\n", '<br>')
         p[0] = re.sub(r'(\\)(.)', r'\2', v)
     else:
-        p[0] = bsmdoc_helper([cmd[1:]], '', re.sub(r'(\\)(.)', r'\2', cmd), p.lineno(1))
+        default = re.sub(r'(\\)(.)', r'\2', cmd)
+        p[0] = bsmdoc_helper([cmd[1:]], '', default, p.lineno(1), True)
 
 def p_inlineblock_cmd_multi(p):
     """inlineblock : CMD bracetext"""
     cmd = p[1]
-    p[0] = bsmdoc_helper([cmd[1:]], p[2], lineno=p.lineno(1))
+    p[0] = bsmdoc_helper([cmd[1:]], p[2], lineno=p.lineno(1), inline=True)
 
 def p_inlineblock_cmd_args(p):
     """inlineblock : CMD BRACEL vtext sections BRACER"""
     cmd = p[3]
     cmd.insert(0, p[1][1:])
-    p[0] = bsmdoc_helper(cmd, p[4], lineno=p.lineno(1))
+    p[0] = bsmdoc_helper(cmd, p[4], lineno=p.lineno(1), inline=True)
 
 def p_inlineblock_eqn(p):
     '''inlineblock : INLINEEQ'''
@@ -880,9 +907,10 @@ def p_empty(p):
 def p_error(p):
     if len(fblock_state):
         e = fblock_state.pop()
-        print("Error: unmatched block '%s' at line %d"%(e[0], e[1]))
+        kwargs = {'lineno': e[1], 'filename':bsmdoc_getcfg('bsmdoc', 'filename')}
+        bsmdoc_error_("unmatched block '%s'"%(e[0]), **kwargs)
     else:
-        print("Error: ", p)
+        print("error: ", p)
 
 yacc.yacc(debug=True)
 
@@ -953,15 +981,17 @@ def get_option_int(key, default):
 def get_option_bool(key, default):
     return get_option(key, default).lower() in ("yes", "true", "t", "1")
 
-def bsmdoc_raw(txt):
+def bsmdoc_raw(filename, encoding):
     global bsmdoc
     global config
+    txt = bsmdoc_readfile(filename, encoding)
     config = SafeConfigParser()
     config.readfp(StringIO(bsmdoc_conf))
     set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
     set_option('scan', 1)
     set_option('title', '')
     set_option('source', '')
+    bsmdoc_setcfg('bsmdoc', 'filename', filename)
     bsmdoc = ''
     lex.lexer.lineno = 1
     #lex.input(txt)
@@ -1023,8 +1053,7 @@ def bsmdoc_readfile(filename, encoding=None):
 def bsmdoc_gen(filename, encoding=None):
     global bsmdoc
     global config
-    txt = bsmdoc_readfile(filename, encoding)
-    bsmdoc_raw(txt)
+    bsmdoc_raw(filename, encoding)
     config_doc = get_option('bsmdoc_conf', '')
     if config_doc:
         txt = bsmdoc_readfile(config_doc)
