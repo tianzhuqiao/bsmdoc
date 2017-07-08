@@ -1,8 +1,3 @@
-" Vim syntax file
-" Language: bsmdoc
-" Maintainer: Tianzhu Qiao
-" Latest Revision: Feb 25 2017
-
 if exists("b:current_syntax")
   finish
 endif

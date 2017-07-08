@@ -1,7 +1,7 @@
-" Vim syntax file
-" Language: bsmdoc
-" Maintainer: Tianzhu Qiao
-" Latest Revision: Jul 02 2017
+if exists('s:doneBFunctionDefinitions')
+	finish
+endif
+let s:doneBFunctionDefinitions = 1
 
 function BGetTopFile()
     " get the top level file. For example, if the current filename is
@@ -17,7 +17,9 @@ endfunction
 
 function BCompile()
     let filename = BGetTopFile()
-    execute "silent !bsmdoc.py " . filename
+    execute "silent make! " . filename
+    cclose
+    cwindow
 endfunction
 
 function BPreview()
@@ -30,3 +32,8 @@ endfunction
 map ll :call BCompile()<CR>
 " preview
 map lv :call BPreview()<CR>
+call IMAP ('{!', "{!<++>\<cr>!}", "bsmdoc")
+call IMAP ('!%', "{!<++>{%\<cr>%}!}", "bsmdoc")
+call IMAP ('{%', "{%<++>\<cr>%}", "bsmdoc")
+call IMAP ('{{', "{{<++>\<cr>}}", "bsmdoc")
+call IMAP ('$$', "$$\<cr><++>\<cr>$$", "bsmdoc")
