@@ -50,7 +50,11 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 </li>
 <li><a href='#sec-funblock'>10 Function block</a> 
 <ul>
-<li><a href='#sec-10-1'>10.1 Inline function block</a> 
+<li><a href='#sec-10-1'>10.1 Generate images</a> 
+</li>
+<li><a href='#sec-10-2'>10.2 Include source code</a> 
+</li>
+<li><a href='#sec-10-3'>10.3 Inline function block</a> 
 </li>
 </ul>
 </li>
@@ -361,7 +365,7 @@ image_file_path
 </div>
 <p>So, include an image is as easy as</p>
 <div class="bs-example">
-<div  class="figure"><img src="./image/scatter.svg" alt="./image/scatter.svg" /></div>
+<div  class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" /></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
@@ -371,7 +375,7 @@ image_file_path
 </div>
 <p>You can add optional caption to an image block</p>
 <div class="bs-example">
-<div  class="figure"><img src="./image/scatter.svg" alt="./image/scatter.svg" />
+<div  class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" />
 <div class="caption"> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
@@ -385,7 +389,7 @@ image_file_path
 <ol>
 <li><p>add a label to an image block</p>
 <div class="bs-example">
-<div id="img-scatter" class="figure"><img src="./image/scatter.svg" alt="./image/scatter.svg" />
+<div id="img-scatter" class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" />
 <div class="caption"><span class="tag">Fig.1.</span> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
@@ -413,7 +417,7 @@ Fig. <a href='#img-scatter'>1</a> shows a scatter diagram
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{image_numbering_prefix</span>|Image <span class="nt">}</span>
 </pre></div>
 <div class="bs-example">
-<div id="img-scatter2" class="figure"><img src="./image/scatter.svg" alt="./image/scatter.svg" />
+<div id="img-scatter2" class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" />
 <div class="caption"><span class="tag">Image 2.</span> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
@@ -521,15 +525,17 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <td>item1</td><td>$E=MC^2$</td>
 </tr>
 <tr>
-<td><a href='http://bsmdoc.feiyilin.com'>bsmdoc</a></td><td><div  id="img_thumb" class="image-left image-thumbnail"><img src="image/scatter.svg" alt="image/scatter.svg" /></div></td>
+<td><a href='http://bsmdoc.feiyilin.com'>bsmdoc</a></td><td><div class="figure image-left image-thumbnail">
+<img  src="image/scatter.svg" alt="image/scatter.svg" />
+</div></td>
 </tr>
 </tbody></table>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 <span class="nf">item1 </span>|<span class="nf"> $E=MC^2$ </span>|<span class="k">|-</span>
-<span class="nt">[http://bsmdoc.feiyilin.com</span>|<span class="s">bsmdoc</span><span class="nt">]</span><span class="nf"> </span>|<span class="nf"> \image{image-left</span>|<span class="nf">image-thumbnail</span>|<span class="nf">image/scatter.svg} </span>|<span class="k">|-</span>
-<span class="nt">}}</span>
+<span class="nt">[http://bsmdoc.feiyilin.com</span>|<span class="s">bsmdoc</span><span class="nt">]</span><span class="nf"> </span>|<span class="nt">{!</span><span class="nf">div</span>|<span class="nt">figure</span>|<span class="nt">image-left</span>|<span class="nt">image-thumbnail</span>||<span class="nf">\image{image/scatter.svg}!} </span>||-
+}}
 </pre></div>
 </div>
 <p>Optionally, a heading line can be added in the front of the table block</p>
@@ -837,10 +843,25 @@ As you may have already figured out, the <code >command</code> section is define
 <ul>
 <li><p>first you need to define the function (e.g., "<code >bsmdoc_del</code>"),</p>
 <div class="bs-example">
-<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">content</span>
+<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">data</span>
 </pre></div>
-</div> 
+</div>
+<p>Here <code >**kwargs</code> are additional arguments from bsmdoc, for example</p>
+<table  class="table">
+ <thead><tr>
+<th>argument</th><th>description</th>
+</tr>
+</thead><tbody><tr>
+<td>inline</td><td><code >True</code> if it is a inline block (we will discuss the inline block shortly).</td>
+</tr>
+<tr>
+<td>filename</td><td>the current filename</td>
+</tr>
+<tr>
+<td>lineno</td><td>the line number of the start of the function block</td>
+</tr>
+</tbody></table> 
 </li>
 <li><p>Now the <code >del</code> can be used as all the other blocks,</p>
 <div class="bs-example">
@@ -866,7 +887,7 @@ delete
 <p>Neither way is scalable. bsmdoc provides the third choice: the function block can be defined in the same doc where it is called. Including the following code in your doc, and it will automatically add the <code >bsmdoc_del</code> function just as it is defined in <code >bsmdoc.py</code> (but be careful, since bsmdoc will call python function "<code >exec()</code>" for this feature, it may cause some security concerns).</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
-<span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">content</span>
 <span class="nt">%}!}</span>
 </pre></div>
@@ -874,7 +895,7 @@ delete
 <p>You can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
-<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
@@ -883,9 +904,9 @@ delete
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
-<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">lang</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">bsmdoc_highlight_raw</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">bsmdoc_highlight_raw</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="c1"># highlight &#39;mylang&#39;</span>
     <span class="o">...</span>
 <span class="nt">%}!}</span>
@@ -895,9 +916,9 @@ delete
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
-<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">lang</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="c1"># highlight &#39;mylang&#39;</span>
     <span class="o">...</span>
 <span class="nt">%}!}</span>
@@ -911,9 +932,9 @@ delete
     <span class="n">bsmdoc_highlight_raw</span>
 <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
     <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
-    <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">lang</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># highlight &#39;mylang&#39;</span>
         <span class="o">...</span>
 <span class="nt">%}!}</span>
@@ -923,14 +944,15 @@ delete
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
 <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
-<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">lang</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="c1"># highlight &#39;mylang&#39;</span>
     <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
 </div>
+<h2 id="sec-10-1">10.1 Generate images</h2>
 <p>Besides defining the function block, the <code >exec</code> block can also be used to execute arbitrary python code (be careful!). One application is to embed the python code to generate the figure with <a href='http://matplotlib.org/'>matplotlib</a> package,</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
@@ -960,7 +982,7 @@ delete
 </div>
 <p>Then you can include the <code >pie.svg</code> in your html file</p>
 <div class="bs-example">
-<div  class="figure"><img src="./image/pie.svg" alt="./image/pie.svg" /></div>
+<div  class="figure"><img  src="./image/pie.svg" alt="./image/pie.svg" /></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
@@ -969,7 +991,111 @@ delete
 </pre></div>
 </div>
 <p>Thus, for most time, there is no need to use other software to generate figures.</p>
-<h2 id="sec-10-1">10.1 Inline function block</h2>
+<h2 id="sec-10-2">10.2 Include source code</h2>
+<p>With function block, you can also easily include source code in your html doc. For example, to import the python source code in your doc, you can define the following function block</p>
+<div class="bs-example_src">
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="k">def</span> <span class="nf">bsmdoc_codesnippet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="nb">eval</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="nt">%}!}</span>
+</pre></div>
+</div>
+<p>Then you can include the source code (e.g., matplotlib.pyplot.plot) by</p>
+<div class="bs-example">
+<div class="syntax"><pre><span></span><span class="nd">@_autogen_docstring</span><span class="p">(</span><span class="n">Axes</span><span class="o">.</span><span class="n">plot</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">gca</span><span class="p">()</span>
+    <span class="c1"># Deprecated: allow callers to override the hold state</span>
+    <span class="c1"># by passing hold=True|False</span>
+    <span class="n">washold</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">_hold</span>
+    <span class="n">hold</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;hold&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">hold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">_hold</span> <span class="o">=</span> <span class="n">hold</span>
+        <span class="kn">from</span> <span class="nn">matplotlib.cbook</span> <span class="kn">import</span> <span class="n">mplDeprecation</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The &#39;hold&#39; keyword argument is deprecated since 2.0.&quot;</span><span class="p">,</span>
+                      <span class="n">mplDeprecation</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">_hold</span> <span class="o">=</span> <span class="n">washold</span>
+
+    <span class="k">return</span> <span class="n">ret</span>
+</pre></div>
+</div>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="nt">%}!}</span>
+<span class="nt">{!</span><span class="nf">highlight</span>|<span class="nt">python</span>||<span class="nf">codesnippet</span>||
+plt.plot
+<span class="nt">!}</span>
+</pre></div>
+</div>
+<p>It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write the function block to just return certain sections (e.g., a function), instead of the whole file.</p>
+<div class="bs-example_src">
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
+<span class="k">def</span> <span class="nf">bsmdoc_ccodesnippet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">data</span>
+<span class="nt">%}!}</span>
+</pre></div>
+</div>
+<p>Then you can include the source code by</p>
+<div class="bs-example">
+<div class="syntax"><pre><span></span><span class="c1">// Cache selectors</span>
+<span class="kd">var</span> <span class="nx">lastId</span><span class="p">,</span>
+    <span class="nx">topMenu</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.menu&quot;</span><span class="p">),</span>
+    <span class="nx">topTitleHeight</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.toptitle&quot;</span><span class="p">).</span><span class="nx">outerHeight</span><span class="p">()</span><span class="o">+</span><span class="mi">15</span><span class="p">,</span>
+    <span class="c1">// All list items</span>
+    <span class="nx">menuItems</span> <span class="o">=</span> <span class="nx">topMenu</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">),</span>
+    <span class="c1">// Anchors corresponding to menu items</span>
+    <span class="nx">scrollItems</span> <span class="o">=</span> <span class="nx">menuItems</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+        <span class="kd">var</span> <span class="nx">item</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">));</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">item</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">});</span>
+
+<span class="c1">// Bind click handler to menu items so we can get a fancy scroll animation</span>
+<span class="nx">menuItems</span><span class="p">.</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">){</span>
+    <span class="kd">var</span> <span class="nx">href</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">),</span>
+        <span class="nx">offsetTop</span> <span class="o">=</span> <span class="nx">href</span> <span class="o">===</span> <span class="s2">&quot;#&quot;</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="nx">$</span><span class="p">(</span><span class="nx">href</span><span class="p">).</span><span class="nx">offset</span><span class="p">().</span><span class="nx">top</span><span class="o">-</span><span class="mi">15</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;html, body&#39;</span><span class="p">).</span><span class="nx">stop</span><span class="p">().</span><span class="nx">animate</span><span class="p">({</span>
+        <span class="nx">scrollTop</span><span class="o">:</span> <span class="nx">offsetTop</span>
+    <span class="p">},</span> <span class="mi">300</span><span class="p">);</span>
+    <span class="nx">e</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+<span class="p">});</span>
+
+<span class="c1">// Bind to scroll</span>
+<span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">scroll</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+    <span class="c1">// Get container scroll position</span>
+    <span class="kd">var</span> <span class="nx">fromTop</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">scrollTop</span><span class="p">()</span> <span class="o">+</span> <span class="mi">15</span><span class="p">;</span>
+
+    <span class="c1">// Get id of current scroll item</span>
+    <span class="kd">var</span> <span class="nx">cur</span> <span class="o">=</span> <span class="nx">scrollItems</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">offset</span><span class="p">().</span><span class="nx">top</span> <span class="o">&lt;</span> <span class="nx">fromTop</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+    <span class="p">});</span>
+    <span class="c1">// Get the id of the current element</span>
+    <span class="nx">cur</span> <span class="o">=</span> <span class="nx">cur</span><span class="p">[</span><span class="nx">cur</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">cur</span> <span class="o">&amp;&amp;</span> <span class="nx">cur</span><span class="p">.</span><span class="nx">length</span> <span class="o">?</span> <span class="nx">cur</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">id</span> <span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">lastId</span> <span class="o">!==</span> <span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">lastId</span> <span class="o">=</span> <span class="nx">id</span><span class="p">;</span>
+        <span class="c1">// Set/remove active class</span>
+        <span class="nx">menuItems</span><span class="p">.</span><span class="nx">removeClass</span><span class="p">(</span><span class="s2">&quot;active&quot;</span><span class="p">);</span>
+        <span class="nx">menuItems</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="s2">&quot;[href=&#39;#&quot;</span><span class="o">+</span><span class="nx">id</span><span class="o">+</span><span class="s2">&quot;&#39;]&quot;</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s2">&quot;active&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+</div>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">highlight</span>|<span class="nt">javascript</span>||<span class="nf">ccodesnippet</span>||
+js/menu.js
+<span class="nt">!}</span>
+</pre></div>
+</div>
+<h2 id="sec-10-3">10.3 Inline function block</h2>
 <p>The difference between <code >function block</code> and <code >inline function block</code> is similar to the <code >equation block</code> and <code >inline equation block</code>. In other words, the output of the inline block can be embedded in the paragraph. The syntax is similar to the $\LaTeX$ macro:</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nf">\command</span><span class="nt">{arg0</span>|<span class="nt">arg1</span>|<span class="nt">...</span>|<span class="nt">argN</span>|content<span class="nt">}</span>
@@ -1128,7 +1254,7 @@ bsmdoc -- another technical html doc generator
 <ol>
 <li><div id="footnote-1">This is the footnote <a href="#footnote-src-1">&#8617;</a></div></li>
 </ol>
-<div class="footer-text"> Last updated 2017-06-15 22:52:25 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2017-07-07 22:45:53 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
 </div>
 </div>
 <script src="js/menu.js"></script>

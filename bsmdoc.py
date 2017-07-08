@@ -14,7 +14,6 @@ except ImportError:
 import ply.lex as lex
 import ply.yacc as yacc
 
-
 tokens = (
     'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'WORD', 'SPACE',
     'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
@@ -220,9 +219,15 @@ def t_BRACKETR(t):
     t.lexer.pop_state()
     return t
 
+#def t_link_WORD(t):
+#    r'(?:\\.|(\!(?!\}))|(\%(?!\}))|[^ \%\!\n\|\{\}\[\]])+'
+#    t.value = bsmdoc_escape(t.value)
+#    return t
 def t_link_WORD(t):
-    r'(?:\\.|(\!(?!\}))|(\%(?!\}))|[^ \%\!\n\|\{\}\[\]])+'
+    r'(?:\\(\W)|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\n\|\{\}\[\]\\])+'
     t.value = bsmdoc_escape(t.value)
+    #t.value = "<br>".join(t.value.split("\\n"))
+    t.value = re.sub(r'(\\)(.)', r'\2', t.value)
     return t
 
 # support the latex stylus command, e.g., \ref{}; and the command must have at
@@ -698,6 +703,7 @@ def p_paragraph_single(p):
 def p_block_table(p):
     '''block : table'''
     p[0] = p[1]
+
 def p_table_title(p):
     '''table : tstart tbody TEND'''
     p[0] = bsmdoc_table('', p[2])

@@ -49,7 +49,7 @@ content = <div class="footer-text"> Last updated %(UPDATED)s, by <a href="http:/
 %}!}
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(code, lang):
+def bsmdoc_highlight(code, lang, **kwargs):
     if lang[0]!='bsmdoc':
         return bsmdoc_highlight_raw(code, lang)
     try:
@@ -76,7 +76,7 @@ def bsmdoc_highlight(code, lang):
 bsmdoc -- another technical html doc generator
 !}
 {!div|content||
-#include content.bsmdoc
+#include index_content.bsmdoc
 !}
 !}
 

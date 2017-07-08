@@ -227,7 +227,7 @@ p + div.codeblock {
 	margin-top: -0.6em;
 }
 
-img, video {
+.figure img, .video video {
     border: none;
     margin: auto;
     display: block;

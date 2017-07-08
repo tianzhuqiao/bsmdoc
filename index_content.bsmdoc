@@ -429,12 +429,12 @@ The content in each column of each row can be anything defined above, for exampl
 {!div|bs-example||
 {{
 item1 | $E=MC^2$ ||-
-[http://bsmdoc.feiyilin.com|bsmdoc] | \image{image-left|image-thumbnail|id="img_thumb"|image/scatter.svg} ||-
+[http://bsmdoc.feiyilin.com|bsmdoc] | {!div|figure|image-left|image-thumbnail||\image{image/scatter.svg}!} ||-
 }}
 !}{!div|bs-example-src ||highlight|bsmdoc||{%
 {{
 item1 | $E=MC^2$ ||-
-[http://bsmdoc.feiyilin.com|bsmdoc] | \image{image-left|image-thumbnail|image/scatter.svg} ||-
+[http://bsmdoc.feiyilin.com|bsmdoc] |{!div|figure|image-left|image-thumbnail||\image{image/scatter.svg}!} ||-
 }}
 %}!}
 
@@ -749,12 +749,19 @@ it will search for the "\tag{code|bsmdoc_command}" function. If found, it will e
 - {first you need to define the function (e.g., "\tag{code|bsmdoc_del}"),
 
 {!div|bs-example||highlight|python||{%
-def bsmdoc_del(content, args):
-    return "<del>%s</del>"%content
+def bsmdoc_del(data, args, **kwargs):
+    return "<del>%s</del>"%data
 %}!}{!exec||{%
-def bsmdoc_del(content, args):
-    return "<del>%s</del>"%content
+def bsmdoc_del(data, args, **kwargs):
+    return "<del>%s</del>"%data
 %}!}
+Here \tag{code|**kwargs} are additional arguments from bsmdoc, for example
+{{
+    argument|description||+
+    inline| \tag{code|True} if it is a inline block (we will discuss the inline block shortly).||-
+    filename| the current filename||-
+    lineno| the line number of the start of the function block||-
+}}
 }
 - {Now the \tag{code|del} can be used as all the other blocks,
 
@@ -776,7 +783,7 @@ Neither way is scalable. bsmdoc provides the third choice: the function block ca
 
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
-def bsmdoc_del(args, content):
+def bsmdoc_del(data, args, **kwargs):
     return "<del>%s</del>"%content
 %}!}
 %}!}
@@ -785,7 +792,7 @@ You can replace all the predefined blocks with this method. For example, you can
 
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
-def bsmdoc_highlight(code, lang):
+def bsmdoc_highlight(data, args, **kwargs):
     ...
 %}!}
 %}!}
@@ -794,9 +801,9 @@ Or in some case, you just want to use your own function for some arguments. For 
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(code, lang):
-    if lang != 'mylang':
-        return bsmdoc_highlight_raw(code, lang)
+def bsmdoc_highlight(data, args, **kwargs):
+    if args[0] != 'mylang':
+        return bsmdoc_highlight_raw(data, args, **kwargs)
     # highlight 'mylang'
     ...
 %}!}
@@ -807,9 +814,9 @@ It may work fine to compile most of your docs, until one day it fails and python
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(code, lang):
-    if lang != 'mylang':
-        return bsmdoc_highlight(code, lang)
+def bsmdoc_highlight(data, args, **kwargs):
+    if args[0] != 'mylang':
+        return bsmdoc_highlight(data, args, **kwargs)
     # highlight 'mylang'
     ...
 %}!}
@@ -825,9 +832,9 @@ try:
     bsmdoc_highlight_raw
 except NameError:
     bsmdoc_highlight_raw = bsmdoc_highlight
-    def bsmdoc_highlight(code, lang):
-        if lang != 'mylang':
-            return bsmdoc_highlight(code, lang)
+    def bsmdoc_highlight(data, args, **kwargs):
+        if args[0] != 'mylang':
+            return bsmdoc_highlight(data, args, **kwargs)
         # highlight 'mylang'
         ...
 %}!}
@@ -838,14 +845,15 @@ Or you can tell bsmdoc to execute the code for the first scan only
 {!div|bs-example||highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(code, lang):
+def bsmdoc_highlight(data, args, **kwargs):
     if lang != 'mylang':
-        return bsmdoc_highlight(code, lang)
+        return bsmdoc_highlight(data, args, **kwargs)
     # highlight 'mylang'
     ...
 %}!}
 %}!}
 
+== Generate images
 Besides defining the function block, the \tag{code|exec} block can also be used to execute arbitrary python code (be careful!). One application is to embed the python code to generate the figure with [http://matplotlib.org/|matplotlib] package,
 
 {!exec|firstRunOnly||{%
@@ -908,6 +916,65 @@ Then you can include the \tag{code|pie.svg} in your html file
 %}!}
 
 Thus, for most time, there is no need to use other software to generate figures.
+
+== Include source code
+With function block, you can also easily include source code in your html doc. For example, to import the python source code in your doc, you can define the following function block
+{!div|bs-example_src||highlight|bsmdoc||{%
+{!exec|firstRunOnly||{%
+import inspect
+def bsmdoc_codesnippet(data, args, **kwargs):
+    return inspect.getsource(eval(data))
+%}!}
+%}!}
+{!exec|firstRunOnly||{%
+import inspect
+def bsmdoc_codesnippet(data, args, **kwargs):
+    return inspect.getsource(eval(data))
+%}!}
+Then you can include the source code (e.g., matplotlib.pyplot.plot) by
+{!div|bs-example||
+{!exec|firstRunOnly||{%
+import matplotlib.pyplot as plt
+%}!}
+{!highlight|python||codesnippet||
+plt.plot
+!}
+!}
+{!div|bs-example-src||highlight|bsmdoc||{%
+{!exec|firstRunOnly||{%
+import matplotlib.pyplot as plt
+%}!}
+{!highlight|python||codesnippet||
+plt.plot
+!}
+%}!}
+
+It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write the function block to just return certain sections (e.g., a function), instead of the whole file.
+{!div|bs-example_src||highlight|bsmdoc||{%
+{!exec|firstRunOnly||{%
+def bsmdoc_ccodesnippet(data, args, **kwargs):
+    with open(data, 'r') as f:
+        return ''.join(f.readlines())
+    return data
+%}!}
+%}!}
+{!exec|firstRunOnly||{%
+def bsmdoc_ccodesnippet(data, args, **kwargs):
+    with open(data, 'r') as f:
+        return ''.join(f.readlines())
+    return data
+%}!}
+Then you can include the source code by
+{!div|bs-example||
+{!highlight|javascript||ccodesnippet||
+js/menu.js
+!}
+!}
+{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|javascript||ccodesnippet||
+js/menu.js
+!}
+%}!}
 
 == Inline function block
 The difference between \tag{code|function block} and \tag{code|inline function block} is similar to the \tag{code|equation block} and \tag{code|inline equation block}. In other words, the output of the inline block can be embedded in the paragraph. The syntax is similar to the $\LaTeX$ macro:
