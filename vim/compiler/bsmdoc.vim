@@ -16,6 +16,8 @@ CompilerSet efm+=%+C\ \ \ \ %.%#
 CompilerSet efm+=%+C\ \ %.%#
 CompilerSet efm+=%Z%[%^\ ]%\\@=%m
 "bsmedit error
+CompilerSet efm+=%f\ %l\ %trror:\ %m
+CompilerSet efm+=%f\ %l\ %tarning:\ %m
 CompilerSet efm+=%l\ %trror:\ %m
 CompilerSet efm+=%l\ %tarning:\ %m
 CompilerSet efm+=%tarning:\ %m

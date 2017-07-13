@@ -1027,6 +1027,12 @@ bsmdoc can automatically generate the table of content with
 
 Only the sections with automatic numbering will be included in the content list. \tag{code|makecontent} will also trigger bsmdoc to scan the doc twice.
 
+\tag{code|makecontent} is implemented by a function \tag{code|bsmdoc_makecontent}.
+ Its input is a list that contains all the headers. The default implementation generates the un-ordered list
+{!highlight|python||codesnippet||
+bsmdoc_makecontent
+!}
+
 When the doc becomes large, you can split your doc into several docs and includes them in the top doc with the "\tag{code|\#include}" directive. For example, suppose you are writing a book, and have created \tag{code|chappter1.bsmdoc}, \tag{code|chapter2.bsmdoc}, .... Then, you can include all the chapters in your \tag{code|book.bsmdoc}
 
 {!div|bs-example-src||highlight|bsmdoc||{%
@@ -1034,7 +1040,53 @@ When the doc becomes large, you can split your doc into several docs and include
 #include chapter2.bsmdoc
 %}!}
 
-bsmdoc will replace the line "\tag{code|\#include chapter1.bsmdoc} with the content in the file "\tag{code|chappter1.bsmdoc}".
+bsmdoc will replace the line \tag{code|\#include chapter1.bsmdoc} with the content of the file \tag{code|chappter1.bsmdoc}.
+
+The \tag{code|\#include} is implemented with function \tag{code|bsmdoc_include}
+{!highlight|python||codesnippet||
+bsmdoc_include
+!}
+Here \tag{code|data} will be anything following \tag{code|\#include}. In the previous example, it will be "\tag{code|chapter1.bsmdoc}" or "\tag{cod|chapter2.bsmdoc}". If open the file successfully, \tag{code|bsmdoc_include} will return the filename and its content by default.
+
+It is easy to extend the \tag{code|bsmdoc_include} function for more complex applications, for example
+{!div|bs-example-src||highlight|bsmdoc||{%
+{!exec|firstRunOnly||{%
+bsmdoc_include_raw = bsmdoc_include
+def bsmdoc_include(data):
+    # assume 'data' has multiple sections separated by '|', in the format of
+    # PATTERN | MAX LINE | FILENAME
+    d = data.strip().split('|')
+    if len(d) == 1:
+        # one section, return the default
+        return bsmdoc_include_raw(data)
+    elif len(d) == 3:
+        import re
+        # assume the last parameter is the filename
+        c = bsmdoc_include_raw(d[-1])
+        if not c:
+            # invalid filename
+            return c
+        lines = c[1].split('\n')
+        pattern = []
+        for i, l in enumerate(lines):
+            # search the PATTERN
+            if re.match(d[0], l):
+               pattern.append(i)
+            if len(pattern) == 2:
+                # return the content between the first and second instances of PATTERN
+                if pattern[1] - pattern[0] > int(d[1]):
+                    # too many lines, cut it
+                    pattern[1] = pattern[0] + int(d[1])
+                return (c[0], '\n'.join(lines[pattern[0]+1:pattern[1]]))
+        return c
+    return None
+%}!}
+%}!}
+
+The the following code will include the content between the first two headings from file \tag{code|myfile.bsmdoc}. And the maximum number of lines is limited to 16.
+{!div|bs-example-src||highlight|bsmdoc||{%
+#include ^(\\s)*=+|16|./myfile.bsmdoc
+%}!}
 
 = HTML template \config{label|sec-template}
 

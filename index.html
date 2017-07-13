@@ -365,7 +365,7 @@ image_file_path
 </div>
 <p>So, include an image is as easy as</p>
 <div class="bs-example">
-<div  class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" /></div>
+<div  class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg"></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
@@ -375,7 +375,7 @@ image_file_path
 </div>
 <p>You can add optional caption to an image block</p>
 <div class="bs-example">
-<div  class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" />
+<div  class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg">
 <div class="caption"> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
@@ -389,7 +389,7 @@ image_file_path
 <ol>
 <li><p>add a label to an image block</p>
 <div class="bs-example">
-<div id="img-scatter" class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" />
+<div id="img-scatter" class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg">
 <div class="caption"><span class="tag">Fig.1.</span> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
@@ -417,7 +417,7 @@ Fig. <a href='#img-scatter'>1</a> shows a scatter diagram
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{image_numbering_prefix</span>|Image <span class="nt">}</span>
 </pre></div>
 <div class="bs-example">
-<div id="img-scatter2" class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg" />
+<div id="img-scatter2" class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg">
 <div class="caption"><span class="tag">Image 2.</span> Example scatter image</div></div>
 </div>
 <div class="bs-example-src">
@@ -526,7 +526,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </tr>
 <tr>
 <td><a href='http://bsmdoc.feiyilin.com'>bsmdoc</a></td><td><div class="figure image-left image-thumbnail">
-<img  src="image/scatter.svg" alt="image/scatter.svg" />
+<img  src="image/scatter.svg" alt="image/scatter.svg">
 </div></td>
 </tr>
 </tbody></table>
@@ -982,7 +982,7 @@ delete
 </div>
 <p>Then you can include the <code >pie.svg</code> in your html file</p>
 <div class="bs-example">
-<div  class="figure"><img  src="./image/pie.svg" alt="./image/pie.svg" /></div>
+<div  class="figure"><img  src="./image/pie.svg" alt="./image/pie.svg"></div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
@@ -1125,13 +1125,86 @@ js/menu.js
 </pre></div>
 </div>
 <p>Only the sections with automatic numbering will be included in the content list. <code >makecontent</code> will also trigger bsmdoc to scan the doc twice.</p>
+<p><code >makecontent</code> is implemented by a function <code >bsmdoc_makecontent</code>. 
+Its input is a list that contains all the headers. The default implementation generates the un-ordered list</p>
+<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_makecontent</span><span class="p">(</span><span class="n">contents</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    contents is a list, where each item has four members:</span>
+<span class="sd">    [level, pre, text, label]</span>
+<span class="sd">        level: 1~6</span>
+<span class="sd">        pre: the prefix (e.g., heading number)</span>
+<span class="sd">        text: the caption text</span>
+<span class="sd">        label: the anchor destination</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">contents</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">first_level</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="c1"># find the smallest level</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">contents</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">first_level</span><span class="p">:</span>
+            <span class="n">first_level</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ctxt</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">contents</span><span class="p">:</span>
+        <span class="c1"># the text has been parsed, so ignore the parsing here</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;[#</span><span class="si">%s</span><span class="s1">|{</span><span class="si">%%%s</span><span class="s1"> </span><span class="si">%s%%</span><span class="s1">}]&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">ctxt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">first_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ctxt</span><span class="p">)</span>
+</pre></div>
 <p>When the doc becomes large, you can split your doc into several docs and includes them in the top doc with the "<code >#include</code>" directive. For example, suppose you are writing a book, and have created <code >chappter1.bsmdoc</code>, <code >chapter2.bsmdoc</code>, .... Then, you can include all the chapters in your <code >book.bsmdoc</code></p>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="k">#include</span><span class="nt"> chapter1.bsmdoc</span>
 <span class="nt">#include chapter2.bsmdoc</span>
 </pre></div>
 </div>
-<p>bsmdoc will replace the line "<code >#include chapter1.bsmdoc</code> with the content in the file "<code >chappter1.bsmdoc</code>".</p>
+<p>bsmdoc will replace the line <code >#include chapter1.bsmdoc</code> with the content of the file <code >chappter1.bsmdoc</code>.</p>
+<p>The <code >#include</code> is implemented with function <code >bsmdoc_include</code></p>
+<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">bsmdoc_readfile</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+    <span class="k">return</span> <span class="bp">None</span>
+</pre></div>
+<p>Here <code >data</code> will be anything following <code >#include</code>. In the previous example, it will be "<code >chapter1.bsmdoc</code>" or "<cod >chapter2.bsmdoc</cod>". If open the file successfully, <code >bsmdoc_include</code> will return the filename and its content by default.</p>
+<p>It is easy to extend the <code >bsmdoc_include</code> function for more complex applications, for example</p>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
+<span class="n">bsmdoc_include_raw</span> <span class="o">=</span> <span class="n">bsmdoc_include</span>
+<span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="c1"># assume &#39;data&#39; has multiple sections separated by &#39;|&#39;, in the format of</span>
+    <span class="c1"># PATTERN | MAX LINE | FILENAME</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># one section, return the default</span>
+        <span class="k">return</span> <span class="n">bsmdoc_include_raw</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">re</span>
+        <span class="c1"># assume the last parameter is the filename</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">bsmdoc_include_raw</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span>
+            <span class="c1"># invalid filename</span>
+            <span class="k">return</span> <span class="n">c</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+            <span class="c1"># search the PATTERN</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">l</span><span class="p">):</span>
+               <span class="n">pattern</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># return the content between the first and second instances of PATTERN</span>
+                <span class="k">if</span> <span class="n">pattern</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pattern</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="c1"># too many lines, cut it</span>
+                    <span class="n">pattern</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">pattern</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="n">pattern</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">pattern</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span>
+        <span class="k">return</span> <span class="n">c</span>
+    <span class="k">return</span> <span class="bp">None</span>
+<span class="nt">%}!}</span>
+</pre></div>
+</div>
+<p>The the following code will include the content between the first two headings from file <code >myfile.bsmdoc</code>. And the maximum number of lines is limited to 16.</p>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="k">#include</span><span class="nt"> ^(\\s)*=+|16|./myfile.bsmdoc</span>
+</pre></div>
+</div>
 <h1 id="sec-template">12 HTML template</h1>
 <p>By default, bsmdoc uses the following template to generate the html file, which defines 4 sections (i.e., <code >html</code>, <code >header</code>, <code >body</code> and <code >footer</code>)</p>
 <div class="bs-example">
@@ -1254,7 +1327,7 @@ bsmdoc -- another technical html doc generator
 <ol>
 <li><div id="footnote-1">This is the footnote <a href="#footnote-src-1">&#8617;</a></div></li>
 </ol>
-<div class="footer-text"> Last updated 2017-07-07 22:45:53 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2017-07-13 12:58:25 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
 </div>
 </div>
 <script src="js/menu.js"></script>

@@ -14,6 +14,45 @@ except ImportError:
 import ply.lex as lex
 import ply.yacc as yacc
 
+class bsmdoc_config(object):
+    """
+    class to hold all the global configurations
+    """
+    def __init__(self):
+        self.html = ""
+        self.config = SafeConfigParser()
+        self.scan = 1
+        self.rescan = False
+        self.contents = None
+
+    def get_cfg(self, sec, key):
+        if self.config.has_option(sec, key):
+            return self.config.get(sec, key)
+        return ''
+
+    def set_cfg(self, sec, key, val):
+        if sec is not 'DEFAULT' and not self.config.has_section(sec):
+            self.config.add_section(sec)
+        self.config.set(sec, key, val)
+
+    def get_option(self, key, default=None):
+        val = self.get_cfg('DEFAULT', key)
+        if val == '':
+            return str(default)
+        return val
+
+    def set_option(self, key, value):
+        return self.set_cfg('DEFAULT', key, str(value))
+
+    def get_option_int(self, key, default):
+        return int(self.get_option(key, default))
+
+    def get_option_bool(self, key, default):
+        return self.get_option(key, default).lower() in ("yes", "true", "t", "1")
+
+bsmdoc = bsmdoc_config()
+
+# lexer definition
 tokens = (
     'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'WORD', 'SPACE',
     'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
@@ -48,7 +87,7 @@ def t_eof(t):
         t.lexer.input(s['lexdata'])
         t.lexer.lexpos = s['lexpos']
         t.lexer.lineno = s['lineno']
-        bsmdoc_setcfg('bsmdoc', 'filename', s['filename'])
+        bsmdoc.set_cfg('bsmdoc', 'filename', s['filename'])
         return t.lexer.token()
     return None
 
@@ -59,38 +98,69 @@ t_fblock_eof = t_eof
 t_link_eof = t_eof
 t_table_eof = t_eof
 
+def bsmdoc_include(data):
+    filename = data.strip()
+    if os.path.isfile(filename):
+        return (filename, bsmdoc_readfile(filename))
+    return None
+
+def bsmdoc_makecontent(contents):
+    """
+    contents is a list, where each item has four members:
+    [level, pre, text, label]
+        level: 1~6
+        pre: the prefix (e.g., heading number)
+        text: the caption text
+        label: the anchor destination
+    """
+    if not contents:
+        return ""
+    first_level = 6
+    # find the smallest level
+    for c in contents:
+        if c[0] < first_level:
+            first_level = c[0]
+    ctxt = []
+    for c in contents:
+        # the text has been parsed, so ignore the parsing here
+        s = '[#%s|{%%%s %s%%}]'%(c[3], c[1], c[2])
+        ctxt.append('-'*(c[0] - first_level + 1) + s)
+    return '\n'.join(ctxt)
+
 def t_INCLUDE(t):
     r'\#include[ ]+[^\s]+[\s]*'
     filename = t.value.strip()
     filename = filename.replace('#include', '', 1)
-    filename = filename.strip()
-    if os.path.isfile(filename):
+    data = bsmdoc_include(filename)
+    if data is not None:
         lex_input_stack.append({'lexdata':t.lexer.lexdata,
                                 'lexpos':t.lexer.lexpos,
                                 'lineno': t.lexer.lineno,
-                                'filename': bsmdoc_getcfg('bsmdoc', 'filename')})
-        t.lexer.input(bsmdoc_readfile(filename))
+                                'filename': bsmdoc.get_cfg('bsmdoc', 'filename')})
+        t.lexer.input(data[1])
         t.lexer.lineno = 1
-        bsmdoc_setcfg('bsmdoc', 'filename', filename)
+        bsmdoc.set_cfg('bsmdoc', 'filename', data[0])
         return t.lexer.token()
     else:
         print("can't not find %s"%filename)
+
 def t_MAKECONTENT(t):
     r'\#makecontent[ ]*'
-    c = bsmdoc_getcfg('bsmdoc', 'CONTENT')
+    c = bsmdoc.contents#bsmdoc.get_cfg('bsmdoc', 'CONTENT')
     if c:
+        content = bsmdoc_makecontent(c)
         lex_input_stack.append({'lexdata':t.lexer.lexdata,
                                 'lexpos':t.lexer.lexpos,
                                 'lineno': t.lexer.lineno,
-                                'filename': bsmdoc_getcfg('bsmdoc', 'filename')})
-        t.lexer.input(c)
+                                'filename': bsmdoc.get_cfg('bsmdoc', 'filename')})
+        t.lexer.input(content)
         t.lexer.lineno = 1
-        bsmdoc_setcfg('bsmdoc', 'filename', 'CONTENT')
+        bsmdoc.set_cfg('bsmdoc', 'filename', 'CONTENT')
         return t.lexer.token()
     else:
         # if first scan, request the 2nd scan
-        if get_option_int('scan', 1) == 1:
-            set_option('rescan', True)
+        if bsmdoc.scan == 1:
+            bsmdoc.rescane = True
 
 # comment starts with "#", except "&#"
 def t_COMMENT(t):
@@ -260,12 +330,13 @@ def t_WORD(t):
 
 lex.lex(reflags=re.M)
 
-bsmdoc = ''
-def bsmdoc_escape(data, *args):
+
+
+def bsmdoc_escape(data, *args, **kwargs):
     s = re.sub(r'(<)', r'&lt;', data)
     s = re.sub(r'(>)', r'&gt;', s)
     return s
-def bsmdoc_unescape(data, *args):
+def bsmdoc_unescape(data, *args, **kwargs):
     s = re.sub(r'(&lt;)', r'<', data)
     s = re.sub(r'&gt;', r'>', s)
     return s
@@ -288,7 +359,7 @@ def bsmdoc_warning_(msg, **kwargs):
 
 def bsmdoc_helper(cmds, data, default=None, lineno=-1, inline=False):
     kwargs = {'lineno': lineno, 'inline': inline,
-              'filename':bsmdoc_getcfg('bsmdoc', 'filename')}
+              'filename':bsmdoc.get_cfg('bsmdoc', 'filename')}
     ldict = lex.get_caller_module_dict(1)
     fun = ldict.get('bsmdoc_'+cmds[0], 'none')
     if fun and hasattr(fun, "__call__"):
@@ -304,9 +375,9 @@ def bsmdoc_helper(cmds, data, default=None, lineno=-1, inline=False):
 def bsmdoc_config(data, args, **kwargs):
     try:
         if len(args) <= 0:
-            config.readfp(StringIO(data))
+            bsmdoc.config.readfp(StringIO(data))
         else:
-            set_option(args[0], data)
+            bsmdoc.set_option(args[0], data)
     except:
         traceback.print_exc()
         bsmdoc_error_("bsmdoc_config('%s',%s)"% (data, args), **kwargs)
@@ -320,7 +391,7 @@ bsmdoc_eqref = bsmdoc_ref
 _bsmdoc_exec_rtn = ''
 def bsmdoc_exec(data, args, **kwargs):
     # check if it only needs to execute the code for the first time
-    if args and args[0] == "firstRunOnly" and get_option_int('scan', 1) > 1:
+    if args and args[0] == "firstRunOnly" and bsmdoc.scan > 1:
         return ''
     try:
         global _bsmdoc_exec_rtn
@@ -396,10 +467,10 @@ def bsmdoc_header(txt, level, **kwargs):
     orderheaddict = bsmdoc_header.head
     s = txt
     pre = ''
-    label = get_option('label', '')
+    label = bsmdoc.get_option('label', '')
 
-    if get_option_bool('heading_numbering', 0):
-        start = get_option_int('heading_numbering_start', 1)
+    if bsmdoc.get_option_bool('heading_numbering', 0):
+        start = bsmdoc.get_option_int('heading_numbering_start', 1)
         c = len(level)
         if c >= start:
             for i in range(start, c):
@@ -416,17 +487,17 @@ def bsmdoc_header(txt, level, **kwargs):
             bsmdoc_header.content.append([c, pre, s, label])
         s = pre + ' ' + s
     if label:
-        bsmdoc_setcfg('ANCHOR', label, pre)
+        bsmdoc.set_cfg('ANCHOR', label, pre)
         label = ' id="%s"'%label
 
     return '<h%d%s>%s</h%d>\n'%(len(level), label, s, len(level))
 
 @static_vars(counter=0)
 def image_next_tag():
-    if get_option_bool('image_numbering', 0):
+    if bsmdoc.get_option_bool('image_numbering', 0):
         image_next_tag.counter += 1
-        prefix = get_option('image_numbering_prefix', 'Fig.')
-        num = get_option('image_numbering_num_prefix', '') + str(image_next_tag.counter)
+        prefix = bsmdoc.get_option('image_numbering_prefix', 'Fig.')
+        num = bsmdoc.get_option('image_numbering_num_prefix', '') + str(image_next_tag.counter)
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
 
@@ -447,18 +518,18 @@ def bsmdoc_style_(args, default_class=None):
 def bsmdoc_image(data, args, **kwargs):
     inline = kwargs.get('inline', False)
     style = bsmdoc_style_(args, '')
-    r = '<img %s src="%s" alt="%s" />'%(style, data, data)
+    r = '<img %s src="%s" alt="%s">'%(style, data, data)
     if inline:
         return r
-    caption = get_option('caption', '')
-    label = get_option('label', '')
+    caption = bsmdoc.get_option('caption', '')
+    label = bsmdoc.get_option('label', '')
     tag = ''
     if label:
         (tag, prefix, num) = image_next_tag()
-        if get_option_int('scan', 1) == 1 and bsmdoc_getcfg('ANCHOR', label):
+        if bsmdoc.scan == 1 and bsmdoc.get_cfg('ANCHOR', label):
             bsmdoc_warning_('duplicated label %s".'%(label), **kwargs)
 
-        bsmdoc_setcfg('ANCHOR', label, num)
+        bsmdoc.set_cfg('ANCHOR', label, num)
         label = 'id="%s"'%label
         tag = '<span class="tag">%s</span>'%tag
     if caption:
@@ -469,15 +540,15 @@ def bsmdoc_image(data, args, **kwargs):
 def bsmdoc_video(data, args, **kwargs):
     style = bsmdoc_style_(args, '')
     r = '<video controls %s><source src="%s">Your browser does not support the video tag.</video>'%(style, data)
-    caption = get_option('caption', '')
-    label = get_option('label', '')
+    caption = bsmdoc.get_option('caption', '')
+    label = bsmdoc.get_option('label', '')
     tag = ''
     if label:
         (tag, prefix, num) = image_next_tag()
-        if get_option_int('scan', 1) == 1 and bsmdoc_getcfg('ANCHOR', label):
+        if bsmdoc.scan == 1 and bsmdoc.get_cfg('ANCHOR', label):
             bsmdoc_warning_('duplicated label %s".'%(label), **kwargs)
 
-        bsmdoc_setcfg('ANCHOR', label, num)
+        bsmdoc.set_cfg('ANCHOR', label, num)
         label = 'id="%s"'%label
         tag = '<span class="tag">%s</span>'%tag
 
@@ -488,10 +559,10 @@ def bsmdoc_video(data, args, **kwargs):
 
 @static_vars(counter=0)
 def table_next_tag():
-    if get_option_bool('table_numbering', 0):
+    if bsmdoc.get_option_bool('table_numbering', 0):
         table_next_tag.counter += 1
-        prefix = get_option('table_numbering_prefix', 'Table.')
-        num = get_option('table_numbering_num_prefix', '') + str(table_next_tag.counter)
+        prefix = bsmdoc.get_option('table_numbering_prefix', 'Table.')
+        num = bsmdoc.get_option('table_numbering_num_prefix', '') + str(table_next_tag.counter)
         return (str(prefix) + num + '.', prefix, num)
     return ("", "", "")
 
@@ -500,15 +571,15 @@ def bsmdoc_table(head, body):
         head = '<thead>%s</thead>'%head
     if body:
         body = '<tbody>%s</tbody>'%body
-    label = get_option('label', '')
+    label = bsmdoc.get_option('label', '')
     tag = ''
     # add the in-page link
     if label:
         (tag, prefix, num) = table_next_tag()
-        bsmdoc_setcfg('ANCHOR', label, num)
+        bsmdoc.set_cfg('ANCHOR', label, num)
         label = 'id="%s"'%label
         tag = '<span class="tag">%s</span>'%tag
-    caption = get_option('caption', '')
+    caption = bsmdoc.get_option('caption', '')
     if caption:
         caption = '<caption>%s</caption>'%(tag + ' ' + caption)
     return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
@@ -658,7 +729,7 @@ empty :
 def p_article(p):
     '''article : sections'''
     global bsmdoc
-    bsmdoc = p[1]
+    bsmdoc.html = p[1]
 
 def p_sections_multi(p):
     '''sections : sections block'''
@@ -670,12 +741,15 @@ def p_sections_single(p):
 
 def p_heading(p):
     '''block : heading_start logicline'''
-    p[0] = bsmdoc_header(p[2].strip(), p[1].strip())
-
+    # ignore the header level 7 or higher
+    if len(p[1].strip()) <= 6:
+        p[0] = bsmdoc_header(p[2].strip(), p[1].strip())
+    else:
+        p[0] = ""
 def p_heading_start(p):
     '''heading_start : HEADING'''
     global header_level
-    set_option('label', '')
+    bsmdoc.set_option('label', '')
     p[0] = p[1]
     header_level = len(fblock_state)
 
@@ -714,8 +788,8 @@ def p_table(p):
 
 def p_table_start(p):
     '''tstart : TSTART'''
-    set_option('caption', '')
-    set_option('label', '')
+    bsmdoc.set_option('caption', '')
+    bsmdoc.set_option('label', '')
     p[0] = ''
 
 def p_tbody_multi(p):
@@ -755,8 +829,8 @@ def p_block_start(p):
     """bstart : BSTART"""
     p[0] = ''
     fblock_state.append((p[1], p.lineno(1), header_level))
-    set_option('caption', '')
-    set_option('label', '')
+    bsmdoc.set_option('caption', '')
+    bsmdoc.set_option('label', '')
 
 def p_block_end(p):
     """bend : BEND"""
@@ -886,13 +960,15 @@ def p_inlineblock_link(p):
     s = p[2].strip()
     v = s
     if s[0] == '#':
-        v = bsmdoc_getcfg('ANCHOR', s[1:])
+        v = bsmdoc.get_cfg('ANCHOR', s[1:])
         if not v:
             v = s[1:]
             # do not find the anchor, wait for the 2nd scan
-            if get_option_int('scan', 1) > 1:
-                print("Broken anchor '%s' at line %d"%(s, p.lineno(2)))
-            set_option('rescan', True)
+            if bsmdoc.scan > 1:
+                kwargs = {'lineno': p.lineno(2),
+                          'filename':bsmdoc.get_cfg('bsmdoc', 'filename')}
+                bsmdoc_warning_("broken anchor '%s'", **kwargs)
+            bsmdoc.rescan = True
     p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
 
 def p_plaintext_multi(p):
@@ -913,7 +989,7 @@ def p_empty(p):
 def p_error(p):
     if len(fblock_state):
         e = fblock_state.pop()
-        kwargs = {'lineno': e[1], 'filename':bsmdoc_getcfg('bsmdoc', 'filename')}
+        kwargs = {'lineno': e[1], 'filename':bsmdoc.get_cfg('bsmdoc', 'filename')}
         bsmdoc_error_("unmatched block '%s'"%(e[0]), **kwargs)
     else:
         print("error: ", p)
@@ -930,75 +1006,35 @@ end= </html>
 
 [header]
 begin = <head>
-    <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/">
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 end = <title>%(TITLE)s</title>
     </head>
-content = <link rel="stylesheet" href="bsmdoc.css" type="text/css" />
+content = <link rel="stylesheet" href="bsmdoc.css" type="text/css">
 
 [body]
 begin = <body>
-    <div id="layout-content">
+    <div class="layout">
 end = </div>
     </body>
 
 [footer]
-begin = <div id="footer">
+begin = <div class="footer">
 end = </div>
-content = <div id="footer-text"> Last updated %(UPDATED)s, by
+content = <div class="footer-text"> Last updated %(UPDATED)s, by
           <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
 """
-def make_content(content):
-    first_level = 6
-    for c in content:
-        if c[0] < first_level:
-            first_level = c[0]
-    ctxt = []
-    for c in content:
-        s = '[#%s'%c[3] + '|{%' + c[1] + ' ' + c[2] + '%}]'
-        ctxt.append('-'*(c[0] - first_level + 1) + s)
-    return '\n'.join(ctxt)
-
-config = SafeConfigParser()
-def bsmdoc_getcfg(sec, key):
-    global config
-    if config.has_option(sec, key):
-        return config.get(sec, key)
-    return ''
-
-def bsmdoc_setcfg(sec, key, val):
-    global config
-    if sec is not 'DEFAULT' and not config.has_section(sec):
-        config.add_section(sec)
-    config.set(sec, key, val)
-
-def get_option(key, default=None):
-    val = bsmdoc_getcfg('DEFAULT', key)
-    if val == '':
-        return str(default)
-    return val
-
-def set_option(key, value):
-    bsmdoc_setcfg('DEFAULT', key, str(value))
-
-def get_option_int(key, default):
-    return int(get_option(key, default))
-
-def get_option_bool(key, default):
-    return get_option(key, default).lower() in ("yes", "true", "t", "1")
 
 def bsmdoc_raw(filename, encoding):
     global bsmdoc
-    global config
     txt = bsmdoc_readfile(filename, encoding)
-    config = SafeConfigParser()
-    config.readfp(StringIO(bsmdoc_conf))
-    set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
-    set_option('scan', 1)
-    set_option('title', '')
-    set_option('source', '')
-    bsmdoc_setcfg('bsmdoc', 'filename', filename)
-    bsmdoc = ''
+    bsmdoc.config = SafeConfigParser()
+    bsmdoc.config.readfp(StringIO(bsmdoc_conf))
+    bsmdoc.set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
+    bsmdoc.scan = 1
+    bsmdoc.set_option('title', '')
+    bsmdoc.set_option('source', '')
+    bsmdoc.set_cfg('bsmdoc', 'filename', filename)
     lex.lexer.lineno = 1
     #lex.input(txt)
     #while True:
@@ -1007,26 +1043,22 @@ def bsmdoc_raw(filename, encoding):
     #        break      # No more input
     #    print(tok)
     yacc.parse(txt, tracking=True)
-    if get_option_bool('rescan', False):
-        set_option('scan', get_option_int('scan', 1)+1)
+    if bsmdoc.rescan:
+        bsmdoc.scan += 1
         # 2nd scan to resolve the references
         image_next_tag.counter = 0
         table_next_tag.counter = 0
         bsmdoc_header.head = {}
         bsmdoc_footnote.notes = []
         if bsmdoc_header.content:
-            s = make_content(bsmdoc_header.content)
-            # % is the variable substitution symbol in ConfigParser;
-            # %% for substitution escape
-            s = s.replace('%', '%%')
-            bsmdoc_setcfg('bsmdoc', 'CONTENT', s)
+            bsmdoc.contents = bsmdoc_header.content
         bsmdoc_header.content = []
         lex.lexer.lineno = 1
         # reset all the global options
-        for k, v in config.items('DEFAULT'):
-            if k not in ['scan', 'updated', 'title', 'source']:
-                config.remove_option('DEFAULT', k)
-        config.readfp(StringIO(bsmdoc_conf))
+        for k, v in bsmdoc.config.items('DEFAULT'):
+            if k not in ['updated', 'title', 'source']:
+                bsmdoc.config.remove_option('DEFAULT', k)
+        bsmdoc.config.readfp(StringIO(bsmdoc_conf))
         yacc.parse(txt, tracking=True)
     return bsmdoc
 
@@ -1058,55 +1090,54 @@ def bsmdoc_readfile(filename, encoding=None):
 
 def bsmdoc_gen(filename, encoding=None):
     global bsmdoc
-    global config
     bsmdoc_raw(filename, encoding)
-    config_doc = get_option('bsmdoc_conf', '')
+    config_doc = bsmdoc.get_option('bsmdoc_conf', '')
     if config_doc:
         txt = bsmdoc_readfile(config_doc)
-        config.readfp(StringIO(txt))
+        bsmdoc.config.readfp(StringIO(txt))
 
-    set_option('THISFILE', os.path.basename(filename))
+    bsmdoc.set_option('THISFILE', os.path.basename(filename))
     html = []
-    html.append(bsmdoc_getcfg('html', 'begin'))
+    html.append(bsmdoc.get_cfg('html', 'begin'))
     # header
-    html.append(bsmdoc_getcfg('header', 'begin'))
-    html.append(bsmdoc_getcfg('header', 'content'))
-    temp = get_option('addcss', '')
+    html.append(bsmdoc.get_cfg('header', 'begin'))
+    html.append(bsmdoc.get_cfg('header', 'content'))
+    temp = bsmdoc.get_option('addcss', '')
     if temp:
         css = temp.split(' ')
         for c in css:
-            html.append('<link rel="stylesheet" href="%s" type="text/css" />'%c)
-    temp = get_option('addjs', '')
+            html.append('<link rel="stylesheet" href="%s" type="text/css">'%c)
+    temp = bsmdoc.get_option('addjs', '')
     if temp:
         js = temp.split(' ')
         for j in js:
             html.append('<script type="text/javascript" language="javascript" src="%s"></script>'%j)
-    html.append(bsmdoc_getcfg('header', 'end'))
+    html.append(bsmdoc.get_cfg('header', 'end'))
     # body
-    html.append(bsmdoc_getcfg('body', 'begin'))
-    subtitle = get_option('subtitle', '')
+    html.append(bsmdoc.get_cfg('body', 'begin'))
+    subtitle = bsmdoc.get_option('subtitle', '')
     if subtitle:
-        subtitle = '<div id="subtitle">%s</div>\n'%(subtitle)
-    doctitle = get_option('doctitle', '')
+        subtitle = '<div class="subtitle">%s</div>\n'%(subtitle)
+    doctitle = bsmdoc.get_option('doctitle', '')
     if doctitle:
-        doctitle = '<div id="toptitle">%s%s</div>'%(doctitle, subtitle)
+        doctitle = '<div class="toptitle">%s%s</div>'%(doctitle, subtitle)
     html.append(doctitle)
-    html.append(bsmdoc)
-    html.append(bsmdoc_getcfg('footer', 'begin'))
+    html.append(bsmdoc.html)
+    html.append(bsmdoc.get_cfg('footer', 'begin'))
     if len(bsmdoc_footnote.notes):
         html.append('<ol>')
         html.append(os.linesep.join(["<li>%s</li>"%x for x in bsmdoc_footnote.notes]))
         html.append('</ol>')
 
-    if get_option('source', ''):
-        set_option("SOURCE", '<a href="%s">(source)</a>'%filename)
-    html.append(bsmdoc_getcfg('footer', 'content'))
+    if bsmdoc.get_option('source', ''):
+        bsmdoc.set_option("SOURCE", '<a href="%s">(source)</a>'%filename)
+    html.append(bsmdoc.get_cfg('footer', 'content'))
 
-    html.append(bsmdoc_getcfg('footer', 'end'))
+    html.append(bsmdoc.get_cfg('footer', 'end'))
 
-    html.append(bsmdoc_getcfg('body', 'end'))
+    html.append(bsmdoc.get_cfg('body', 'end'))
 
-    html.append(bsmdoc_getcfg('html', 'end'))
+    html.append(bsmdoc.get_cfg('html', 'end'))
     outname = os.path.splitext(filename)[0] + '.html'
     fp = open(outname, 'w')
     fp.write('\n'.join(html))
