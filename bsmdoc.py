@@ -115,11 +115,7 @@ def bsmdoc_makecontent(contents):
     """
     if not contents:
         return ""
-    first_level = 6
-    # find the smallest level
-    for c in contents:
-        if c[0] < first_level:
-            first_level = c[0]
+    first_level = min([c[0] for c in contents])
     ctxt = []
     for c in contents:
         # the text has been parsed, so ignore the parsing here

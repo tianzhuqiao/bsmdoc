@@ -923,13 +923,21 @@ With function block, you can also easily include source code in your html doc. F
 {!exec|firstRunOnly||{%
 import inspect
 def bsmdoc_codesnippet(data, args, **kwargs):
-    return inspect.getsource(eval(data))
+    d = eval(data)
+    if isinstance(d, str):
+        return d
+    else:
+        return inspect.getsource(eval(data))
 %}!}
 %}!}
 {!exec|firstRunOnly||{%
 import inspect
 def bsmdoc_codesnippet(data, args, **kwargs):
-    return inspect.getsource(eval(data))
+    d = eval(data)
+    if isinstance(d, basestring):
+        return d
+    else:
+        return inspect.getsource(eval(data))
 %}!}
 Then you can include the source code (e.g., matplotlib.pyplot.plot) by
 {!div|bs-example||
@@ -1025,10 +1033,10 @@ bsmdoc can automatically generate the table of content with
 #makecontent
 %}!}
 
-Only the sections with automatic numbering will be included in the content list. \tag{code|makecontent} will also trigger bsmdoc to scan the doc twice.
+Only the headings with automatic numbering will be included in the content list. \tag{code|makecontent} will also trigger bsmdoc to scan the doc twice.
 
 \tag{code|makecontent} is implemented by a function \tag{code|bsmdoc_makecontent}.
- Its input is a list that contains all the headers. The default implementation generates the un-ordered list
+ Its input is a list that contains all the headings. The default implementation generates an un-ordered list
 {!highlight|python||codesnippet||
 bsmdoc_makecontent
 !}
@@ -1046,7 +1054,7 @@ The \tag{code|\#include} is implemented with function \tag{code|bsmdoc_include}
 {!highlight|python||codesnippet||
 bsmdoc_include
 !}
-Here \tag{code|data} will be anything following \tag{code|\#include}. In the previous example, it will be "\tag{code|chapter1.bsmdoc}" or "\tag{cod|chapter2.bsmdoc}". If open the file successfully, \tag{code|bsmdoc_include} will return the filename and its content by default.
+Here \tag{code|data} will be anything following \tag{code|\#include}. In the previous example, it will be "\tag{code|chapter1.bsmdoc}" or "\tag{code|chapter2.bsmdoc}". If the file is opened successfully, by default \tag{code|bsmdoc_include} will return the filename and its content.
 
 It is easy to extend the \tag{code|bsmdoc_include} function for more complex applications, for example
 {!div|bs-example-src||highlight|bsmdoc||{%
@@ -1092,39 +1100,9 @@ The the following code will include the content between the first two headings f
 
 By default, bsmdoc uses the following template to generate the html file, which defines 4 sections (i.e., \tag{code|html}, \tag{code|header}, \tag{code|body} and \tag{code|footer})
 
-{!div|bs-example||highlight|ini||{%
-[html]
-begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
-    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-end= </html>
-
-[header]
-begin = <head>
-    <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-end = <title>%(TITLE)s</title>
-</head>
-content = <link rel="stylesheet" href="bsmdoc.css" type="text/css" />
-
-[body]
-begin = <body>
-    <div id="layout-content">
-end = </div>
-    </body>
-
-[footer]
-begin = <div id="footer">
-end = </div>
-content = <div id="footer-text"> Last updated %(UPDATED)s, by
-          <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
-%}!}
-
-To use the customized template, you can generate a configuration file to define the above four sections. Then, tell bsmdoc to use the customized template with command
-
-{!div|bs-example-src||highlight|bsmdoc||{%
-\config{bsmdoc_conf|configure_file_path}
-%}!}
+{!div|bs-example||highlight|ini||codesnippet||
+bsmdoc_conf
+!}
 
 Using a separate configuration file seems not compatible with our goal to include everything in a single file, although sometimes it may be convenient (for example, to use the same configuration file for multiple docs). bsmdoc also provides a way to include the customized template in your doc, for example
 
