@@ -915,7 +915,7 @@ Then you can include the \tag{code|pie.svg} in your html file
 !}
 %}!}
 
-Thus, for most time, there is no need to use other software to generate figures.
+Thus, there may be no need to use other software to generate figures.
 
 == Include source code
 With function block, you can also easily include source code in your html doc. For example, to import the python source code in your doc, you can define the following function block

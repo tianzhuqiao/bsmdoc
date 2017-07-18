@@ -14,7 +14,7 @@ except ImportError:
 import ply.lex as lex
 import ply.yacc as yacc
 
-class bsmdoc_config(object):
+class bsmdocConfiguration(object):
     """
     class to hold all the global configurations
     """
@@ -50,7 +50,7 @@ class bsmdoc_config(object):
     def get_option_bool(self, key, default):
         return self.get_option(key, default).lower() in ("yes", "true", "t", "1")
 
-bsmdoc = bsmdoc_config()
+bsmdoc = bsmdocConfiguration()
 
 # lexer definition
 tokens = (
@@ -78,7 +78,9 @@ t_equation_ignore = ''
 # input stack to support dynamically changing the input text (e.g., include)
 lex_input_stack = []
 def t_error(t):
-    print("Illegal character '%s' at line %d"%(t.value[0], t.lexer.lineno))
+    kwargs = {'filename':bsmdoc.get_cfg('bsmdoc', 'filename'),
+              'lineno': t.lexer.lineno}
+    bsmdoc_error_("Illegal character '%s'"%(t.value[0]), **kwargs)
     t.lexer.skip(1)
 
 def t_eof(t):
@@ -156,7 +158,7 @@ def t_MAKECONTENT(t):
     else:
         # if first scan, request the 2nd scan
         if bsmdoc.scan == 1:
-            bsmdoc.rescane = True
+            bsmdoc.rescan = True
 
 # comment starts with "#", except "&#"
 def t_COMMENT(t):
@@ -190,12 +192,13 @@ def t_equation_EQN(t):
 # everything except '$$'
 def t_equation_WORD(t):
     r'(?:\\.|(\$(?!\$))|[^\$])+'
-    t.lexer.lineno += t.value.count('\n')
+    #t.lexer.lineno += t.value.count('\n')
+    pass
 t_equation_error = t_error
 
 # shortcuts for inline equation
 def t_INLINE_EQN(t):
-    r'\$[^\$]*\$'
+    r'\$[^\$\n]*\$'
     t.type = 'INLINEEQ'
     t.lexer.lineno += t.value.count('\n')
     t.value = t.value[1:-1]
@@ -362,7 +365,7 @@ def bsmdoc_helper(cmds, data, default=None, lineno=-1, inline=False):
         return str(eval('fun(data, cmds[1:], **kwargs)'))
     else:
         f = 'bsmdoc_%s(%s)' %(cmds[0], ",".join(cmds[1:]))
-        bsmdoc_warning_('undefined function block "%s".'%(f))
+        bsmdoc_warning_('undefined function block "%s".'%(f), **kwargs)
     if default:
         return default
     else:

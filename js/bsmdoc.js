@@ -71,7 +71,7 @@ var simplePopup = (function() {
             thispopup.tooltip.bind('mouseover', {thispopup:thispopup}, thispopup.keepVisible);
             thispopup.tooltip.bind('mouseout',  {thispopup:thispopup}, thispopup.mouseOut);
             thispopup.tooltip.stop(true, true);
-            thispopup.tooltip.html($root.html());
+            thispopup.tooltip.html($root[0].outerHTML);
             thispopup.tooltip.css({
                 top: 0,
             });
