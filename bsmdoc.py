@@ -24,7 +24,7 @@ class bsmdocConfiguration(object):
         self.scan = 1
         self.rescan = False
         self.contents = None
-
+        self.refs = {}
     def get_cfg(self, sec, key):
         if self.config.has_option(sec, key):
             return self.config.get(sec, key)
@@ -140,7 +140,9 @@ def t_INCLUDE(t):
         bsmdoc.set_cfg('bsmdoc', 'filename', data[0])
         return t.lexer.token()
     else:
-        print("can't not find %s"%filename)
+        kwargs = {'lineno': t.lexer.lineno,
+                  'filename':  bsmdoc.get_cfg('bsmdoc', 'filename')}
+        bsmdoc_error_("can't not find %s"%filename, **kwargs)
 
 def t_MAKECONTENT(t):
     r'\#makecontent[ ]*'
@@ -451,10 +453,55 @@ def static_vars(**kwargs):
         return func
     return decorate
 
+@static_vars(refs=[])
+def bsmdoc_cite(data, args, **kwargs):
+    hide = args and args[0] == 'hide'
+    ref = bsmdoc.refs.get(data, '')
+    if not ref:
+        if bsmdoc.scan == 1:
+            bsmdoc.rescan = True
+        else:
+            bsmdoc_error_("Can't find the reference: %s"%data, **kwargs)
+        return ""
+    i = 0
+    for i in xrange(len(bsmdoc_cite.refs)):
+        if ref == bsmdoc_cite.refs[i][2]:
+            if hide:
+                break
+            bsmdoc_cite.refs[i][3] += 1
+            ach = bsmdoc_cite.refs[i][3]
+            tag = bsmdoc_cite.refs[i][1]
+            break
+    else:
+        tag = len(bsmdoc_cite.refs) + 1
+        ach = 1
+        if hide: ach = 0
+        bsmdoc_cite.refs.append(['', tag, ref, ach])
+        i = -1
+    src_t = 'cite_src-%d-'%(tag)
+    src = '%s%d'%(src_t, ach)
+    dec = 'cite-%d'%tag
+    # add the reference to the list, which will show at the end of the page
+    src_a = ' '.join(['<a href="#%s%d">&#8617;</a>'%(src_t, a) for a in xrange(1, ach+1)])
+    fn = '<div id="%s">%s %s</div>'%(dec, ref, src_a)
+    bsmdoc_cite.refs[i][0] = fn
+    if args and args[0] == 'hide':
+        # hide the cite
+        return ""
+    ach = '[<a id="%s" href="#%s">%d</a>]'%(src, dec, tag)
+    return ach
+
+def bsmdoc_reference(data, args, **kwargs):
+    if not args:
+        bsmdoc_error_("Invalid reference definition: missing alias", **kwargs)
+    k = args[0].strip()
+    bsmdoc.refs[k] = data
+    return ""
+
 @static_vars(notes=[])
 def bsmdoc_footnote(data, args, **kwargs):
     tag = len(bsmdoc_footnote.notes) + 1
-    src = 'footnote-src-%d'%tag
+    src = 'footnote_src-%d'%tag
     dec = 'footnote-%d'%tag
     # add the footnote to the list, which will show at the end of the page
     fn = '<div id="%s">%s <a href="#%s">&#8617;</a></div>'%(dec, data, src)
@@ -966,7 +1013,7 @@ def p_inlineblock_link(p):
             if bsmdoc.scan > 1:
                 kwargs = {'lineno': p.lineno(2),
                           'filename':bsmdoc.get_cfg('bsmdoc', 'filename')}
-                bsmdoc_warning_("broken anchor '%s'", **kwargs)
+                bsmdoc_warning_("broken anchor '%s'"%v, **kwargs)
             bsmdoc.rescan = True
     p[0] = '<a href=\'%s\'>%s</a>'%(s, v)
 
@@ -1049,6 +1096,7 @@ def bsmdoc_raw(filename, encoding):
         table_next_tag.counter = 0
         bsmdoc_header.head = {}
         bsmdoc_footnote.notes = []
+        bsmdoc_cite.refs = []
         if bsmdoc_header.content:
             bsmdoc.contents = bsmdoc_header.content
         bsmdoc_header.content = []
@@ -1122,11 +1170,17 @@ def bsmdoc_gen(filename, encoding=None):
         doctitle = '<div class="toptitle">%s%s</div>'%(doctitle, subtitle)
     html.append(doctitle)
     html.append(bsmdoc.html)
+    # reference
+    if len(bsmdoc_cite.refs):
+        html.append('<div class="reference"><ol>')
+        html.append(os.linesep.join(["<li>%s</li>"%x[0] for x in bsmdoc_cite.refs]))
+        html.append('</ol></div>')
+
     html.append(bsmdoc.get_cfg('footer', 'begin'))
     if len(bsmdoc_footnote.notes):
-        html.append('<ol>')
+        html.append('<div class="footnote"><ol>')
         html.append(os.linesep.join(["<li>%s</li>"%x for x in bsmdoc_footnote.notes]))
-        html.append('</ol>')
+        html.append('</ol></div>')
 
     if bsmdoc.get_option('source', ''):
         bsmdoc.set_option("SOURCE", '<a href="%s">(source)</a>'%filename)

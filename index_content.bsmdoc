@@ -235,6 +235,7 @@ My in-page [#myanchor|link]
 My in-page [#myanchor|link]
 %}!}
 
+\tag{b|Footnote.}
 One special in-page link is \tag{code|footnote}\anchor{footnote}. It will automatic add the link to the position it gets defined, and add the footnote content at the end of the page. bsmdoc also adds a shortcut at the end of the footnote content, so you can return to the footnote definition position easily.
 {!div|bs-example||
 footnote example\footnote{This is the footnote}.
@@ -244,6 +245,28 @@ footnote example\footnote{This is the footnote}.
 %}!}
 
 The footnote block will automatically add indexing to each footnote. When you move the cursor to the footnote link, bsmdoc will show a popup window to display the footnote content. So you may not need to go to the end of the page to see the footnote content. The [#sec-image|image], [#sec-equation|equation] and [#sec-table|table] blocks support similar feature.
+
+\tag{b|Reference.}
+In technical writing, reference is very common. bsmdoc has an easy way to add references and citations. For example, the following command will add a book reference
+\reference{Simon|Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001}
+{!div|bs-example-src||highlight|bsmdoc||{%
+\reference{Simon|Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001}
+%}!}
+where \tag{code|Simon} before \tag{code|\|} is the alias, which you can use to cite it, e.g.,
+{!div|bs-example||
+The LMS algorithm in \cite{Simon}...
+!}
+{!div|bs-example-src||highlight|bsmdoc||{%
+The LMS algorithm in \cite{Simon}...
+%}!}
+And the reference is not required to be defined before citation. If bsmdoc can not find the reference when it sees \tag{code|\\cite}, it will trigger the second scan, in case the reference is defined after the citation.
+
+All cited references will be appended to the end of the document in the citation order. If you want to add the reference without citation, you can use the \tag{code|hide} argument of the \tag{code|cite} command
+{!div|bs-example-src||highlight|bsmdoc||{%
+\cite{hide|Simon}...
+%}!}
+In this case, it will not generate the link to the reference, but the reference will still be added to the reference list even if there is no explicit citation in the document.
+
 = Image \config{label|sec-image}
 
 {!exec|firstRunOnly||{%

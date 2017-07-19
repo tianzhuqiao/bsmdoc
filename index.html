@@ -346,15 +346,37 @@ My in-page <a href='#myanchor'>link</a>
 <div class="syntax"><pre><span></span>My in-page <span class="nt">[#myanchor</span>|<span class="s">link</span><span class="nt">]</span>
 </pre></div>
 </div>
-<p>One special in-page link is <code >footnote</code><a name="footnote"><sup>&#x2693;</sup></a>. It will automatic add the link to the position it gets defined, and add the footnote content at the end of the page. bsmdoc also adds a shortcut at the end of the footnote content, so you can return to the footnote definition position easily.</p>
+<p><b >Footnote.</b> 
+One special in-page link is <code >footnote</code><a name="footnote"><sup>&#x2693;</sup></a>. It will automatic add the link to the position it gets defined, and add the footnote content at the end of the page. bsmdoc also adds a shortcut at the end of the footnote content, so you can return to the footnote definition position easily.</p>
 <div class="bs-example">
-footnote example<a name="footnote-src-1" href="#footnote-1"><sup>1</sup></a>.
+footnote example<a name="footnote_src-1" href="#footnote-1"><sup>1</sup></a>.
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span>footnote example<span class="nf">\footnote</span><span class="nt">{</span>This is the footnote<span class="nt">}</span>.
 </pre></div>
 </div>
 <p>The footnote block will automatically add indexing to each footnote. When you move the cursor to the footnote link, bsmdoc will show a popup window to display the footnote content. So you may not need to go to the end of the page to see the footnote content. The <a href='#sec-image'>image</a>, <a href='#sec-equation'>equation</a> and <a href='#sec-table'>table</a> blocks support similar feature.</p>
+<p><b >Reference.</b> 
+In technical writing, reference is very common. bsmdoc has an easy way to add references and citations. For example, the following command will add a book reference</p>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="nf">\reference</span><span class="nt">{Simon</span>|Simon Haykin, &quot;Adaptive Filter Theory,&quot; Prentice Hall, 4th edition, Sep. 2001<span class="nt">}</span>
+</pre></div>
+</div>
+<p>where <code >Simon</code> before <code >|</code> is the alias, which you can use to cite it, e.g.,</p>
+<div class="bs-example">
+The LMS algorithm in [<a id="cite_src-1-1" href="#cite-1">1</a>]...
+</div>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span>The LMS algorithm in <span class="nf">\cite</span><span class="nt">{</span>Simon<span class="nt">}</span>...
+</pre></div>
+</div>
+<p>And the reference is not required to be defined before citation. If bsmdoc can not find the reference when it sees <code >\cite</code>, it will trigger the second scan, in case the reference is defined after the citation.</p>
+<p>All cited references will be appended to the end of the document in the citation order. If you want to add the reference without citation, you can use the <code >hide</code> argument of the <code >cite</code> command</p>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="nf">\cite</span><span class="nt">{hide</span>|Simon<span class="nt">}</span>...
+</pre></div>
+</div>
+<p>In this case, it will not generate the link to the reference, but the reference will still be added to the reference list even if there is no explicit citation in the document.</p>
 <h1 id="sec-image">5 Image</h1>
 <p>The syntax of the <code >image</code> block is</p>
 <div class="bs-example">
@@ -1318,11 +1340,14 @@ bsmdoc -- another technical html doc generator
 </div>
 </div>
 
+<div class="reference"><ol>
+<li><div id="cite-1">Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001 <a href="#cite_src-1-1">&#8617;</a></div></li>
+</ol></div>
 <div class="footer">
-<ol>
-<li><div id="footnote-1">This is the footnote <a href="#footnote-src-1">&#8617;</a></div></li>
-</ol>
-<div class="footer-text"> Last updated 2017-07-15 17:14:45 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
+<div class="footnote"><ol>
+<li><div id="footnote-1">This is the footnote <a href="#footnote_src-1">&#8617;</a></div></li>
+</ol></div>
+<div class="footer-text"> Last updated 2017-07-19 14:21:08 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
 </div>
 </div>
 <script src="js/menu.js"></script>

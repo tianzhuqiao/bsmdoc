@@ -100,4 +100,5 @@ $( window ).load(function() {
     new simplePopup('a[href*="img-"]');
     new simplePopup('a[href*="tbl-"]');
     new simplePopup('a[href*="footnote-"]');
+    new simplePopup('a[href*="cite-"]');
 });
