@@ -385,9 +385,22 @@ def bsmdoc_config(data, args, **kwargs):
     return ""
 
 # deal with the equation reference: \ref{} or \eqref{}
-def bsmdoc_ref(data, args, **kwargs):
+def bsmdoc_eqref(data, args, **kwargs):
     return "\\ref{%s}"%data
-bsmdoc_eqref = bsmdoc_ref
+
+def bsmdoc_ref(data, args, **kwargs):
+    # search in links defined with \config{label|}
+    # so you can use the same syntax to reference to images, sections etc.
+    v = bsmdoc.get_cfg('ANCHOR', data)
+    if v:
+        return '<a href=\'#%s\'>%s</a>'%(data, v)
+    else:
+        # do not find the anchor, wait for the 2nd scan
+        if bsmdoc.scan > 1 and not data.startswith('eq'):
+            bsmdoc_warning_("Probably broken anchor '%s'"%data, **kwargs)
+        bsmdoc.rescan = True
+    # can not find the anchor, assume its a equation reference
+    return bsmdoc_eqref(data, args, **kwargs)
 
 _bsmdoc_exec_rtn = ''
 def bsmdoc_exec(data, args, **kwargs):

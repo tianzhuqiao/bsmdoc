@@ -55,7 +55,7 @@ Remove all background/borders, since we are applying them to .menu.
  */
 .menu {
     border: none;
-    background: transparent;
+    /*background: transparent;*/
 }
 .menu ul {
     border: none;
@@ -65,7 +65,7 @@ Remove all background/borders, since we are applying them to .menu.
     display: inline-block;
     margin: 0;
     padding: 0;
-    list-style-type: None
+    list-style-type: None;
 }
 .menu  ul ul {
     border: none;
@@ -76,7 +76,7 @@ Remove all background/borders, since we are applying them to .menu.
     margin: 0;
     padding-left: 1.5em;
     padding-top: 0;
-    list-style-type: None
+    list-style-type: None;
 }
 .menu a {
     display: block;

@@ -335,7 +335,8 @@ To add reference to an image, you need to
 {!div|bs-example||
 Fig. [#img-scatter] shows a scatter diagram
 !}{!div|bs-example-src||highlight|bsmdoc||{%
-Fig. [#img-scatter] shows a scatter diagram
+Fig. [#img-scatter] shows a scatter diagram... or
+Fig. \ref{img-scatter} shows a scatter diagram
 %}!}
 }
 

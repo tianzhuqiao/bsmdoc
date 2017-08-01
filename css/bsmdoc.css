@@ -246,7 +246,7 @@ p + div.codeblock {
 	margin-top: -0.6em;
 }
 
-.figure img, .video video {
+.figure img, .figure svg, .video video {
     border: none;
     margin: auto;
     display: block;
@@ -450,15 +450,28 @@ table th[class*="col-"] {
     letter-spacing: 1px;
     content: "Example";
 }
-
-
+.bs-example-src,
+.bs-example-rst {
+    width: auto;
+    padding: 9px 14px;
+    margin-bottom: 14px;
+    background-color: #f7f7f9;
+    margin: -15px -15px 15px;
+    border-style: solid;
+    border-width: 1px 0 1px;
+    border-radius: 0;
+    border-color: #e1e1e8;
+}
+.bs-example-rst {
+    background-color: #fff;
+}
 /* Tweak display of the code snippets when following an example */
-.bs-example + .bs-example-src {
+.bs-example + .bs-example-src,
+.bs-example-src + .bs-example-rst {
     margin: -15px -15px 15px;
     border-width: 0 0 1px;
     border-radius: 0;
 }
-
 /* Make the examples and snippets not full-width */
 @media (min-width: 768px) {
     .bs-example {
@@ -471,10 +484,25 @@ table th[class*="col-"] {
         -webkit-box-shadow: none;
         box-shadow: none;
     }
+    .bs-example-src {
+        width: auto;
+        padding: 9px 14px;
+        margin-top: 0px;
+        margin-bottom: 14px;
+        background-color: #f7f7f9;
+        border: 1px solid #e1e1e8;
+        border-radius: 4px;
+    }
     .bs-example + .bs-example-src {
         margin-top: -16px;
         margin-right: 0;
         margin-left: 0;
+        border-width: 1px;
+        border-bottom-right-radius: 4px;
+        border-bottom-left-radius: 4px;
+    }
+    .bs-example-src + .bs-example-rst {
+        margin-top: -16px;
         border-width: 1px;
         border-bottom-right-radius: 4px;
         border-bottom-left-radius: 4px;
@@ -488,15 +516,6 @@ table th[class*="col-"] {
 .bs-example > blockquote:last-child,
 .bs-example > .table:last-child {
   margin-bottom: 0;
-}
-
-.bs-example-src {
-    width: auto;
-    padding: 9px 14px;
-    margin-bottom: 14px;
-    background-color: #f7f7f9;
-    border: 1px solid #e1e1e8;
-    border-radius: 4px;
 }
 
 .bs-example-src pre {
@@ -559,3 +578,36 @@ table th[class*="col-"] {
     letter-spacing: 1px;
     content: "Note";
 }
+
+.proof {
+  padding: 20px;
+  margin: 20px 0;
+  padding: 45px 15px 15px;
+  margin: 0 15px 15px;
+  border: 1px solid #eee;
+  border-left-width: 5px;
+  border-radius: 3px;
+  border-left-color: #1b809e;
+  position: relative;
+}
+.proof:before {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #1b809e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    content: "Proof";
+}
+.proof:after {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1b809e;
+    content: '\25a0';
+}
+

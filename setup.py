@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='bsmdoc',
       version='0.0.1',
@@ -8,5 +8,6 @@ setup(name='bsmdoc',
       url='http://bsmdoc.feiyilin.com',
       license="MIT",
       platforms=["any"],
-      scripts=['bsmdoc.py']
+      scripts=['bsmdoc.py'],
+      install_requires=['ply', 'pygments'],
      )
