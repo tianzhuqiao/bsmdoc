@@ -25,6 +25,33 @@ class bsmdocConfiguration(object):
         self.rescan = False
         self.contents = None
         self.refs = {}
+        # input stack to support dynamically changing the input text (e.g.,
+        # include)
+        self.lex_input_stack = []
+
+        # function block supports embedded block, remember the current block
+        # level to print the error message correspondingly when error occurs.
+        self.fblock_state = []
+        self.header_fblock_level = 0
+    def pop_input(self):
+        if len(self.lex_input_stack):
+            return self.lex_input_stack.pop()
+        return None
+
+    def push_input(self, t):
+        status = {'lexdata':t.lexer.lexdata, 'lexpos':t.lexer.lexpos,
+                  'lineno':t.lexer.lineno}
+        status['filename'] = self.get_cfg('bsmdoc', 'filename')
+        self.lex_input_stack.append(status)
+
+    def pop_block(self):
+        if len(self.fblock_state):
+            s, self.header_fblock_level = self.fblock_state.pop()
+            return s
+
+    def push_block(self, b):
+        self.fblock_state.append((b, self.header_fblock_level))
+
     def get_cfg(self, sec, key):
         if self.config.has_option(sec, key):
             return self.config.get(sec, key)
@@ -75,8 +102,6 @@ t_ignore = '\t'
 t_rblock_ignore = ''
 t_equation_ignore = ''
 
-# input stack to support dynamically changing the input text (e.g., include)
-lex_input_stack = []
 def t_error(t):
     kwargs = {'filename':bsmdoc.get_cfg('bsmdoc', 'filename'),
               'lineno': t.lexer.lineno}
@@ -84,8 +109,8 @@ def t_error(t):
     t.lexer.skip(1)
 
 def t_eof(t):
-    if len(lex_input_stack):
-        s = lex_input_stack.pop()
+    s = bsmdoc.pop_input()
+    if s:
         t.lexer.input(s['lexdata'])
         t.lexer.lexpos = s['lexpos']
         t.lexer.lineno = s['lineno']
@@ -131,10 +156,7 @@ def t_INCLUDE(t):
     filename = filename.replace('#include', '', 1)
     data = bsmdoc_include(filename)
     if data is not None:
-        lex_input_stack.append({'lexdata':t.lexer.lexdata,
-                                'lexpos':t.lexer.lexpos,
-                                'lineno': t.lexer.lineno,
-                                'filename': bsmdoc.get_cfg('bsmdoc', 'filename')})
+        bsmdoc.push_input(t)
         t.lexer.input(data[1])
         t.lexer.lineno = 1
         bsmdoc.set_cfg('bsmdoc', 'filename', data[0])
@@ -149,10 +171,7 @@ def t_MAKECONTENT(t):
     c = bsmdoc.contents#bsmdoc.get_cfg('bsmdoc', 'CONTENT')
     if c:
         content = bsmdoc_makecontent(c)
-        lex_input_stack.append({'lexdata':t.lexer.lexdata,
-                                'lexpos':t.lexer.lexpos,
-                                'lineno': t.lexer.lineno,
-                                'filename': bsmdoc.get_cfg('bsmdoc', 'filename')})
+        bsmdoc.push_input(t)
         t.lexer.input(content)
         t.lexer.lineno = 1
         bsmdoc.set_cfg('bsmdoc', 'filename', 'CONTENT')
@@ -598,7 +617,9 @@ def bsmdoc_image(data, args, **kwargs):
 
 def bsmdoc_video(data, args, **kwargs):
     style = bsmdoc_style_(args, '')
-    r = '<video controls %s><source src="%s">Your browser does not support the video tag.</video>'%(style, data)
+    fmt = ('<video controls %s><source src="%s">'
+           'Your browser does not support the video tag.</video>')
+    r = fmt%(style, data)
     caption = bsmdoc.get_option('caption', '')
     label = bsmdoc.get_option('label', '')
     tag = ''
@@ -807,19 +828,19 @@ def p_heading(p):
         p[0] = ""
 def p_heading_start(p):
     '''heading_start : HEADING'''
-    global header_level
     bsmdoc.set_option('label', '')
     p[0] = p[1]
-    header_level = len(fblock_state)
+    bsmdoc.header_fblock_level = len(bsmdoc.fblock_state)
 
 def p_block_paragraph(p):
     '''block : paragraph'''
     # add <P> tag to any text which is not in a function block and ended with
     # '\n'
-    if len(fblock_state) == header_level and p[1].endswith('\n'):
+    if len(bsmdoc.fblock_state) == bsmdoc.header_fblock_level and p[1].endswith('\n'):
         p[0] = '<p>%s</p>\n' %(p[1].strip())
     else:
         p[0] = p[1]
+
 def p_paragraph_multiple(p):
     '''paragraph : text NEWPARAGRAPH'''
     if p[1]:
@@ -880,23 +901,17 @@ def p_rowsep(p):
               | empty'''
     p[0] = ''
 
-# function block supports embedded block, remember the current block level
-# to print the error message correspondingly when error occurs.
-fblock_state = []
-header_level = 0
 def p_block_start(p):
     """bstart : BSTART"""
     p[0] = ''
-    fblock_state.append((p[1], p.lineno(1), header_level))
+    bsmdoc.push_block((p[1], p.lineno(1)))
     bsmdoc.set_option('caption', '')
     bsmdoc.set_option('label', '')
 
 def p_block_end(p):
     """bend : BEND"""
-    global header_level
     p[0] = ''
-    header_level = fblock_state[-1][2]
-    fblock_state.pop()
+    s = bsmdoc.pop_block()
 
 def p_block(p):
     '''block : bstart sections bend'''
@@ -970,6 +985,7 @@ def p_logicline_newline(p):
     p[0] = p[1].strip()
     if p[0]:
         p[0] = p[0] + ' \n'
+
 def p_bracetext(p):
     '''bracetext : BRACEL sections BRACER'''
     p[0] = p[2]
@@ -1046,8 +1062,8 @@ def p_empty(p):
     p[0] = ''
 
 def p_error(p):
-    if len(fblock_state):
-        e = fblock_state.pop()
+    e = bsmdoc.pop_block()
+    if e:
         kwargs = {'lineno': e[1], 'filename':bsmdoc.get_cfg('bsmdoc', 'filename')}
         bsmdoc_error_("unmatched block '%s'"%(e[0]), **kwargs)
     else:
@@ -1195,8 +1211,10 @@ def bsmdoc_gen(filename, encoding=None):
         html.append(os.linesep.join(["<li>%s</li>"%x for x in bsmdoc_footnote.notes]))
         html.append('</ol></div>')
 
-    if bsmdoc.get_option('source', ''):
+    if bsmdoc.get_option('source', '') in ['1', 'on']:
         bsmdoc.set_option("SOURCE", '<a href="%s">(source)</a>'%filename)
+    else:
+        bsmdoc.set_option("SOURCE", '')
     html.append(bsmdoc.get_cfg('footer', 'content'))
 
     html.append(bsmdoc.get_cfg('footer', 'end'))

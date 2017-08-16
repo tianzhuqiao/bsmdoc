@@ -365,7 +365,7 @@ As you have seen, the image block can automatically add the numbering to the ima
 %}!}
 
 = Equation \config{label|sec-equation}
-bsmdoc uses [www.mathjax.org|mathjax] to render the equations: both inline and normal equation blocks. The configuration may look like:
+bsmdoc uses [http://www.mathjax.org|mathjax] to render the equations: both inline and normal equation blocks. The configuration may look like:
 
 {!div|bs-example|| highlight|html||{%
 <script type="text/x-mathjax-config">
@@ -951,7 +951,7 @@ def bsmdoc_codesnippet(data, args, **kwargs):
     if isinstance(d, str):
         return d
     else:
-        return inspect.getsource(eval(data))
+        return inspect.getsource(d)
 %}!}
 %}!}
 {!exec|firstRunOnly||{%
@@ -961,7 +961,7 @@ def bsmdoc_codesnippet(data, args, **kwargs):
     if isinstance(d, basestring):
         return d
     else:
-        return inspect.getsource(eval(data))
+        return inspect.getsource(d)
 %}!}
 Then you can include the source code (e.g., matplotlib.pyplot.plot) by
 {!div|bs-example||

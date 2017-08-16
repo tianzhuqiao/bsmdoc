@@ -31,7 +31,7 @@ content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css" />
       });
       MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
     </script>
-    <script type="text/javascript" language="javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
     <script src=https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js></script>
     <script src="js/bsmdoc.js"></script>
     <link rel="stylesheet" href="css/menu.css" type="text/css" />
