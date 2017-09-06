@@ -10,11 +10,11 @@
   box-sizing: border-box;
 }*/
 body {
-	background: white;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: white;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 18px;
-	padding-bottom: 8px;
-	margin: 0;
+    padding-bottom: 8px;
+    margin: 0;
     line-height:1.5;
     color: #555;
 }
@@ -25,9 +25,9 @@ body {
     line-height: 1.6em;
 }
 #layout {
-	padding-top: 1.0em;
-	padding-left: 1.0em;
-	padding-right: 1.0em;
+    padding-top: 1.0em;
+    padding-left: 1.0em;
+    padding-right: 1.0em;
     border: none;
     background: white;
     text-align: left;
@@ -41,36 +41,39 @@ body {
 #layout h1:first-child,
 #layout h2:first-child,
 #layout h3:first-child {
-	margin-top: -0.7em;
+    margin-top: -0.7em;
 }
 
 a {
-  display:inline-block;
-  line-height:1.1em;
-  text-decoration:none;
-  color: #2A6EA6;
+    line-height:1.1em;
+    text-decoration:none;
+    color: #2A6EA6;
+}
+
+a sup {
+    display:inline-block;
 }
 
 a:hover {
-	border-bottom: 1px gray dotted;
+    border-bottom: 1px gray dotted;
 }
 
 
 .toptitle {
     padding-top:0.2em;
-	padding-bottom: 0.2em;
-	margin-bottom: 1.5em;
-	border-bottom: 1px solid #eee;
+    padding-bottom: 0.2em;
+    margin-bottom: 1.5em;
+    border-bottom: 1px solid #eee;
     font-size: 3em;
     text-align:center;
     font-weight: 300;
 }
 
 .subtitle {
-	margin-top: 0.0em;
-	margin-bottom: 0.0em;
-	padding-top: 0em;
-	padding-bottom: 0.1em;
+    margin-top: 0.0em;
+    margin-bottom: 0.0em;
+    padding-top: 0em;
+    padding-bottom: 0.1em;
     font-size: 45%;
     text-align:center;
     font-weight: normal;
@@ -140,9 +143,9 @@ h6 {
 }
 p {
     margin-top: 0.0em;
-	margin-bottom: 0.8em;
-	padding: 0;
-	line-height: 1.3;
+    margin-bottom: 0.8em;
+    padding: 0;
+    line-height: 1.3;
     text-align: justify;
 }
 
@@ -178,11 +181,11 @@ code {
 }
 
 .reference {
-	font-size: small;
-	border-top: 1px solid #c0c0c0;
+    font-size: small;
+    border-top: 1px solid #c0c0c0;
     position: relative;
     padding: 45px 15px 15px;
-    margin: 0 -15px 15px;
+    margin: 5px 5px 5px;
 }
 
 .reference:after {
@@ -197,21 +200,21 @@ code {
 }
 
 .footer {
-	font-size: small;
-	border-top: 1px solid #c0c0c0;
-	padding-top: 0.1em;
-	margin-top: 4.0em;
+    font-size: small;
+    border-top: 1px solid #c0c0c0;
+    padding-top: 0.1em;
+    margin-top: 4.0em;
 }
 
 .footer a {
-	color: #80a0b0;
+    color: #80a0b0;
 }
 
 .footer-text {
-	float: center;
-	padding-bottom: 8px;
+    float: center;
+    padding-bottom: 8px;
     text-align: center;
-	color: #a0a0a0;
+    color: #a0a0a0;
 }
 
 ul {
@@ -222,28 +225,28 @@ ul ul {
 ul ul ul {
 }
 p + ul, p + ol {
-	margin-top: -0.5em;
+    margin-top: -0.5em;
 }
 
 li ul, li ol {
-	margin-top: -0.3em;
+    margin-top: -0.3em;
 }
 
 ol {
-	list-style-position: outside;
-	list-style-type: decimal;
+    list-style-position: outside;
+    list-style-type: decimal;
 }
 
 ol ol {
-	list-style-type: lower-alpha;
+    list-style-type: lower-alpha;
 }
 
 ol ol ol {
-	list-style-type: lower-roman;
+    list-style-type: lower-roman;
 }
 
 p + div.codeblock {
-	margin-top: -0.6em;
+    margin-top: -0.6em;
 }
 
 .figure img, .figure svg, .video video {
@@ -346,12 +349,12 @@ table {
     background-color: transparent;
     border-spacing: 0;
     border-collapse: collapse;
-	border-top: 1px solid #eee;
-	border-bottom: 1px solid #eee;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
 }
 
 table tr:nth-child(odd) td{
-    background:#eee;
+    background: #f7f7f9;
 }
 
 td,
