@@ -403,6 +403,14 @@ def bsmdoc_config(data, args, **kwargs):
         bsmdoc_error_("bsmdoc_config('%s',%s)"% (data, args), **kwargs)
     return ""
 
+def bsmdoc_label(data, args, **kwargs):
+    args.insert(0, 'label')
+    return bsmdoc_config(data, args, **kwargs)
+
+def bsmdoc_caption(data, args, **kwargs):
+    args.insert(0, 'caption')
+    return bsmdoc_config(data, args, **kwargs)
+
 # deal with the equation reference: \ref{} or \eqref{}
 def bsmdoc_eqref(data, args, **kwargs):
     return "\\ref{%s}"%data
@@ -662,7 +670,8 @@ def bsmdoc_table(head, body):
     caption = bsmdoc.get_option('caption', '')
     if caption:
         caption = '<caption>%s</caption>'%(tag + ' ' + caption)
-    return '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
+    tbl = '<table %s class="table">%s\n %s</table>\n'%(label, caption, head+body)
+    return bsmdoc_div(tbl, ['tables'])
 
 def bsmdoc_listbullet(data, args, **kwargs):
     def listbullet(stack):

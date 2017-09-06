@@ -15,7 +15,7 @@ ignoreClass: "tex2jax_ignore|nomathjax"
 });
 MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 </script>
-<script type="text/javascript" language="javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
 <script src=https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js></script>
 <script src="js/bsmdoc.js"></script>
 <link rel="stylesheet" href="css/menu.css" type="text/css" />
@@ -428,7 +428,8 @@ image_file_path
 Fig. <a href='#img-scatter'>1</a> shows a scatter diagram
 </div>
 <div class="bs-example-src">
-<div class="syntax"><pre><span></span>Fig. <span class="nt">[#img-scatter]</span> shows a scatter diagram
+<div class="syntax"><pre><span></span>Fig. <span class="nt">[#img-scatter]</span> shows a scatter diagram... or
+Fig. <span class="nf">\ref</span><span class="nt">{</span>img-scatter<span class="nt">}</span> shows a scatter diagram
 </pre></div>
 </div>
 </li>
@@ -452,7 +453,7 @@ Fig. <a href='#img-scatter'>1</a> shows a scatter diagram
 </pre></div>
 </div>
 <h1 id="sec-equation">6 Equation</h1>
-<p>bsmdoc uses <a href='www.mathjax.org'>mathjax</a> to render the equations: both inline and normal equation blocks. The configuration may look like:</p>
+<p>bsmdoc uses <a href='http://www.mathjax.org'>mathjax</a> to render the equations: both inline and normal equation blocks. The configuration may look like:</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/x-mathjax-config&quot;</span><span class="p">&gt;</span>
     <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
@@ -542,6 +543,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <li><a href='#sec-equation'>Equation</a></li>
 </ul>
 <div class="bs-example">
+<div class="tables">
 <table  class="table">
  <tbody><tr>
 <td>item1</td><td>$E=MC^2$</td>
@@ -552,6 +554,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </div></td>
 </tr>
 </tbody></table>
+</div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
@@ -565,6 +568,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <li>the heading line is delimited by "<code >|+</code>".</li>
 </ul>
 <div class="bs-example">
+<div class="tables">
 <table  class="table">
  <thead><tr>
 <th>Heading1</th><th>Heading2</th>
@@ -577,6 +581,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </tr>
 </tbody></table>
 </div>
+</div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 <span class="nf">Heading1 </span>|<span class="nf"> Heading2</span>|<span class="k">|+</span>
@@ -587,6 +592,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </div>
 <p>Furthermore, a caption can be added to the table block too</p>
 <div class="bs-example">
+<div class="tables">
 <table  class="table"><caption> Example table title</caption>
  <thead><tr>
 <th>Heading1</th><th>Heading2</th>
@@ -598,6 +604,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <td>item3</td><td>item4</td>
 </tr>
 </tbody></table>
+</div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
@@ -621,6 +628,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </li>
 </ul>
 <div class="bs-example">
+<div class="tables">
 <table id="tbl-example" class="table"><caption><span class="tag">Table.1.</span> Example table title</caption>
  <thead><tr>
 <th>Heading1</th><th>Heading2</th>
@@ -632,6 +640,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <td>item3</td><td>item4</td>
 </tr>
 </tbody></table>
+</div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
@@ -648,6 +657,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{table_numbering_prefix</span>|TABLE <span class="nt">}</span>
 </pre></div>
 <div class="bs-example">
+<div class="tables">
 <table id="tbl-example2" class="table"><caption><span class="tag">TABLE 2.</span> Example table title</caption>
  <thead><tr>
 <th>Heading1</th><th>Heading2</th>
@@ -659,6 +669,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <td>item3</td><td>item4</td>
 </tr>
 </tbody></table>
+</div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
@@ -870,6 +881,7 @@ As you may have already figured out, the <code >command</code> section is define
 </pre></div>
 </div>
 <p>Here <code >**kwargs</code> are additional arguments from bsmdoc, for example</p>
+<div class="tables">
 <table  class="table">
  <thead><tr>
 <th>argument</th><th>description</th>
@@ -883,7 +895,8 @@ As you may have already figured out, the <code >command</code> section is define
 <tr>
 <td>lineno</td><td>the line number of the start of the function block</td>
 </tr>
-</tbody></table> 
+</tbody></table>
+</div> 
 </li>
 <li><p>Now the <code >del</code> can be used as all the other blocks,</p>
 <div class="bs-example">
@@ -1023,7 +1036,7 @@ delete
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">d</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="nb">eval</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
 <span class="nt">%}!}</span>
 </pre></div>
 </div>
@@ -1107,10 +1120,14 @@ plt.plot
     <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">cur</span> <span class="o">&amp;&amp;</span> <span class="nx">cur</span><span class="p">.</span><span class="nx">length</span> <span class="o">?</span> <span class="nx">cur</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">id</span> <span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="nx">lastId</span> <span class="o">!==</span> <span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">lastId</span> <span class="o">=</span> <span class="nx">id</span><span class="p">;</span>
         <span class="c1">// Set/remove active class</span>
         <span class="nx">menuItems</span><span class="p">.</span><span class="nx">removeClass</span><span class="p">(</span><span class="s2">&quot;active&quot;</span><span class="p">);</span>
         <span class="nx">menuItems</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="s2">&quot;[href=&#39;#&quot;</span><span class="o">+</span><span class="nx">id</span><span class="o">+</span><span class="s2">&quot;&#39;]&quot;</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s2">&quot;active&quot;</span><span class="p">);</span>
+        <span class="c1">//menuItems.filter(&quot;[href=&#39;#&quot;+lastId+&quot;&#39;]&quot;).closest(&quot;ul&quot;).hide();</span>
+        <span class="c1">//menuItems.filter(&quot;[href=&#39;#&quot;+id+&quot;&#39;]&quot;).parents(&quot;ul&quot;).show();</span>
+        <span class="c1">//menuItems.filter(&quot;[href=&#39;#&quot;+id+&quot;&#39;]&quot;).closest(&quot;li&quot;).children(&quot;ul&quot;).show();</span>
+        <span class="c1">//menuItems.filter(&quot;[href=&#39;#sec-1&#39;]&quot;).closest(&quot;ul&quot;).show();</span>
+        <span class="nx">lastId</span> <span class="o">=</span> <span class="nx">id</span><span class="p">;</span>
     <span class="p">}</span>
 <span class="p">});</span>
 </pre></div>
@@ -1347,7 +1364,7 @@ bsmdoc -- another technical html doc generator
 <div class="footnote"><ol>
 <li><div id="footnote-1">This is the footnote <a href="#footnote_src-1">&#8617;</a></div></li>
 </ol></div>
-<div class="footer-text"> Last updated 2017-07-19 14:21:08 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2017-08-29 21:55:26 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
 </div>
 </div>
 <script src="js/menu.js"></script>
