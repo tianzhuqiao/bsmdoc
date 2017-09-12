@@ -1,19 +1,24 @@
 = Why bsmdoc?
 bsmdoc is a tool to generate technical html files.
 
-There are many ways to generate html files. Typing the html tags directly may not be a good use of your time. Otherwise, you may end up spending a lot of time on finding a mismatched \tag{code|tag} in the html file. Besides that straightforward method, there are many tools that can help to generate html documents from various formats.
-In this case, there is no need to manually check the html tags anymore, since they are automatically generated and "guarantee" to be correct. Most of them try to make a comprehensive and complicated tool (so that no one (like me) wants/dares to make any changes easily). Such tool may meet most requirements, and contain many features (and many of them may never be used by many users); however, once you need some missing features, it is almost impossible to update the tool by yourself.
+There are many ways to generate html files. Typing the html tags directly may not be a good use of your time. Otherwise, you may end up spending a lot of time on finding a mismatched \tag{code|tag}. There are many tools that can help to generate html documents from various formats.
+In this case, there may be no need to worry about the html tags anymore, as they are automatically generated and "guaranteed" to be correct. Most of them try to make a comprehensive and complicated tool, which may contain many features and meet most requirements; however, once you need some missing features, it is almost impossible to update it by yourself.
 
-There should (always) be a simple way to generate html files; bsmdoc is designed to be a light-weighted tool, which keeps the 'core' as small as possible. It only provides some very basic features, but allow each user to extend the tool to meet his/her own requirements in a straightforward way.
+There should be a simple way to generate html files; bsmdoc is designed to be a light-weighted tool, which keeps the 'core' as small as possible. It only provides some very basic features, but allow you to extend the tool to solve your own problem in a straightforward way.
 
-Furthermore, bsmdoc wants to provide you a way to write the doc in a \tag{code|single} file. You can always type your doc in a text editor, generate the images with Matlab, write your equation with $Latex$ and export the images files... But, with bsmdoc, you can finish all these steps in just a single file.
+Furthermore, bsmdoc also gives you a chance to write the doc in a \tag{code|single} file. You can always type the text in your favourite editor, generate the images with Matlab, write your equation with $Latex$ and export the images files... But, with bsmdoc, you can finish all these steps in just a single file.
 
 However, if you know nothing about python or some basic programming skill, bsmdoc may not be ideal for you, unless the very limited pre-defined features is what you want.
 
-bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, etc.). We will show the basic blocks in the following sections, as well as the way to extend the existing blocks.
+bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, ...). In the following sections, we will show each block in detail, as well as the way to extend the existing blocks.
 
 == Hello World
 * Download [https://github.com/tianzhuqiao/bsmdoc|bsmdoc]
+*- { install the script
+{!highlight|shell||{%
+> python setup.py install
+%}!}
+}
 *- bsmdoc depends on package [http://www.dabeaz.com/ply/|PLY]
 * {Create a file (e.g., \tag{code|helloworld.bsmdoc}) with content
 {!highlight|bsmdoc||{%
@@ -48,7 +53,7 @@ bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, 
 %}!}
 }
 
-= Heading \config{label|sec-heading}
+= Heading \label{sec-heading}
 \tag{code|heading} block is defined by the line starting with "\tag{code|=}"
 {!div|bs-example||
 # stop numbering the headers, so that the following headers will not affect
@@ -94,34 +99,39 @@ line
 heading}
 %}!}
 
-To add reference to the \tag{code|heading} block, first you need to add a label to it with command "\tag{code|{%\config{label}%}}". Then, it can be referenced as a normal in-page [#sec-link|link].
+To add reference to the \tag{code|heading} block, first you need to add a label to it with command "\tag{code|{%\label%}}". Then, it can be referenced as a normal in-page [#sec-link|link].
 {!div|bs-example||
 \config{heading_numbering|0}
-= {section with label\config{label|sec-label}}
+= {section with label\label{sec-label}}
 This [#sec-label|section] ...
 \config{heading_numbering|1}
 !}{!div|bs-example-src||highlight|bsmdoc||{%
-= {section with label\config{label|sec-label}}
+= {section with label\label{sec-label}}
 This [#sec-label|section] ...
 %}!}
 
 By default, the heading block will not be automatically numbered. The following configuration is used to turn on the automatic numbering
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{heading_numbering|1}
 %}!}
 
 bsmdoc will not start the automatic heading numbering until you set the above flag. Thus if you want bsmdoc to add numbering to the whole doc, simply put the above configuration line at the beginning of the doc. You also can set the start heading level for automatic numbering. For example, the following line will tell bsmdoc to start heading numbering from level 2 (i.e., \tag{code|H2})
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{heading_numbering_start|2}
 %}!}
 
-When referencing to a \tag{code|heading} block with automatic heading numbering on, the link text will be automatically replaced with its index,
+When referencing to a \tag{code|heading} block with automatic heading numbering on, the link text will be automatically filled with its index if it is empty,
 {!div|bs-example||
 Sec. [#sec-heading] ...
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 Sec. [#sec-heading] ...
 %}!}
-
+It can also be achieved by \tag{code|{%\ref%}} command
+{!div|bs-example||
+Sec. \ref{sec-heading}...
+!}{!div|bs-example-src||highlight|bsmdoc||{%
+Sec. \ref{sec-heading}...
+%}!}
 = List
 bsmdoc defines two kinds of list blocks: \tag{code|unordered list} and \tag{code|ordered list}.
 A line leading with "\tag{code|-}" will be rendered as unordered list. In other words, "\tag{code|-}" will be ignored if it is not at the start of a line. Such rule holds for all \tag{code|heading}, \tag{code|unordered list}, and \tag{code|ordered list} blocks.
@@ -196,7 +206,7 @@ Each item of a list can spread over multiple lines as long as they are enclosed 
 -* ordered item2
 %}!}
 
-= Link \config{label|sec-link}
+= Link \label{sec-link}
 Text between \tag{code|\[} and \tag{code|\]} will be rendered as link block
 
 {!div|bs-example||
@@ -221,7 +231,7 @@ Or email
 [mailto:tianzhu.qiao@feiyilin.com | Email]
 %}!}
 
-You can also easily define in-page links with \tag{code|{%\anchor{}%}}
+You can also easily define in-page links with \tag{code|{%\anchor%}} command
 {!div|bs-example||
 In page link \anchor{myanchor}
 !}{!div|bs-example-src||highlight|bsmdoc||{%
@@ -238,18 +248,18 @@ My in-page [#myanchor|link]
 \tag{b|Footnote.}
 One special in-page link is \tag{code|footnote}\anchor{footnote}. It will automatic add the link to the position it gets defined, and add the footnote content at the end of the page. bsmdoc also adds a shortcut at the end of the footnote content, so you can return to the footnote definition position easily.
 {!div|bs-example||
-footnote example\footnote{This is the footnote}.
+footnote example\footnote{This is a footnote}.
 !}
 {!div|bs-example-src||highlight|bsmdoc||{%
-footnote example\footnote{This is the footnote}.
+footnote example\footnote{This is a footnote}.
 %}!}
 
-The footnote block will automatically add indexing to each footnote. When you move the cursor to the footnote link, bsmdoc will show a popup window to display the footnote content. So you may not need to go to the end of the page to see the footnote content. The [#sec-image|image], [#sec-equation|equation] and [#sec-table|table] blocks support similar feature.
+bsmdoc will automatically add indexing to each footnote. When you move the cursor to the footnote link, bsmdoc will show a popup window to display the footnote content. So you may not need to go to the end of the page to see the footnote content. The [#sec-image|image], [#sec-equation|equation] and [#sec-table|table] blocks support similar feature.
 
-\tag{b|Reference.}
+\tag{b|Reference and citation.}
 In technical writing, reference is very common. bsmdoc has an easy way to add references and citations. For example, the following command will add a book reference
 \reference{Simon|Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001}
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \reference{Simon|Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001}
 %}!}
 where \tag{code|Simon} before \tag{code|\|} is the alias, which you can use to cite it, e.g.,
@@ -259,16 +269,15 @@ The LMS algorithm in \cite{Simon}...
 {!div|bs-example-src||highlight|bsmdoc||{%
 The LMS algorithm in \cite{Simon}...
 %}!}
-And the reference is not required to be defined before citation. If bsmdoc can not find the reference when it sees \tag{code|\\cite}, it will trigger the second scan, in case the reference is defined after the citation.
+And the reference is not required to be defined before citation. If bsmdoc can not find the reference when it sees \tag{code|\\cite}, it will trigger the second scan, in case the reference is defined after the citation. If the reference is still missing at the second scan, bsmdoc will show a warning.
 
 All cited references will be appended to the end of the document in the citation order. If you want to add the reference without citation, you can use the \tag{code|hide} argument of the \tag{code|cite} command
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \cite{hide|Simon}...
 %}!}
 In this case, it will not generate the link to the reference, but the reference will still be added to the reference list even if there is no explicit citation in the document.
 
-= Image \config{label|sec-image}
-
+= Image \label{sec-image}
 {!exec|firstRunOnly||{%
 import os.path
 if not os.path.isfile("image/scatter.svg"):
@@ -289,7 +298,7 @@ if not os.path.isfile("image/scatter.svg"):
 
 The syntax of the \tag{code|image} block is
 
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!image||
 image_file_path
 !}
@@ -307,26 +316,25 @@ So, include an image is as easy as
 
 You can add optional caption to an image block
 {!div|bs-example||image||
-\config{caption|Example scatter image}
+\caption{Example scatter image}
 ./image/scatter.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
-\config{caption|Example scatter image}
+\caption{Example scatter image}
 ./image/scatter.svg
 !}
 %}!}
 
 To add reference to an image, you need to
-
 * { add a label to an image block
 {!div|bs-example||image||
-\config{label|img-scatter}
-\config{caption|Example scatter image}
+\label{img-scatter}
+\caption{Example scatter image}
 ./image/scatter.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
-\config{label|img-scatter}
-\config{caption|Example scatter image}
+\label{img-scatter}
+\caption{Example scatter image}
 ./image/scatter.svg
 !}
 %}!}
@@ -340,7 +348,7 @@ Fig. \ref{img-scatter} shows a scatter diagram
 %}!}
 }
 
-Here the reference link (\tag{code|{%[#img-scatter]%}}) is defined after the definition of the image block. The reference link text is automatically replaced with the image index. In some case, if the reference link is created before the image block is defined, bsmdoc will not know the destination, when it sees the reference link. In this case, the second scan will automatically be triggered to solve the reference link.
+Here the reference link (\tag{code|{%[#img-scatter]%}} or \tag{code|{%\ref{img-scatter}%}}) is defined after the definition of the image block. The reference link text is automatically replaced with the image index. In some case, if the reference link is created before the image block is defined, bsmdoc will not know the destination, when it sees the reference link. In this case, the second scan will automatically be triggered to solve the reference link.
 
 When the cursor is moved to the reference link, the referenced image will be highlighted if it is visible; otherwise, a popup window will be displayed to show the image. Such feature is inspired by [http://www.feynmanlectures.caltech.edu/|"The Feynman Lectures on Physics"] website, and implemented by a simple Javascript. It allows you to view the images at the current reference position. Otherwise, you would have to follow the link to the original place where the image is first included. To use such feature, the image label should start with "\tag{code|img-}", which is hard-coded in the Javascript. The references to [#sec-equation|equation], [#sec-table|table], and [#footnote|footnote] behave similarly.
 
@@ -349,25 +357,24 @@ As you have seen, the image block can automatically add the numbering to the ima
 {!highlight|bsmdoc||{%
 \config{image_numbering_prefix|Image }
 %}!}
-
+For example
 {!div|bs-example||image||
 \config{image_numbering_prefix|Image }
-\config{label|img-scatter2}
-\config{caption|Example scatter image}
+\label{img-scatter2}
+\caption{Example scatter image}
 ./image/scatter.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 {!image||
 \config{image_numbering_prefix|Image }
-\config{label|img-scatter2}
-\config{caption|Example scatter image}
+\label{img-scatter2}
+\caption{Example scatter image}
 ./image/scatter.svg
 !}
 %}!}
 
-= Equation \config{label|sec-equation}
-bsmdoc uses [http://www.mathjax.org|mathjax] to render the equations: both inline and normal equation blocks. The configuration may look like:
-
-{!div|bs-example|| highlight|html||{%
+= Equation \label{sec-equation}
+bsmdoc relies on [http://www.mathjax.org|mathjax] to render the equations: both inline and normal equation blocks. The [http://docs.mathjax.org/en/latest/start.html|configuration] may look like:
+{!highlight|html||{%
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         tex2jax: {inlineMath: [['$','$']]},
@@ -376,7 +383,9 @@ bsmdoc uses [http://www.mathjax.org|mathjax] to render the equations: both inlin
     });
     MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 </script>
-<script type="text/javascript" language="javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
 %}!}
 
 Such configuration can be included in a configuration file, which will be shown in detail in Sec. [#sec-template].
@@ -390,12 +399,17 @@ Newton's second law is often stated as $F=ma$, which means the force ($F$) actin
 %}!}
 
 The normal equation block looks like
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!math||{%
 Latex Equation
 %}!}
 %}!}
-
+or
+{!highlight|bsmdoc||{%
+$$
+Latex Equation
+$$
+%}!}
 For example
 
 {!div|bs-example|| math||{%
@@ -420,15 +434,14 @@ For example
 \end{align}
 %}!}%}!}
 
-bsmdoc generally keeps the equation content (i.e., the content between \tag{code|\{\%...\%\}}) untouched, except the \tag{code|<} and \tag{code|>}, which will be replaced with \tag{code|&amp;lt;} and \tag{code|&amp;gt;} to avoid the conflict with html tags. For example,
-
+bsmdoc generally keeps the equation content (i.e., the content between \tag{code|\{\%...\%\}}) untouched, except the \tag{code|<} and \tag{code|>}, which will be replaced with \tag{code|&amp;lt;} and \tag{code|&amp;gt;}, respectively, to avoid the conflict with html tags. For example,
 {!div|bs-example||pre||{%
 $a &amp;gt; 5$
 %}!}{!div|bs-example-src||highlight|bsmdoc||{%
 $a>5$
 %}!}
 
-Unlike the figure block mentioned above, the reference to equation is also handled by [www.mathjax.org|mathjax]. The syntax is same as $Latex$
+Unlike the [#sec-image|image] block mentioned above, the reference to equation is also handled by [http://www.mathjax.org|mathjax]. The syntax is same as $Latex$
 
 {!div|bs-example||
 Eq. (\ref{eqn:matrix}) or
@@ -438,18 +451,14 @@ Eq. (\ref{eqn:matrix}) or
 Eq. (\eqref{eqn:matrix})
 %}!}
 
-Same as the [#sec-image|image] block, when you move the cursor to the equation reference link, bsmdoc will highlight the referenced equation if it is visible on the current position. Otherwise, a popup window will be displayed to show the equation.
+Same as the [#sec-image|image] block, when you move the cursor to the equation reference link, bsmdoc will highlight the referenced equation if it is visible. Otherwise, a popup window will be displayed to show the equation.
 
-= Table \config{label|sec-table}
+= Table \label{sec-table}
 The table block is defined with \tag{code|\{\{...\}\}}, where
 - each row is ended by "\tag{code|\|-}";
 - each column in a row is terminated by "\tag{code|\|}".
 
-The content in each column of each row can be anything defined above, for example
-- [#sec-link|Link]
-- [#sec-image|Image]
-- [#sec-equation|Equation]
-
+The content in each column of each row can be anything defined above, for example, [#sec-link|Link], [#sec-image|Image], [#sec-equation|Equation],...
 {!div|bs-example||
 {{
 item1 | $E=MC^2$ ||-
@@ -458,7 +467,7 @@ item1 | $E=MC^2$ ||-
 !}{!div|bs-example-src ||highlight|bsmdoc||{%
 {{
 item1 | $E=MC^2$ ||-
-[http://bsmdoc.feiyilin.com|bsmdoc] |{!div|figure|image-left|image-thumbnail||\image{image/scatter.svg}!} ||-
+[http://bsmdoc.feiyilin.com|bsmdoc] | {!div|figure|image-left|image-thumbnail||\image{image/scatter.svg}!} ||-
 }}
 %}!}
 
@@ -483,14 +492,14 @@ Furthermore, a caption can be added to the table block too
 \config{table_numbering|0}
 {!div|bs-example||
 {{
-\config{caption|Example table title}
+\caption{Example table title}
 Heading1 | Heading2||+
 item1 | item2 ||-
 item3 | item4 ||-
 }}
 !}{!div|bs-example-src ||highlight|bsmdoc||{%
 {{
-\config{caption|Example table title}
+\caption{Example table title}
 Heading1 | Heading2||+
 item1 | item2 ||-
 item3 | item4 ||-
@@ -506,15 +515,15 @@ bsmdoc will add the automatic indexing to all the tables defined after the above
 }
 - {add the label to each table you want to add the automatic indexing
 {!highlight|bsmdoc||{%
-\config{label|table_label}
+\label{table_label}
 %}!}}
 
 \config{table_numbering_prefix|}
 {!div|bs-example||
 {{
 \config{table_numbering|1}
-\config{label|tbl-example}
-\config{caption|Example table title}
+\label{tbl-example}
+\caption{Example table title}
 Heading1 | Heading2||+
 item1 | item2 ||-
 item3 | item4 ||-
@@ -522,8 +531,8 @@ item3 | item4 ||-
 !}{!div|bs-example-src ||highlight|bsmdoc||{%
 {{
 \config{table_numbering|1}
-\config{label|tbl-example}
-\config{caption|Example table title}
+\label{tbl-example}
+\caption{Example table title}
 Heading1 | Heading2||+
 item1 | item2 ||-
 item3 | item4 ||-
@@ -538,8 +547,8 @@ The default automatic indexing format is: "\tag{code|Table. I.}", where "\tag{co
 {!div|bs-example||
 {{
 \config{table_numbering_prefix|TABLE }
-\config{label|tbl-example2}
-\config{caption|Example table title}
+\label{tbl-example2}
+\caption{Example table title}
 Heading1 | Heading2||+
 item1 | item2 ||-
 item3 | item4 ||-
@@ -547,8 +556,8 @@ item3 | item4 ||-
 !}{!div|bs-example-src ||highlight|bsmdoc||{%
 {{
 \config{table_numbering_prefix|TABLE}
-\config{label|tbl-example2}
-\config{caption|Example table title}
+\label{tbl-example2}
+\caption{Example table title}
 Heading1 | Heading2||+
 item1 | item2 ||-
 item3 | item4 ||-
@@ -582,17 +591,17 @@ item3 | item4 ||-
 The label enables not only the automatic indexing, but also the cross-reference. Reference to a table is as easy as the [#sec-image|image] and [#sec-equation|equation] blocks
 
 {!div|bs-example||
-Table [#tbl-example] shows how to make a table in bsmdoc.
+Table \ref{tbl-example} shows how to make a table in bsmdoc.
 !}{!div|bs-example-src||highlight|bsmdoc||{%
-Table [#tbl-example] shows how to make a table in bsmdoc.
+Table \ref{tbl-example} shows how to make a table in bsmdoc.
 %}!}
 
 If the table label text starts with "\tag{code|tbl-}", when the cursor is moved to the reference index, the table will be highlighted if it is visible; otherwise, a popup window will be displayed to show the table content.
 
-= Syntax highlighting \config{label|sec-highlight}
+= Syntax highlighting \label{sec-highlight}
 bsmdoc uses [http://pygments.org/docs/quickstart/ | Pygments] for syntax highlighting. [http://pygments.org/docs/quickstart/ | Pygments] needs to be installed before using this feature. The syntax is
 
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!highlight|language||{%
 code
 %}!}
@@ -640,13 +649,13 @@ int main ()
 %}!}
 }
 
-It is possible to use other way or package for syntax highlighting. It will be discussed in detail in Sec. [#sec-funblock].
+It is possible to use other way or package for syntax highlighting, which will be discussed in detail in Sec. [#sec-funblock].
 
 = Raw text block #(\tag{code|\{\% \%\}})
-Sometimes you may want to skip the parsing from bsmdoc. For example, to highlight the code, it is basically not a good idea to let bsmdoc parse the code. Instead, the raw data should be sent to the code highlighting block. In another example, you may have seen similar syntax between the latex macro and the bsmdoc commands (e.g., both are preceded by "\tag{code|\\}"). If bsmdoc tries to parse these latex macros, the result will not be what you want. Thus, bsmdoc defines the raw text block. It basically tells bsmdoc to ignore all the rules on its content.
+Sometimes you may want to skip the parsing from bsmdoc. For example, to highlight the code, it is basically not a good idea to let bsmdoc parse the code. Instead, the raw data should be sent to the code highlighting block. In another example, you may have seen similar syntax between the latex macro and the bsmdoc commands (e.g., both are preceded by "\tag{code|\\}"). If bsmdoc tries to parse these latex macros, the result is obviously not be what you want. Thus, bsmdoc defines the raw text block. It basically tells bsmdoc to ignore all the rules on its content.
 The syntax of the raw text block is
 
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {%
 Content
 %}
@@ -655,26 +664,30 @@ Content
 In this case, bsmdoc will stop parsing the \tag{code|Content} between \tag{code|\{\%...\%\}}, and the raw text will be either sent to the final html file or send to the other function blocks to process.
 
 However, sometimes you may still want to slightly process the \tag{code|Content} before sending to the html file. For example, the \tag{code|Content} may contain symbols (e.g., \tag{code|< >}), which may cause conflict to the html tags. You can use the \tag{code|escape} function block to process the data
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!escape||{%
 Content
 %}!}
 %}!}
 
-In this case, \tag{code|<} (\tag{code|>}) will be replaced with \tag{code|&amp;lt;} (\tag{code|&amp;gt;}). The [#sec-equation|equation] block will automatically replace \tag{code|<} (\tag{code|>}) with \tag{code|&amp;lt;} (\tag{code|&amp;gt;}). Thus, there is no need to explicitly call the \tag{code|escape} function block. By symmetry, bsmdoc also defines the \tag{code|unescape} function block, which will replace \tag{code|&amp;lt;} (\tag{code|&amp;gt;}) with \tag{code|<} (\tag{code|>}).
+In this case, \tag{code|<} and \tag{code|>} will be replaced with \tag{code|&amp;lt;} and \tag{code|&amp;gt;}, respectively.
+{!div|info||
+The [#sec-equation|equation] block will automatically replace \tag{code|<} (\tag{code|>}) with \tag{code|&amp;lt;} (\tag{code|&amp;gt;}). Thus, there is no need to explicitly call the \tag{code|escape} function block.
+!}
+By symmetry, bsmdoc also defines the \tag{code|unescape} function block, which will replace \tag{code|&amp;lt;} (\tag{code|&amp;gt;}) with \tag{code|<} (\tag{code|>}).
 
-= Function block \config{label|sec-funblock}
+= Function block \label{sec-funblock}
 Function block makes things really interesting. Without function block, bsmdoc is almost useless. Function block provides a easy way to allow the content to be processed before sent to the final html file.
-The syntax of a function block looks like
+As you have seen above, the syntax of a function block looks like
 
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!command
 content
 !}
 %}!}
 where \tag{code|command} is optional and may contain the name and arguments of the corresponding function block.
 
-As you have seen, many features mentioned above are implemented with function blocks.
+As described above, many features mentioned above are implemented with function blocks.
 For example,
 - {[#sec-image|image] block:
 
@@ -693,7 +706,6 @@ latex-equation
 %}!}
 }
 - {[#sec-highlight|syntax highlight] block:
-
 {!highlight|bsmdoc||{%
 {!highlight|language||{%
 code
@@ -724,8 +736,7 @@ content
 %}!}
 %}!}
 }
-- {tag
-
+- {general tag
 {!div|bs-example||highlight|html||{%
 <key class="tag-class">
 content
@@ -741,29 +752,28 @@ content
 The \tag{code|command} section is optional. When the \tag{code|command} section is not defined, the function block behaves exactly same as the simple block (\tag{code|\{\}}). Otherwise, the corresponding function will be called to process the content included in the block.
 As you may have already figured out, the \tag{code|command} section is defined as
 
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 command|arg0|arg1|arg2|...|argN||
 %}!}
 
 The command can have arbitrary number of arguments, which are separated by "\tag{code|\|}". And the command is always terminated by "\tag{code|\|\|}". It is also possible to combine multiple commands
 
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 command0|arg0|arg1|arg2||command1|arg0|arg1|arg2||
 %}!}
 
 In this case, the commands are called from right to left. Thus in the above example, \tag{code|command1} will be called first, and its result will be sent to \tag{code|command0}. The result from \tag{code|command0} will be sent to the html file. It is equivalently to the following nested blocks
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!command0|arg0|arg1|arg2||
 {!command1|arg0|arg1|arg2||
     content
 !}!}
 %}!}
 
-The function block make it easy to extend bsmdoc. We could have defined all kinds of function blocks to generate all html tags, and write a comprehensive doc so we can look up later. We don't. Otherwise, that will be not significantly different from remembering all the html syntax. Instead, we make it easy to add new functions.
+The function block make it easy to extend bsmdoc. We could have defined all kinds of function blocks to generate all html tags, and write a comprehensive doc so we can look up later. We don't. Otherwise, that will not be significantly different from remembering all html syntax. Instead, we make it easy to add new functions.
 
 When bsmdoc sees the following function block
-
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!command|arg0|arg1||
     content
 !}
@@ -771,8 +781,7 @@ When bsmdoc sees the following function block
 
 it will search for the "\tag{code|bsmdoc_command}" function. If found, it will execute the command with list "\tag{code|\[arg0, arg1\]}" as argument. For example, if you want to define a function block to achieve the "\tag{del|delete}" effect,
 - {first you need to define the function (e.g., "\tag{code|bsmdoc_del}"),
-
-{!div|bs-example||highlight|python||{%
+{!highlight|python||{%
 def bsmdoc_del(data, args, **kwargs):
     return "<del>%s</del>"%data
 %}!}{!exec||{%
@@ -786,6 +795,7 @@ Here \tag{code|**kwargs} are additional arguments from bsmdoc, for example
     filename| the current filename||-
     lineno| the line number of the start of the function block||-
 }}
+Such info may be helpful to show debugging tips once some error happens.
 }
 - {Now the \tag{code|del} can be used as all the other blocks,
 
@@ -800,21 +810,26 @@ delete
 
 All \tag{code|bsmdoc_command} function should return a \tag{code|string}, which will be sent to the generated html file. If the function does not need to change the html file, it should return the empty string.
 
-The next question is where to put the function definition? One straightforward solution is to define the above \tag{code|bsmdoc_del} function in \tag{code|bsmdoc.py} and then all the documents can use the \tag{code|del} function block. However, that also means once you find something is missing, you need to go back to the \tag{code|bsmdoc.py} and define the function there. It may cause two potential issues:
+The next question is where to put the function definition? One straightforward solution is to define the above \tag{code|bsmdoc_del} function in \tag{code|bsmdoc.py} and then all the documents can use the \tag{code|del} function block. However, that also means once you need some missing features, you need to go back to the \tag{code|bsmdoc.py} and define the functions there. It may cause two potential issues:
 - {It needs to edit additional file \tag{code|bsmdoc.py} besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled;}
 - How about two docs need slightly different implementation of some function? You may end up either using some slightly different (but not straightforward) function names, or adding additional arguments to the function blocks.
-Neither way is scalable. bsmdoc provides the third choice: the function block can be defined in the same doc where it is called. Including the following code in your doc, and it will automatically add the \tag{code|bsmdoc_del} function just as it is defined in \tag{code|bsmdoc.py} (but be careful, since bsmdoc will call python function "\tag{code|exec()}" for this feature, it may cause some security concerns).
-
-{!div|bs-example||highlight|bsmdoc||{%
+Neither way is scalable. bsmdoc provides the third choice: the function block can be defined in the same doc where it is called. To achieve that, bsmdoc define a special \tag{code|exec} block
+{!highlight|bsmdoc||{%
+{!exec||{%
+code
+%}!}
+%}!}
+which will execute the \tag{code|code} automatically.
+Thus, including the following code in your doc will automatically add the \tag{code|bsmdoc_del} function just as it is defined in \tag{code|bsmdoc.py} (but be careful, since bsmdoc will call python function "\tag{code|exec()}" for this feature, it may cause some security concerns).
+{!highlight|bsmdoc||{%
 {!exec||{%
 def bsmdoc_del(data, args, **kwargs):
     return "<del>%s</del>"%content
 %}!}
 %}!}
 
-You can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library
-
-{!div|bs-example||highlight|bsmdoc||{%
+With the \tag{code|exec} block, you can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library
+{!highlight|bsmdoc||{%
 {!exec||{%
 def bsmdoc_highlight(data, args, **kwargs):
     ...
@@ -822,7 +837,7 @@ def bsmdoc_highlight(data, args, **kwargs):
 %}!}
 
 Or in some case, you just want to use your own function for some arguments. For example, you want to call your own function to highlight the code for a specific language, and use the default function for all the others. In this case, you may try
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!exec||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
 def bsmdoc_highlight(data, args, **kwargs):
@@ -834,8 +849,7 @@ def bsmdoc_highlight(data, args, **kwargs):
 %}!}
 
 It may work fine to compile most of your docs, until one day it fails and python complains indefinite loop. The problem here is that the above definition assumes such code will only be called once. But it is not always true for bsmdoc. As mentioned before, bsmdoc may scan the doc multiple times to solve the late-defined references. Thus, when bsmdoc executes the above code second time, \tag{code|bsmdoc_highlight_raw} will not refer to the original \tag{code|bsmdoc_highlight}, instead, it will also point to the local defined copy. The definition will be equivalent to
-
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!exec||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
 def bsmdoc_highlight(data, args, **kwargs):
@@ -848,9 +862,8 @@ def bsmdoc_highlight(data, args, **kwargs):
 
 It is apparently an indefinite loop.
 
-Several techniques can be used to solve this problem. For example, you can always define the whole function by yourself, instead of calling the original function in some branches. Or you may check if the local function has been defined
-
-{!div|bs-example||highlight|bsmdoc||{%
+Several techniques can be used to solve this problem. For example, you can always define the whole function by yourself, instead of calling the default function in some branches. Or you may check whether the local function has been defined or not
+{!highlight|bsmdoc||{%
 {!exec||{%
 try:
     bsmdoc_highlight_raw
@@ -865,8 +878,7 @@ except NameError:
 %}!}
 
 Or you can tell bsmdoc to execute the code for the first scan only
-
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
 def bsmdoc_highlight(data, args, **kwargs):
@@ -878,7 +890,7 @@ def bsmdoc_highlight(data, args, **kwargs):
 %}!}
 
 == Generate images
-Besides defining the function block, the \tag{code|exec} block can also be used to execute arbitrary python code (be careful!). One application is to embed the python code to generate the figure with [http://matplotlib.org/|matplotlib] package,
+Besides defining the function block, the \tag{code|exec} block can also be used to execute arbitrary python code (\tag{b|be careful\!}). One application is to embed the python code to generate the figure with [http://matplotlib.org/|matplotlib] package,
 
 {!exec|firstRunOnly||{%
 import os.path
@@ -903,7 +915,7 @@ if not os.path.isfile("image/pie.svg"):
         bar.set_alpha(0.5)
     plt.savefig("image/pie.svg")
 %}!}
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!exec||{%
 import os.path
 if not os.path.isfile("pie.svg"):
@@ -930,7 +942,6 @@ if not os.path.isfile("pie.svg"):
 %}!}
 
 Then you can include the \tag{code|pie.svg} in your html file
-
 {!div|bs-example|| image||
 ./image/pie.svg
 !}{!div|bs-example-src||highlight|bsmdoc||{%
@@ -943,7 +954,7 @@ Thus, there may be no need to use other software to generate figures.
 
 == Include source code
 With function block, you can also easily include source code in your html doc. For example, to import the python source code in your doc, you can define the following function block
-{!div|bs-example_src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 import inspect
 def bsmdoc_codesnippet(data, args, **kwargs):
@@ -981,8 +992,8 @@ plt.plot
 !}
 %}!}
 
-It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write the function block to just return certain sections (e.g., a function), instead of the whole file.
-{!div|bs-example_src||highlight|bsmdoc||{%
+It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write a function block to just return certain sections (e.g., a function), instead of the whole file.
+{!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 def bsmdoc_ccodesnippet(data, args, **kwargs):
     with open(data, 'r') as f:
@@ -1010,7 +1021,7 @@ js/menu.js
 
 == Inline function block
 The difference between \tag{code|function block} and \tag{code|inline function block} is similar to the \tag{code|equation block} and \tag{code|inline equation block}. In other words, the output of the inline block can be embedded in the paragraph. The syntax is similar to the $\LaTeX$ macro:
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \command{arg0|arg1|...|argN|content}
 %}!}
 
@@ -1028,11 +1039,11 @@ In general, the blocks defined in the above section can also be used as inline b
 
 bsmdoc defines a special inline function block for configuration (\tag{code|{%\config{}%}}). It adds a configuration item to bsmdoc's global configuration table, and output empty string to the html file. Thus, it will not directly update the html docs, although the other blocks may rely on such configurations to control their behaviors. The syntax is
 
-{!div|bs-example||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{option|value}}
 %}!}
 
-We have see [#sec-heading|heading], [#sec-image|image], and [#sec-table|table] blocks use such feature to set the label and/or caption. We will see more configurations in Sec. [#sec-template].
+We have seen [#sec-heading|heading], [#sec-image|image], and [#sec-table|table] blocks use such feature to set the label and/or caption. We will see more configurations in Sec. [#sec-template].
 
 #The options used by the default block function implementation
 #{{
@@ -1053,7 +1064,7 @@ We have see [#sec-heading|heading], [#sec-image|image], and [#sec-table|table] b
 = Input redirection
 bsmdoc can automatically generate the table of content with
 
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 #makecontent
 %}!}
 
@@ -1067,7 +1078,7 @@ bsmdoc_makecontent
 
 When the doc becomes large, you can split your doc into several docs and includes them in the top doc with the "\tag{code|\#include}" directive. For example, suppose you are writing a book, and have created \tag{code|chappter1.bsmdoc}, \tag{code|chapter2.bsmdoc}, .... Then, you can include all the chapters in your \tag{code|book.bsmdoc}
 
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 #include chapter1.bsmdoc
 #include chapter2.bsmdoc
 %}!}
@@ -1080,8 +1091,8 @@ bsmdoc_include
 !}
 Here \tag{code|data} will be anything following \tag{code|\#include}. In the previous example, it will be "\tag{code|chapter1.bsmdoc}" or "\tag{code|chapter2.bsmdoc}". If the file is opened successfully, by default \tag{code|bsmdoc_include} will return the filename and its content.
 
-It is easy to extend the \tag{code|bsmdoc_include} function for more complex applications, for example
-{!div|bs-example-src||highlight|bsmdoc||{%
+It is easy to extend the \tag{code|bsmdoc_include} function for more advanced applications, for example
+{!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 bsmdoc_include_raw = bsmdoc_include
 def bsmdoc_include(data):
@@ -1116,21 +1127,19 @@ def bsmdoc_include(data):
 %}!}
 
 The the following code will include the content between the first two headings from file \tag{code|myfile.bsmdoc}. And the maximum number of lines is limited to 16.
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 #include ^(\\s)*=+|16|./myfile.bsmdoc
 %}!}
 
-= HTML template \config{label|sec-template}
-
+= HTML template \label{sec-template}
 By default, bsmdoc uses the following template to generate the html file, which defines 4 sections (i.e., \tag{code|html}, \tag{code|header}, \tag{code|body} and \tag{code|footer})
 
-{!div|bs-example||highlight|ini||codesnippet||
+{!highlight|ini||codesnippet||
 bsmdoc_conf
 !}
 
-Using a separate configuration file seems not compatible with our goal to include everything in a single file, although sometimes it may be convenient (for example, to use the same configuration file for multiple docs). bsmdoc also provides a way to include the customized template in your doc, for example
-
-{!div|bs-example||highlight|ini||{%
+Using a separate configuration file seems not to be compatible with our goal to include everything in a single file, although sometimes it may be convenient (for example, to use the same configuration file for multiple docs). bsmdoc also provides a way to include the customized template in your doc, for example
+{!highlight|ini||{%
 {!config||{%
 [html]
 begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
@@ -1146,44 +1155,40 @@ In this case, "\tag{code|config}" function block is called without any argument.
 bsmdoc uses [https://docs.python.org/2/library/configparser.html|ConfigParser] to parse the configurations. Thus, \tag{code|\%()s} will be resolved to the corresponding configuration values. The configuration name is case insensitive. For example,
 
 - {\tag{code|\%(TITLE)s} will be replaced with "\tag{code|my html title}", if you config the title with
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{title|my html title}
 %}!}}
 - \tag{code|\%(UPDATED)s} will be replaced with the time when the html file is generated.
 - \tag{code|\%(SOURCE)s} will be replaced with the bsmdoc filename.
 
 It is easy to create a configuration by
-
 - {define the macro content, e.g.,
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{MYMACRO|...}
 %}!}}
 - {use the configuration in the template
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 ...%(MYMACRO}s...
 %}!}}
 
 
 bsmdoc defines "\tag{code|addcss}" configuration to insert additional \tag{code|css} in the html file without change the html template
 
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{addcss|mycss.css}
 %}!}
 
 To insert multiple css, separate the multiple css files with white-space
-
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{addcss|mycss.css mycss2.css}
 %}!}
 
 Similarly, bsmdoc also defines the "\tag{code|addjs}" configuration to include javascripts in the html file
-
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 \config{addcss|myjs.js myjs2.js}
 %}!}
 
 There are two ways to define doc title. The first one is to use the \tag{code|toptitle} configuration. For example, the following line will define the top title
-
 {!div|bs-example||highlight|html||{%
 <div class="toptitle">
     bsmdoc -- another technical html doc generator
@@ -1199,7 +1204,7 @@ There are two ways to define doc title. The first one is to use the \tag{code|to
 
 It is easy to see that it is equivalent to the following code
 
-{!div|bs-example-src||highlight|bsmdoc||{%
+{!highlight|bsmdoc||{%
 {!div|toptitle||
 bsmdoc -- another technical html doc generator
 {!div|subtitle||

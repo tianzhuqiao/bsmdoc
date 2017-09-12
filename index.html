@@ -71,16 +71,20 @@ bsmdoc -- another technical html doc generator
 <div class="content">
 <h1 id="sec-1">1 Why bsmdoc?</h1>
 <p>bsmdoc is a tool to generate technical html files.</p>
-<p>There are many ways to generate html files. Typing the html tags directly may not be a good use of your time. Otherwise, you may end up spending a lot of time on finding a mismatched <code >tag</code> in the html file. Besides that straightforward method, there are many tools that can help to generate html documents from various formats. 
-In this case, there is no need to manually check the html tags anymore, since they are automatically generated and "guarantee" to be correct. Most of them try to make a comprehensive and complicated tool (so that no one (like me) wants/dares to make any changes easily). Such tool may meet most requirements, and contain many features (and many of them may never be used by many users); however, once you need some missing features, it is almost impossible to update the tool by yourself.</p>
-<p>There should (always) be a simple way to generate html files; bsmdoc is designed to be a light-weighted tool, which keeps the 'core' as small as possible. It only provides some very basic features, but allow each user to extend the tool to meet his/her own requirements in a straightforward way.</p>
-<p>Furthermore, bsmdoc wants to provide you a way to write the doc in a <code >single</code> file. You can always type your doc in a text editor, generate the images with Matlab, write your equation with $Latex$ and export the images files... But, with bsmdoc, you can finish all these steps in just a single file.</p>
+<p>There are many ways to generate html files. Typing the html tags directly may not be a good use of your time. Otherwise, you may end up spending a lot of time on finding a mismatched <code >tag</code>. There are many tools that can help to generate html documents from various formats. 
+In this case, there may be no need to worry about the html tags anymore, as they are automatically generated and "guaranteed" to be correct. Most of them try to make a comprehensive and complicated tool, which may contain many features and meet most requirements; however, once you need some missing features, it is almost impossible to update it by yourself.</p>
+<p>There should be a simple way to generate html files; bsmdoc is designed to be a light-weighted tool, which keeps the 'core' as small as possible. It only provides some very basic features, but allow you to extend the tool to solve your own problem in a straightforward way.</p>
+<p>Furthermore, bsmdoc also gives you a chance to write the doc in a <code >single</code> file. You can always type the text in your favourite editor, generate the images with Matlab, write your equation with $Latex$ and export the images files... But, with bsmdoc, you can finish all these steps in just a single file.</p>
 <p>However, if you know nothing about python or some basic programming skill, bsmdoc may not be ideal for you, unless the very limited pre-defined features is what you want.</p>
-<p>bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, etc.). We will show the basic blocks in the following sections, as well as the way to extend the existing blocks.</p>
+<p>bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, ...). In the following sections, we will show each block in detail, as well as the way to extend the existing blocks.</p>
 <h2 id="sec-1-1">1.1 Hello World</h2>
 <ol>
 <li>Download <a href='https://github.com/tianzhuqiao/bsmdoc'>bsmdoc</a> 
 <ul>
+<li><p>install the script</p>
+<div class="syntax"><pre><span></span>&gt; python setup.py install
+</pre></div> 
+</li>
 <li>bsmdoc depends on package <a href='http://www.dabeaz.com/ply/'>PLY</a> 
 </li>
 </ul>
@@ -155,32 +159,36 @@ heading</h1>
 <span class="gh">heading}</span>
 </pre></div>
 </div>
-<p>To add reference to the <code >heading</code> block, first you need to add a label to it with command "<code >\config{label}</code>". Then, it can be referenced as a normal in-page <a href='#sec-link'>link</a>.</p>
+<p>To add reference to the <code >heading</code> block, first you need to add a label to it with command "<code >\label</code>". Then, it can be referenced as a normal in-page <a href='#sec-link'>link</a>.</p>
 <div class="bs-example">
 <h1 id="sec-label">section with label</h1>
 <p>This <a href='#sec-label'>section</a> ...</p>
 </div>
 <div class="bs-example-src">
-<div class="syntax"><pre><span></span><span class="nt">=</span><span class="gh"> {section with label\config{label|sec-label}</span>}
+<div class="syntax"><pre><span></span><span class="nt">=</span><span class="gh"> {section with label\label{sec-label}</span>}
 This <span class="nt">[#sec-label</span>|<span class="s">section</span><span class="nt">]</span> ...
 </pre></div>
 </div>
 <p>By default, the heading block will not be automatically numbered. The following configuration is used to turn on the automatic numbering</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{heading_numbering</span>|1<span class="nt">}</span>
 </pre></div>
-</div>
 <p>bsmdoc will not start the automatic heading numbering until you set the above flag. Thus if you want bsmdoc to add numbering to the whole doc, simply put the above configuration line at the beginning of the doc. You also can set the start heading level for automatic numbering. For example, the following line will tell bsmdoc to start heading numbering from level 2 (i.e., <code >H2</code>)</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{heading_numbering_start</span>|2<span class="nt">}</span>
 </pre></div>
-</div>
-<p>When referencing to a <code >heading</code> block with automatic heading numbering on, the link text will be automatically replaced with its index,</p>
+<p>When referencing to a <code >heading</code> block with automatic heading numbering on, the link text will be automatically filled with its index if it is empty,</p>
 <div class="bs-example">
 Sec. <a href='#sec-heading'>2</a> ...
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span>Sec. <span class="nt">[#sec-heading]</span> ...
+</pre></div>
+</div>
+<p>It can also be achieved by <code >\ref</code> command</p>
+<div class="bs-example">
+Sec. <a href='#sec-heading'>2</a>...
+</div>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span>Sec. <span class="nf">\ref</span><span class="nt">{</span>sec-heading<span class="nt">}</span>...
 </pre></div>
 </div>
 <h1 id="sec-3">3 List</h1>
@@ -330,7 +338,7 @@ more text here
 <div class="syntax"><pre><span></span><span class="nt">[mailto:tianzhu.qiao@feiyilin.com </span>|<span class="s"> Email</span><span class="nt">]</span>
 </pre></div>
 </div>
-<p>You can also easily define in-page links with <code >\anchor{}</code></p>
+<p>You can also easily define in-page links with <code >\anchor</code> command</p>
 <div class="bs-example">
 In page link <a name="myanchor"><sup>&#x2693;</sup></a>
 </div>
@@ -352,16 +360,14 @@ One special in-page link is <code >footnote</code><a name="footnote"><sup>&#x269
 footnote example<a name="footnote_src-1" href="#footnote-1"><sup>1</sup></a>.
 </div>
 <div class="bs-example-src">
-<div class="syntax"><pre><span></span>footnote example<span class="nf">\footnote</span><span class="nt">{</span>This is the footnote<span class="nt">}</span>.
+<div class="syntax"><pre><span></span>footnote example<span class="nf">\footnote</span><span class="nt">{</span>This is a footnote<span class="nt">}</span>.
 </pre></div>
 </div>
-<p>The footnote block will automatically add indexing to each footnote. When you move the cursor to the footnote link, bsmdoc will show a popup window to display the footnote content. So you may not need to go to the end of the page to see the footnote content. The <a href='#sec-image'>image</a>, <a href='#sec-equation'>equation</a> and <a href='#sec-table'>table</a> blocks support similar feature.</p>
-<p><b >Reference.</b> 
+<p>bsmdoc will automatically add indexing to each footnote. When you move the cursor to the footnote link, bsmdoc will show a popup window to display the footnote content. So you may not need to go to the end of the page to see the footnote content. The <a href='#sec-image'>image</a>, <a href='#sec-equation'>equation</a> and <a href='#sec-table'>table</a> blocks support similar feature.</p>
+<p><b >Reference and citation.</b> 
 In technical writing, reference is very common. bsmdoc has an easy way to add references and citations. For example, the following command will add a book reference</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nf">\reference</span><span class="nt">{Simon</span>|Simon Haykin, &quot;Adaptive Filter Theory,&quot; Prentice Hall, 4th edition, Sep. 2001<span class="nt">}</span>
 </pre></div>
-</div>
 <p>where <code >Simon</code> before <code >|</code> is the alias, which you can use to cite it, e.g.,</p>
 <div class="bs-example">
 The LMS algorithm in [<a id="cite_src-1-1" href="#cite-1">1</a>]...
@@ -370,21 +376,17 @@ The LMS algorithm in [<a id="cite_src-1-1" href="#cite-1">1</a>]...
 <div class="syntax"><pre><span></span>The LMS algorithm in <span class="nf">\cite</span><span class="nt">{</span>Simon<span class="nt">}</span>...
 </pre></div>
 </div>
-<p>And the reference is not required to be defined before citation. If bsmdoc can not find the reference when it sees <code >\cite</code>, it will trigger the second scan, in case the reference is defined after the citation.</p>
+<p>And the reference is not required to be defined before citation. If bsmdoc can not find the reference when it sees <code >\cite</code>, it will trigger the second scan, in case the reference is defined after the citation. If the reference is still missing at the second scan, bsmdoc will show a warning.</p>
 <p>All cited references will be appended to the end of the document in the citation order. If you want to add the reference without citation, you can use the <code >hide</code> argument of the <code >cite</code> command</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nf">\cite</span><span class="nt">{hide</span>|Simon<span class="nt">}</span>...
 </pre></div>
-</div>
 <p>In this case, it will not generate the link to the reference, but the reference will still be added to the reference list even if there is no explicit citation in the document.</p>
 <h1 id="sec-image">5 Image</h1>
 <p>The syntax of the <code >image</code> block is</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
 image_file_path
 <span class="nt">!}</span>
 </pre></div>
-</div>
 <p>So, include an image is as easy as</p>
 <div class="bs-example">
 <div  class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg"></div>
@@ -402,7 +404,7 @@ image_file_path
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
-<span class="nt">\config{caption</span>|Example scatter image}
+<span class="nf">\caption</span><span class="nt">{</span>Example scatter image<span class="nt">}</span>
 ./image/scatter.svg
 <span class="nt">!}</span>
 </pre></div>
@@ -416,8 +418,8 @@ image_file_path
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
-<span class="nt">\config{label</span>|img-scatter}
-<span class="nt">\config{caption</span>|Example scatter image}
+<span class="nf">\label</span><span class="nt">{</span>img-scatter<span class="nt">}</span>
+<span class="nf">\caption</span><span class="nt">{</span>Example scatter image<span class="nt">}</span>
 ./image/scatter.svg
 <span class="nt">!}</span>
 </pre></div>
@@ -434,11 +436,12 @@ Fig. <span class="nf">\ref</span><span class="nt">{</span>img-scatter<span class
 </div>
 </li>
 </ol>
-<p>Here the reference link (<code >[#img-scatter]</code>) is defined after the definition of the image block. The reference link text is automatically replaced with the image index. In some case, if the reference link is created before the image block is defined, bsmdoc will not know the destination, when it sees the reference link. In this case, the second scan will automatically be triggered to solve the reference link.</p>
+<p>Here the reference link (<code >[#img-scatter]</code> or <code >\ref{img-scatter}</code>) is defined after the definition of the image block. The reference link text is automatically replaced with the image index. In some case, if the reference link is created before the image block is defined, bsmdoc will not know the destination, when it sees the reference link. In this case, the second scan will automatically be triggered to solve the reference link.</p>
 <p>When the cursor is moved to the reference link, the referenced image will be highlighted if it is visible; otherwise, a popup window will be displayed to show the image. Such feature is inspired by <a href='http://www.feynmanlectures.caltech.edu/'>"The Feynman Lectures on Physics"</a> website, and implemented by a simple Javascript. It allows you to view the images at the current reference position. Otherwise, you would have to follow the link to the original place where the image is first included. To use such feature, the image label should start with "<code >img-</code>", which is hard-coded in the Javascript. The references to <a href='#sec-equation'>equation</a>, <a href='#sec-table'>table</a>, and <a href='#footnote'>footnote</a> behave similarly.</p>
 <p>As you have seen, the image block can automatically add the numbering to the image with label. The default automatic indexing format is: "<code >Fig. I.</code>", where "<code >I</code>" is the current index. You can configure the automatic prefix text. For example, to change it to "<code >Image </code>", the following line can be inserted before a image block definition (usually at the beginning of the doc, so that it affects all the image blocks)</p>
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{image_numbering_prefix</span>|Image <span class="nt">}</span>
 </pre></div>
+<p>For example</p>
 <div class="bs-example">
 <div id="img-scatter2" class="figure"><img  src="./image/scatter.svg" alt="./image/scatter.svg">
 <div class="caption"><span class="tag">Image 2.</span> Example scatter image</div></div>
@@ -446,15 +449,14 @@ Fig. <span class="nf">\ref</span><span class="nt">{</span>img-scatter<span class
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">image</span>||
 <span class="nt">\config{image_numbering_prefix</span>|Image }
-<span class="nt">\config{label</span>|img-scatter2}
-<span class="nt">\config{caption</span>|Example scatter image}
+<span class="nf">\label</span><span class="nt">{</span>img-scatter2<span class="nt">}</span>
+<span class="nf">\caption</span><span class="nt">{</span>Example scatter image<span class="nt">}</span>
 ./image/scatter.svg
 <span class="nt">!}</span>
 </pre></div>
 </div>
 <h1 id="sec-equation">6 Equation</h1>
-<p>bsmdoc uses <a href='http://www.mathjax.org'>mathjax</a> to render the equations: both inline and normal equation blocks. The configuration may look like:</p>
-<div class="bs-example">
+<p>bsmdoc relies on <a href='http://www.mathjax.org'>mathjax</a> to render the equations: both inline and normal equation blocks. The <a href='http://docs.mathjax.org/en/latest/start.html'>configuration</a> may look like:</p>
 <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/x-mathjax-config&quot;</span><span class="p">&gt;</span>
     <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
         <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span><span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[[</span><span class="s1">&#39;$&#39;</span><span class="p">,</span><span class="s1">&#39;$&#39;</span><span class="p">]]},</span>
@@ -463,9 +465,10 @@ Fig. <span class="nf">\ref</span><span class="nt">{</span>img-scatter<span class
     <span class="p">});</span>
     <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span> <span class="nx">TeX</span><span class="o">:</span> <span class="p">{</span> <span class="nx">equationNumbers</span><span class="o">:</span> <span class="p">{</span><span class="nx">autoNumber</span><span class="o">:</span> <span class="s2">&quot;all&quot;</span><span class="p">}</span> <span class="p">}</span> <span class="p">});</span>
 <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">language</span><span class="o">=</span><span class="s">&quot;javascript&quot;</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">async</span>
+  <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
 </pre></div>
-</div>
 <p>Such configuration can be included in a configuration file, which will be shown in detail in Sec. <a href='#sec-template'>12</a>.</p>
 <p>bmdoc looks for "<code >$...$</code>" as delimiters for inline equation block</p>
 <div class="bs-example">
@@ -476,12 +479,15 @@ Newton's second law is often stated as $F=ma$, which means the force ($F$) actin
 </pre></div>
 </div>
 <p>The normal equation block looks like</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">math</span>||<span class="nt">{%</span>
 Latex Equation
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
+<p>or</p>
+<div class="syntax"><pre><span></span><span class="nt">$$</span>
+<span class="nt">Latex Equation</span>
+<span class="nt">$$</span>
+</pre></div>
 <p>For example</p>
 <div class="bs-example">
 <div class='mathjax'>
@@ -508,7 +514,7 @@ $$\begin{align}
 <span class="nt">%}!}</span>
 </pre></div>
 </div>
-<p>bsmdoc generally keeps the equation content (i.e., the content between <code >{%...%}</code>) untouched, except the <code >&lt;</code> and <code >&gt;</code>, which will be replaced with <code >&amp;lt;</code> and <code >&amp;gt;</code> to avoid the conflict with html tags. For example,</p>
+<p>bsmdoc generally keeps the equation content (i.e., the content between <code >{%...%}</code>) untouched, except the <code >&lt;</code> and <code >&gt;</code>, which will be replaced with <code >&amp;lt;</code> and <code >&amp;gt;</code>, respectively, to avoid the conflict with html tags. For example,</p>
 <div class="bs-example">
 <pre>$a &amp;gt; 5$</pre>
 </div>
@@ -516,7 +522,7 @@ $$\begin{align}
 <div class="syntax"><pre><span></span><span class="nt">$a&gt;5$</span>
 </pre></div>
 </div>
-<p>Unlike the figure block mentioned above, the reference to equation is also handled by <a href='www.mathjax.org'>mathjax</a>. The syntax is same as $Latex$</p>
+<p>Unlike the <a href='#sec-image'>image</a> block mentioned above, the reference to equation is also handled by <a href='http://www.mathjax.org'>mathjax</a>. The syntax is same as $Latex$</p>
 <div class="bs-example">
 Eq. (\ref{eqn:matrix}) or 
 Eq. (\ref{eqn:matrix})
@@ -526,7 +532,7 @@ Eq. (\ref{eqn:matrix})
 Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span class="nt">}</span>)
 </pre></div>
 </div>
-<p>Same as the <a href='#sec-image'>image</a> block, when you move the cursor to the equation reference link, bsmdoc will highlight the referenced equation if it is visible on the current position. Otherwise, a popup window will be displayed to show the equation.</p>
+<p>Same as the <a href='#sec-image'>image</a> block, when you move the cursor to the equation reference link, bsmdoc will highlight the referenced equation if it is visible. Otherwise, a popup window will be displayed to show the equation.</p>
 <h1 id="sec-table">7 Table</h1>
 <p>The table block is defined with <code >{{...}}</code>, where</p>
 <ul>
@@ -534,14 +540,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </li>
 <li>each column in a row is terminated by "<code >|</code>".</li>
 </ul>
-<p>The content in each column of each row can be anything defined above, for example</p>
-<ul>
-<li><a href='#sec-link'>Link</a> 
-</li>
-<li><a href='#sec-image'>Image</a> 
-</li>
-<li><a href='#sec-equation'>Equation</a></li>
-</ul>
+<p>The content in each column of each row can be anything defined above, for example, <a href='#sec-link'>Link</a>, <a href='#sec-image'>Image</a>, <a href='#sec-equation'>Equation</a>,...</p>
 <div class="bs-example">
 <div class="tables">
 <table  class="table">
@@ -558,9 +557,9 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
-<span class="nf">item1 </span>|<span class="nf"> $E=MC^2$ </span>|<span class="k">|-</span>
-<span class="nt">[http://bsmdoc.feiyilin.com</span>|<span class="s">bsmdoc</span><span class="nt">]</span><span class="nf"> </span>|<span class="nt">{!</span><span class="nf">div</span>|<span class="nt">figure</span>|<span class="nt">image-left</span>|<span class="nt">image-thumbnail</span>||<span class="nf">\image{image/scatter.svg}!} </span>||-
-}}
+item1 | <span class="nt">$E=MC^2$</span> |<span class="k">|-</span>
+<span class="nt">[http://bsmdoc.feiyilin.com</span>|<span class="s">bsmdoc</span><span class="nt">]</span> | <span class="nt">{!</span><span class="nf">div</span>|<span class="nt">figure</span>|<span class="nt">image-left</span>|<span class="nt">image-thumbnail</span>||<span class="nf">\image</span><span class="nt">{</span>image/scatter.svg<span class="nt">}!}</span> |<span class="k">|-</span>
+<span class="nt">}}</span>
 </pre></div>
 </div>
 <p>Optionally, a heading line can be added in the front of the table block</p>
@@ -584,9 +583,9 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
-<span class="nf">Heading1 </span>|<span class="nf"> Heading2</span>|<span class="k">|+</span>
-<span class="nf">item1 </span>|<span class="nf"> item2 </span>|<span class="k">|-</span>
-<span class="nf">item3 </span>|<span class="nf"> item4 </span>|<span class="k">|-</span>
+Heading1 | Heading2|<span class="k">|+</span>
+item1 | item2 |<span class="k">|-</span>
+item3 | item4 |<span class="k">|-</span>
 <span class="nt">}}</span>
 </pre></div>
 </div>
@@ -608,10 +607,10 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
-<span class="nf">\config</span><span class="nt">{caption</span>|Example table title<span class="nt">}</span>
-<span class="nf">Heading1 </span>|<span class="nf"> Heading2</span>|<span class="k">|+</span>
-<span class="nf">item1 </span>|<span class="nf"> item2 </span>|<span class="k">|-</span>
-<span class="nf">item3 </span>|<span class="nf"> item4 </span>|<span class="k">|-</span>
+<span class="nf">\caption</span><span class="nt">{</span>Example table title<span class="nt">}</span>
+Heading1 | Heading2|<span class="k">|+</span>
+item1 | item2 |<span class="k">|-</span>
+item3 | item4 |<span class="k">|-</span>
 <span class="nt">}}</span>
 </pre></div>
 </div>
@@ -623,7 +622,7 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <p>bsmdoc will add the automatic indexing to all the tables defined after the above line, until you explicitly turn off the configuration.</p> 
 </li>
 <li><p>add the label to each table you want to add the automatic indexing</p>
-<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{label</span>|table_label<span class="nt">}</span>
+<div class="syntax"><pre><span></span><span class="nf">\label</span><span class="nt">{</span>table_label<span class="nt">}</span>
 </pre></div>
 </li>
 </ul>
@@ -645,11 +644,11 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 <span class="nf">\config</span><span class="nt">{table_numbering</span>|1<span class="nt">}</span>
-<span class="nf">\config</span><span class="nt">{label</span>|tbl-example<span class="nt">}</span>
-<span class="nf">\config</span><span class="nt">{caption</span>|Example table title<span class="nt">}</span>
-<span class="nf">Heading1 </span>|<span class="nf"> Heading2</span>|<span class="k">|+</span>
-<span class="nf">item1 </span>|<span class="nf"> item2 </span>|<span class="k">|-</span>
-<span class="nf">item3 </span>|<span class="nf"> item4 </span>|<span class="k">|-</span>
+<span class="nf">\label</span><span class="nt">{</span>tbl-example<span class="nt">}</span>
+<span class="nf">\caption</span><span class="nt">{</span>Example table title<span class="nt">}</span>
+Heading1 | Heading2|<span class="k">|+</span>
+item1 | item2 |<span class="k">|-</span>
+item3 | item4 |<span class="k">|-</span>
 <span class="nt">}}</span>
 </pre></div>
 </div>
@@ -674,11 +673,11 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 <span class="nf">\config</span><span class="nt">{table_numbering_prefix</span>|TABLE<span class="nt">}</span>
-<span class="nf">\config</span><span class="nt">{label</span>|tbl-example2<span class="nt">}</span>
-<span class="nf">\config</span><span class="nt">{caption</span>|Example table title<span class="nt">}</span>
-<span class="nf">Heading1 </span>|<span class="nf"> Heading2</span>|<span class="k">|+</span>
-<span class="nf">item1 </span>|<span class="nf"> item2 </span>|<span class="k">|-</span>
-<span class="nf">item3 </span>|<span class="nf"> item4 </span>|<span class="k">|-</span>
+<span class="nf">\label</span><span class="nt">{</span>tbl-example2<span class="nt">}</span>
+<span class="nf">\caption</span><span class="nt">{</span>Example table title<span class="nt">}</span>
+Heading1 | Heading2|<span class="k">|+</span>
+item1 | item2 |<span class="k">|-</span>
+item3 | item4 |<span class="k">|-</span>
 <span class="nt">}}</span>
 </pre></div>
 </div>
@@ -687,18 +686,16 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 Table <a href='#tbl-example'>1</a> shows how to make a table in bsmdoc.
 </div>
 <div class="bs-example-src">
-<div class="syntax"><pre><span></span>Table <span class="nt">[#tbl-example]</span> shows how to make a table in bsmdoc.
+<div class="syntax"><pre><span></span>Table <span class="nf">\ref</span><span class="nt">{</span>tbl-example<span class="nt">}</span> shows how to make a table in bsmdoc.
 </pre></div>
 </div>
 <p>If the table label text starts with "<code >tbl-</code>", when the cursor is moved to the reference index, the table will be highlighted if it is visible; otherwise, a popup window will be displayed to show the table content.</p>
 <h1 id="sec-highlight">8 Syntax highlighting</h1>
 <p>bsmdoc uses <a href='http://pygments.org/docs/quickstart/ '> Pygments</a> for syntax highlighting. <a href='http://pygments.org/docs/quickstart/ '> Pygments</a> needs to be installed before using this feature. The syntax is</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">highlight</span>|<span class="nt">language</span>||<span class="nt">{%</span>
 code
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p><code >language</code> can be any language supported by <a href='http://pygments.org/languages/'>Pygments</a>. For example,</p>
 <ul>
 <li><p>python</p>
@@ -752,36 +749,34 @@ int main ()
 </div>
 </li>
 </ul>
-<p>It is possible to use other way or package for syntax highlighting. It will be discussed in detail in Sec. <a href='#sec-funblock'>10</a>.</p>
+<p>It is possible to use other way or package for syntax highlighting, which will be discussed in detail in Sec. <a href='#sec-funblock'>10</a>.</p>
 <h1 id="sec-9">9 Raw text block</h1>
-<p>Sometimes you may want to skip the parsing from bsmdoc. For example, to highlight the code, it is basically not a good idea to let bsmdoc parse the code. Instead, the raw data should be sent to the code highlighting block. In another example, you may have seen similar syntax between the latex macro and the bsmdoc commands (e.g., both are preceded by "<code >\</code>"). If bsmdoc tries to parse these latex macros, the result will not be what you want. Thus, bsmdoc defines the raw text block. It basically tells bsmdoc to ignore all the rules on its content. 
+<p>Sometimes you may want to skip the parsing from bsmdoc. For example, to highlight the code, it is basically not a good idea to let bsmdoc parse the code. Instead, the raw data should be sent to the code highlighting block. In another example, you may have seen similar syntax between the latex macro and the bsmdoc commands (e.g., both are preceded by "<code >\</code>"). If bsmdoc tries to parse these latex macros, the result is obviously not be what you want. Thus, bsmdoc defines the raw text block. It basically tells bsmdoc to ignore all the rules on its content. 
 The syntax of the raw text block is</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{%</span>
 Content
 <span class="nt">%}</span>
 </pre></div>
-</div>
 <p>In this case, bsmdoc will stop parsing the <code >Content</code> between <code >{%...%}</code>, and the raw text will be either sent to the final html file or send to the other function blocks to process.</p>
 <p>However, sometimes you may still want to slightly process the <code >Content</code> before sending to the html file. For example, the <code >Content</code> may contain symbols (e.g., <code >&lt; &gt;</code>), which may cause conflict to the html tags. You can use the <code >escape</code> function block to process the data</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">escape</span>||<span class="nt">{%</span>
 Content
 <span class="nt">%}!}</span>
 </pre></div>
+<p>In this case, <code >&lt;</code> and <code >&gt;</code> will be replaced with <code >&amp;lt;</code> and <code >&amp;gt;</code>, respectively.</p>
+<div class="info">
+The <a href='#sec-equation'>equation</a> block will automatically replace <code >&lt;</code> (<code >&gt;</code>) with <code >&amp;lt;</code> (<code >&amp;gt;</code>). Thus, there is no need to explicitly call the <code >escape</code> function block.
 </div>
-<p>In this case, <code >&lt;</code> (<code >&gt;</code>) will be replaced with <code >&amp;lt;</code> (<code >&amp;gt;</code>). The <a href='#sec-equation'>equation</a> block will automatically replace <code >&lt;</code> (<code >&gt;</code>) with <code >&amp;lt;</code> (<code >&amp;gt;</code>). Thus, there is no need to explicitly call the <code >escape</code> function block. By symmetry, bsmdoc also defines the <code >unescape</code> function block, which will replace <code >&amp;lt;</code> (<code >&amp;gt;</code>) with <code >&lt;</code> (<code >&gt;</code>).</p>
+<p>By symmetry, bsmdoc also defines the <code >unescape</code> function block, which will replace <code >&amp;lt;</code> (<code >&amp;gt;</code>) with <code >&lt;</code> (<code >&gt;</code>).</p>
 <h1 id="sec-funblock">10 Function block</h1>
 <p>Function block makes things really interesting. Without function block, bsmdoc is almost useless. Function block provides a easy way to allow the content to be processed before sent to the final html file. 
-The syntax of a function block looks like</p>
-<div class="bs-example">
+As you have seen above, the syntax of a function block looks like</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span>command
 content
 <span class="nt">!}</span>
 </pre></div>
-</div>
 <p>where <code >command</code> is optional and may contain the name and arguments of the corresponding function block.</p>
-<p>As you have seen, many features mentioned above are implemented with function blocks. 
+<p>As described above, many features mentioned above are implemented with function blocks. 
 For example,</p>
 <ul>
 <li><p><a href='#sec-image'>image</a> block:</p>
@@ -830,7 +825,7 @@ content
 </pre></div>
 </div> 
 </li>
-<li><p>tag</p>
+<li><p>general tag</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">key</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;tag-class&quot;</span><span class="p">&gt;</span>
 content
@@ -847,39 +842,29 @@ content
 </ul>
 <p>The <code >command</code> section is optional. When the <code >command</code> section is not defined, the function block behaves exactly same as the simple block (<code >{}</code>). Otherwise, the corresponding function will be called to process the content included in the block. 
 As you may have already figured out, the <code >command</code> section is defined as</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span>command|arg0|arg1|arg2|...|argN||
 </pre></div>
-</div>
 <p>The command can have arbitrary number of arguments, which are separated by "<code >|</code>". And the command is always terminated by "<code >||</code>". It is also possible to combine multiple commands</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span>command0|arg0|arg1|arg2||command1|arg0|arg1|arg2||
 </pre></div>
-</div>
 <p>In this case, the commands are called from right to left. Thus in the above example, <code >command1</code> will be called first, and its result will be sent to <code >command0</code>. The result from <code >command0</code> will be sent to the html file. It is equivalently to the following nested blocks</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">command0</span>|<span class="nt">arg0</span>|<span class="nt">arg1</span>|<span class="nt">arg2</span>||
 <span class="nt">{!</span><span class="nf">command1</span>|<span class="nt">arg0</span>|<span class="nt">arg1</span>|<span class="nt">arg2</span>||
     content
 <span class="nt">!}!}</span>
 </pre></div>
-</div>
-<p>The function block make it easy to extend bsmdoc. We could have defined all kinds of function blocks to generate all html tags, and write a comprehensive doc so we can look up later. We don't. Otherwise, that will be not significantly different from remembering all the html syntax. Instead, we make it easy to add new functions.</p>
+<p>The function block make it easy to extend bsmdoc. We could have defined all kinds of function blocks to generate all html tags, and write a comprehensive doc so we can look up later. We don't. Otherwise, that will not be significantly different from remembering all html syntax. Instead, we make it easy to add new functions.</p>
 <p>When bsmdoc sees the following function block</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">command</span>|<span class="nt">arg0</span>|<span class="nt">arg1</span>||
     content
 <span class="nt">!}</span>
 </pre></div>
-</div>
 <p>it will search for the "<code >bsmdoc_command</code>" function. If found, it will execute the command with list "<code >[arg0, arg1]</code>" as argument. For example, if you want to define a function block to achieve the "<del >delete</del>" effect,</p>
 <ul>
 <li><p>first you need to define the function (e.g., "<code >bsmdoc_del</code>"),</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">data</span>
 </pre></div>
-</div>
 <p>Here <code >**kwargs</code> are additional arguments from bsmdoc, for example</p>
 <div class="tables">
 <table  class="table">
@@ -896,7 +881,8 @@ As you may have already figured out, the <code >command</code> section is define
 <td>lineno</td><td>the line number of the start of the function block</td>
 </tr>
 </tbody></table>
-</div> 
+</div>
+<p>Such info may be helpful to show debugging tips once some error happens.</p> 
 </li>
 <li><p>Now the <code >del</code> can be used as all the other blocks,</p>
 <div class="bs-example">
@@ -912,31 +898,32 @@ delete
 </li>
 </ul>
 <p>All <code >bsmdoc_command</code> function should return a <code >string</code>, which will be sent to the generated html file. If the function does not need to change the html file, it should return the empty string.</p>
-<p>The next question is where to put the function definition? One straightforward solution is to define the above <code >bsmdoc_del</code> function in <code >bsmdoc.py</code> and then all the documents can use the <code >del</code> function block. However, that also means once you find something is missing, you need to go back to the <code >bsmdoc.py</code> and define the function there. It may cause two potential issues:</p>
+<p>The next question is where to put the function definition? One straightforward solution is to define the above <code >bsmdoc_del</code> function in <code >bsmdoc.py</code> and then all the documents can use the <code >del</code> function block. However, that also means once you need some missing features, you need to go back to the <code >bsmdoc.py</code> and define the functions there. It may cause two potential issues:</p>
 <ul>
 <li>It needs to edit additional file <code >bsmdoc.py</code> besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled; 
 </li>
 <li>How about two docs need slightly different implementation of some function? You may end up either using some slightly different (but not straightforward) function names, or adding additional arguments to the function blocks. 
 </li>
 </ul>
-<p>Neither way is scalable. bsmdoc provides the third choice: the function block can be defined in the same doc where it is called. Including the following code in your doc, and it will automatically add the <code >bsmdoc_del</code> function just as it is defined in <code >bsmdoc.py</code> (but be careful, since bsmdoc will call python function "<code >exec()</code>" for this feature, it may cause some security concerns).</p>
-<div class="bs-example">
+<p>Neither way is scalable. bsmdoc provides the third choice: the function block can be defined in the same doc where it is called. To achieve that, bsmdoc define a special <code >exec</code> block</p>
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
+<span class="n">code</span>
+<span class="nt">%}!}</span>
+</pre></div>
+<p>which will execute the <code >code</code> automatically. 
+Thus, including the following code in your doc will automatically add the <code >bsmdoc_del</code> function just as it is defined in <code >bsmdoc.py</code> (but be careful, since bsmdoc will call python function "<code >exec()</code>" for this feature, it may cause some security concerns).</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">content</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
-<p>You can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library</p>
-<div class="bs-example">
+<p>With the <code >exec</code> block, you can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>Or in some case, you just want to use your own function for some arguments. For example, you want to call your own function to highlight the code for a specific language, and use the default function for all the others. In this case, you may try</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -946,9 +933,7 @@ delete
     <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>It may work fine to compile most of your docs, until one day it fails and python complains indefinite loop. The problem here is that the above definition assumes such code will only be called once. But it is not always true for bsmdoc. As mentioned before, bsmdoc may scan the doc multiple times to solve the late-defined references. Thus, when bsmdoc executes the above code second time, <code >bsmdoc_highlight_raw</code> will not refer to the original <code >bsmdoc_highlight</code>, instead, it will also point to the local defined copy. The definition will be equivalent to</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -958,10 +943,8 @@ delete
     <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>It is apparently an indefinite loop.</p>
-<p>Several techniques can be used to solve this problem. For example, you can always define the whole function by yourself, instead of calling the original function in some branches. Or you may check if the local function has been defined</p>
-<div class="bs-example">
+<p>Several techniques can be used to solve this problem. For example, you can always define the whole function by yourself, instead of calling the default function in some branches. Or you may check whether the local function has been defined or not</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">bsmdoc_highlight_raw</span>
@@ -974,9 +957,7 @@ delete
         <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>Or you can tell bsmdoc to execute the code for the first scan only</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
 <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -986,10 +967,8 @@ delete
     <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <h2 id="sec-10-1">10.1 Generate images</h2>
-<p>Besides defining the function block, the <code >exec</code> block can also be used to execute arbitrary python code (be careful!). One application is to embed the python code to generate the figure with <a href='http://matplotlib.org/'>matplotlib</a> package,</p>
-<div class="bs-example">
+<p>Besides defining the function block, the <code >exec</code> block can also be used to execute arbitrary python code (<b >be careful!</b>). One application is to embed the python code to generate the figure with <a href='http://matplotlib.org/'>matplotlib</a> package,</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="kn">import</span> <span class="nn">os.path</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;pie.svg&quot;</span><span class="p">):</span>
@@ -1014,7 +993,6 @@ delete
     <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;image/pie.svg&quot;</span><span class="p">)</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>Then you can include the <code >pie.svg</code> in your html file</p>
 <div class="bs-example">
 <div  class="figure"><img  src="./image/pie.svg" alt="./image/pie.svg"></div>
@@ -1028,7 +1006,6 @@ delete
 <p>Thus, there may be no need to use other software to generate figures.</p>
 <h2 id="sec-10-2">10.2 Include source code</h2>
 <p>With function block, you can also easily include source code in your html doc. For example, to import the python source code in your doc, you can define the following function block</p>
-<div class="bs-example_src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="k">def</span> <span class="nf">bsmdoc_codesnippet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1039,7 +1016,6 @@ delete
         <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>Then you can include the source code (e.g., matplotlib.pyplot.plot) by</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nd">@_autogen_docstring</span><span class="p">(</span><span class="n">Axes</span><span class="o">.</span><span class="n">plot</span><span class="p">)</span>
@@ -1071,8 +1047,7 @@ plt.plot
 <span class="nt">!}</span>
 </pre></div>
 </div>
-<p>It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write the function block to just return certain sections (e.g., a function), instead of the whole file.</p>
-<div class="bs-example_src">
+<p>It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write a function block to just return certain sections (e.g., a function), instead of the whole file.</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
 <span class="k">def</span> <span class="nf">bsmdoc_ccodesnippet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -1080,7 +1055,6 @@ plt.plot
     <span class="k">return</span> <span class="n">data</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>Then you can include the source code by</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="c1">// Cache selectors</span>
@@ -1140,10 +1114,8 @@ js/menu.js
 </div>
 <h2 id="sec-10-3">10.3 Inline function block</h2>
 <p>The difference between <code >function block</code> and <code >inline function block</code> is similar to the <code >equation block</code> and <code >inline equation block</code>. In other words, the output of the inline block can be embedded in the paragraph. The syntax is similar to the $\LaTeX$ macro:</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nf">\command</span><span class="nt">{arg0</span>|<span class="nt">arg1</span>|<span class="nt">...</span>|<span class="nt">argN</span>|content<span class="nt">}</span>
 </pre></div>
-</div>
 <p>In general, the blocks defined in the above section can also be used as inline block. For example</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">code</span> <span class="p">&gt;</span>content<span class="p">&lt;/</span><span class="nt">code</span><span class="p">&gt;</span> 
@@ -1156,17 +1128,13 @@ js/menu.js
 </pre></div>
 </div>
 <p>bsmdoc defines a special inline function block for configuration (<code >\config{}</code>). It adds a configuration item to bsmdoc's global configuration table, and output empty string to the html file. Thus, it will not directly update the html docs, although the other blocks may rely on such configurations to control their behaviors. The syntax is</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{option</span>|value<span class="nt">}</span>}
 </pre></div>
-</div>
-<p>We have see <a href='#sec-heading'>heading</a>, <a href='#sec-image'>image</a>, and <a href='#sec-table'>table</a> blocks use such feature to set the label and/or caption. We will see more configurations in Sec. <a href='#sec-template'>12</a>.</p>
+<p>We have seen <a href='#sec-heading'>heading</a>, <a href='#sec-image'>image</a>, and <a href='#sec-table'>table</a> blocks use such feature to set the label and/or caption. We will see more configurations in Sec. <a href='#sec-template'>12</a>.</p>
 <h1 id="sec-11">11 Input redirection</h1>
 <p>bsmdoc can automatically generate the table of content with</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="k">#makecontent</span>
 </pre></div>
-</div>
 <p>Only the headings with automatic numbering will be included in the content list. <code >makecontent</code> will also trigger bsmdoc to scan the doc twice.</p>
 <p><code >makecontent</code> is implemented by a function <code >bsmdoc_makecontent</code>. 
 Its input is a list that contains all the headings. The default implementation generates an un-ordered list</p>
@@ -1190,11 +1158,9 @@ Its input is a list that contains all the headings. The default implementation g
     <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ctxt</span><span class="p">)</span>
 </pre></div>
 <p>When the doc becomes large, you can split your doc into several docs and includes them in the top doc with the "<code >#include</code>" directive. For example, suppose you are writing a book, and have created <code >chappter1.bsmdoc</code>, <code >chapter2.bsmdoc</code>, .... Then, you can include all the chapters in your <code >book.bsmdoc</code></p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="k">#include</span><span class="nt"> chapter1.bsmdoc</span>
 <span class="nt">#include chapter2.bsmdoc</span>
 </pre></div>
-</div>
 <p>bsmdoc will replace the line <code >#include chapter1.bsmdoc</code> with the content of the file <code >chappter1.bsmdoc</code>.</p>
 <p>The <code >#include</code> is implemented with function <code >bsmdoc_include</code></p>
 <div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
@@ -1204,8 +1170,7 @@ Its input is a list that contains all the headings. The default implementation g
     <span class="k">return</span> <span class="bp">None</span>
 </pre></div>
 <p>Here <code >data</code> will be anything following <code >#include</code>. In the previous example, it will be "<code >chapter1.bsmdoc</code>" or "<code >chapter2.bsmdoc</code>". If the file is opened successfully, by default <code >bsmdoc_include</code> will return the filename and its content.</p>
-<p>It is easy to extend the <code >bsmdoc_include</code> function for more complex applications, for example</p>
-<div class="bs-example-src">
+<p>It is easy to extend the <code >bsmdoc_include</code> function for more advanced applications, for example</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
 <span class="n">bsmdoc_include_raw</span> <span class="o">=</span> <span class="n">bsmdoc_include</span>
 <span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
@@ -1238,15 +1203,11 @@ Its input is a list that contains all the headings. The default implementation g
     <span class="k">return</span> <span class="bp">None</span>
 <span class="nt">%}!}</span>
 </pre></div>
-</div>
 <p>The the following code will include the content between the first two headings from file <code >myfile.bsmdoc</code>. And the maximum number of lines is limited to 16.</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="k">#include</span><span class="nt"> ^(\\s)*=+|16|./myfile.bsmdoc</span>
 </pre></div>
-</div>
 <h1 id="sec-template">12 HTML template</h1>
 <p>By default, bsmdoc uses the following template to generate the html file, which defines 4 sections (i.e., <code >html</code>, <code >header</code>, <code >body</code> and <code >footer</code>)</p>
-<div class="bs-example">
 <div class="syntax"><pre><span></span><span class="k">[html]</span>
 <span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot;</span>
 <span class="s">    &quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;</span>
@@ -1273,9 +1234,7 @@ Its input is a list that contains all the headings. The default implementation g
 <span class="na">content</span> <span class="o">=</span> <span class="s">&lt;div class=&quot;footer-text&quot;&gt; Last updated %(UPDATED)s, by</span>
 <span class="s">          &lt;a href=&quot;http://bsmdoc.feiyilin.com/&quot;&gt;bsmdoc&lt;/a&gt; %(SOURCE)s.&lt;/div&gt;</span>
 </pre></div>
-</div>
-<p>Using a separate configuration file seems not compatible with our goal to include everything in a single file, although sometimes it may be convenient (for example, to use the same configuration file for multiple docs). bsmdoc also provides a way to include the customized template in your doc, for example</p>
-<div class="bs-example">
+<p>Using a separate configuration file seems not to be compatible with our goal to include everything in a single file, although sometimes it may be convenient (for example, to use the same configuration file for multiple docs). bsmdoc also provides a way to include the customized template in your doc, for example</p>
 <div class="syntax"><pre><span></span><span class="na">{!config||{%</span>
 <span class="k">[html]</span>
 <span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot;</span>
@@ -1285,15 +1244,12 @@ Its input is a list that contains all the headings. The default implementation g
 <span class="na">...</span>
 <span class="na">%}!}</span>
 </pre></div>
-</div>
 <p>In this case, "<code >config</code>" function block is called without any argument. And its content should have a INI file structure.</p>
 <p>bsmdoc uses <a href='https://docs.python.org/2/library/configparser.html'>ConfigParser</a> to parse the configurations. Thus, <code >%()s</code> will be resolved to the corresponding configuration values. The configuration name is case insensitive. For example,</p>
 <ul>
 <li><p><code >%(TITLE)s</code> will be replaced with "<code >my html title</code>", if you config the title with</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{title</span>|my html title<span class="nt">}</span>
-</pre></div>
-</div> 
+</pre></div> 
 </li>
 <li><code >%(UPDATED)s</code> will be replaced with the time when the html file is generated. 
 </li>
@@ -1302,33 +1258,23 @@ Its input is a list that contains all the headings. The default implementation g
 <p>It is easy to create a configuration by</p>
 <ul>
 <li><p>define the macro content, e.g.,</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{MYMACRO</span>|...<span class="nt">}</span>
-</pre></div>
-</div> 
+</pre></div> 
 </li>
 <li><p>use the configuration in the template</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span>...%(MYMACRO}s...
 </pre></div>
-</div>
 </li>
 </ul>
 <p>bsmdoc defines "<code >addcss</code>" configuration to insert additional <code >css</code> in the html file without change the html template</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{addcss</span>|mycss.css<span class="nt">}</span>
 </pre></div>
-</div>
 <p>To insert multiple css, separate the multiple css files with white-space</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{addcss</span>|mycss.css mycss2.css<span class="nt">}</span>
 </pre></div>
-</div>
 <p>Similarly, bsmdoc also defines the "<code >addjs</code>" configuration to include javascripts in the html file</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{addcss</span>|myjs.js myjs2.js<span class="nt">}</span>
 </pre></div>
-</div>
 <p>There are two ways to define doc title. The first one is to use the <code >toptitle</code> configuration. For example, the following line will define the top title</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;toptitle&quot;</span><span class="p">&gt;</span>
@@ -1345,7 +1291,6 @@ Its input is a list that contains all the headings. The default implementation g
 </pre></div>
 </div>
 <p>It is easy to see that it is equivalent to the following code</p>
-<div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">div</span>|<span class="nt">toptitle</span>||
 bsmdoc -- another technical html doc generator
 <span class="nt">{!</span><span class="nf">div</span>|<span class="nt">subtitle</span>||
@@ -1355,16 +1300,15 @@ bsmdoc -- another technical html doc generator
 </pre></div>
 </div>
 </div>
-</div>
 
 <div class="reference"><ol>
 <li><div id="cite-1">Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001 <a href="#cite_src-1-1">&#8617;</a></div></li>
 </ol></div>
 <div class="footer">
 <div class="footnote"><ol>
-<li><div id="footnote-1">This is the footnote <a href="#footnote_src-1">&#8617;</a></div></li>
+<li><div id="footnote-1">This is a footnote <a href="#footnote_src-1">&#8617;</a></div></li>
 </ol></div>
-<div class="footer-text"> Last updated 2017-08-29 21:55:26 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2017-09-12 13:59:20 Pacific Daylight Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
 </div>
 </div>
 <script src="js/menu.js"></script>

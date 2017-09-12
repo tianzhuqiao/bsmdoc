@@ -32,9 +32,9 @@ class bLexer(RegexLexer):
             (r'(exec)(\|)(firstRunOnly)(\|\|)(\{\%)', bygroups(Name.Function,Text,Name.Tag, Text, Name.Tag), 'pythonblock'),
             (r'(math)(\|\|)(\{\%)', bygroups(Name.Function, Text, Name.Tag), 'texblock'),
             (r'((?<=\{\!)[^|\n]*)(\|)', bygroups(Name.Function, Text)),
-            (r'((?<=\|\|)[^|\n]*)(\|)', bygroups(Name.Function, Text)),
-            (r'([^|\n]*)(\|\|)', bygroups(Name.Tag,Text)),
-            (r'([^|\n]*)(\|)', bygroups(Name.Tag,Text)),
+            (r'((?<=\|\|)[^|\n\!\}]*)(\|)', bygroups(Name.Function, Text)),
+            (r'([^|\n\!\}]*)(\|\|)', bygroups(Name.Tag,Text)),
+            (r'([^|\n\!\}]*)(\|)', bygroups(Name.Tag,Text)),
             include('section'),
             (r'.', Text),
             ],
@@ -55,7 +55,7 @@ class bLexer(RegexLexer):
         'cmdblock':[
             (r'\{', Name.Tag, "#push"),
             (r'\}', Name.Tag, "#pop"),
-            (r'([^|\n]*)(\|)', bygroups(Name.Tag,Text)),
+            (r'([^|\n\}]*)(\|)', bygroups(Name.Tag,Text)),
             include('section'),
             (r'.', Text),
             ],
@@ -70,7 +70,8 @@ class bLexer(RegexLexer):
             (r'\|\+', Keyword ),
             (r'\|\-', Keyword ),
             include('section'),
-            (r'([^\|\n]*)(\|)', bygroups(Name.Function, Text)),
+            #(r'([^\|\n]*)(\|)', bygroups(Name.Function, Text)),
+            #(r'\|', Keyword ),
             (r'.', Text),
             ],
         'section': [
@@ -97,7 +98,7 @@ class bLexer(RegexLexer):
             # command
             #(r'(\\\w+)({)([^|]*|)(.*)(})', bygroups(Name.Tag,Name.Tag,Name.Tag, Text, Name.Tag)),
             (r'(\\\w+)({)', bygroups(Name.Function,Name.Tag), 'cmdblock'),
-            (r'(\\\w+)({)(.*)(})', bygroups(Name.Tag,Name.Tag,Text, Name.Tag)),
+            #(r'(\\\w+)({)(.*)(})', bygroups(Name.Tag,Name.Tag,Text, Name.Tag)),
             # link
             (r'(\[)([^\]\|]+)(\|)([^\]\|]*)(\])', bygroups(Name.Tag, Name.Tag, Text, String, Name.Tag)),
             (r'(\[)([^\]]*)(\])', bygroups(Name.Tag, Name.Tag,Name.Tag)),
