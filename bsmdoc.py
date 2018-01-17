@@ -13,71 +13,8 @@ except ImportError:
 
 import ply.lex as lex
 import ply.yacc as yacc
+import click
 
-class bsmdocConfiguration(object):
-    """
-    class to hold all the global configurations
-    """
-    def __init__(self):
-        self.html = ""
-        self.config = SafeConfigParser()
-        self.scan = 1
-        self.rescan = False
-        self.contents = None
-        self.refs = {}
-        # input stack to support dynamically changing the input text (e.g.,
-        # include)
-        self.lex_input_stack = []
-
-        # function block supports embedded block, remember the current block
-        # level to print the error message correspondingly when error occurs.
-        self.fblock_state = []
-        self.header_fblock_level = 0
-    def pop_input(self):
-        if len(self.lex_input_stack):
-            return self.lex_input_stack.pop()
-        return None
-
-    def push_input(self, t):
-        status = {'lexdata':t.lexer.lexdata, 'lexpos':t.lexer.lexpos,
-                  'lineno':t.lexer.lineno}
-        status['filename'] = self.get_cfg('bsmdoc', 'filename')
-        self.lex_input_stack.append(status)
-
-    def pop_block(self):
-        if len(self.fblock_state):
-            s, self.header_fblock_level = self.fblock_state.pop()
-            return s
-
-    def push_block(self, b):
-        self.fblock_state.append((b, self.header_fblock_level))
-
-    def get_cfg(self, sec, key):
-        if self.config.has_option(sec, key):
-            return self.config.get(sec, key)
-        return ''
-
-    def set_cfg(self, sec, key, val):
-        if sec is not 'DEFAULT' and not self.config.has_section(sec):
-            self.config.add_section(sec)
-        self.config.set(sec, key, val)
-
-    def get_option(self, key, default=None):
-        val = self.get_cfg('DEFAULT', key)
-        if val == '':
-            return str(default)
-        return val
-
-    def set_option(self, key, value):
-        return self.set_cfg('DEFAULT', key, str(value))
-
-    def get_option_int(self, key, default):
-        return int(self.get_option(key, default))
-
-    def get_option_bool(self, key, default):
-        return self.get_option(key, default).lower() in ("yes", "true", "t", "1")
-
-bsmdoc = bsmdocConfiguration()
 
 # lexer definition
 tokens = (
@@ -350,8 +287,6 @@ def t_WORD(t):
 
 lex.lex(reflags=re.M)
 
-
-
 def bsmdoc_escape(data, *args, **kwargs):
     s = re.sub(r'(<)', r'&lt;', data)
     s = re.sub(r'(>)', r'&gt;', s)
@@ -395,9 +330,16 @@ def bsmdoc_helper(cmds, data, default=None, lineno=-1, inline=False):
 def bsmdoc_config(data, args, **kwargs):
     try:
         if len(args) <= 0:
+            # configuration as text
+            bsmdoc.info("reading configuration...")
             bsmdoc.config.readfp(StringIO(data))
         else:
-            bsmdoc.set_option(args[0], data)
+            if args[0] =='bsmdoc_conf':
+                bsmdoc.info("read configuration from file %s..."%data)
+                txt = bsmdoc_readfile(data)
+                bsmdoc.config.readfp(StringIO(txt))
+            else:
+                bsmdoc.set_option(args[0], data)
     except:
         traceback.print_exc()
         bsmdoc_error_("bsmdoc_config('%s',%s)"% (data, args), **kwargs)
@@ -1080,6 +1022,35 @@ def p_error(p):
 
 yacc.yacc(debug=True)
 
+def bsmdoc_readfile(filename, encoding=None):
+    if not encoding:
+        try:
+            # encoding is not define, try to detect it
+            import chardet
+            raw = open(filename, 'rb').read()
+            result = chardet.detect(raw)
+            encoding = result['encoding']
+        except IOError:
+            traceback.print_exc()
+            return ""
+        except:
+            pass
+    bsmdoc.info("open \"%s\" with encoding \"%s\""%(filename, encoding))
+    txt = ""
+    fp = io.open(filename, 'r', encoding=encoding)
+    txt = fp.read()
+    fp.close()
+    txt = txt.encode('unicode_escape')
+    txt = txt.decode()
+    regexp = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
+    m = regexp.search(txt)
+    while m:
+        qb = '&#x' + m.group(1) + ';'
+        txt = txt[:m.start()] + qb + txt[m.end():]
+        m = regexp.search(txt, m.start())
+    txt = txt.encode().decode('unicode_escape')
+    return txt
+
 # generate the html
 bsmdoc_conf = u"""
 [html]
@@ -1109,134 +1080,192 @@ content = <div class="footer-text"> Last updated %(UPDATED)s, by
           <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
 """
 
-def bsmdoc_raw(filename, encoding):
-    global bsmdoc
-    txt = bsmdoc_readfile(filename, encoding)
-    bsmdoc.config = SafeConfigParser()
-    bsmdoc.config.readfp(StringIO(bsmdoc_conf))
-    bsmdoc.set_option('UPDATED', time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(time.time())))
-    bsmdoc.scan = 1
-    bsmdoc.set_option('title', '')
-    bsmdoc.set_option('source', '')
-    bsmdoc.set_cfg('bsmdoc', 'filename', filename)
-    lex.lexer.lineno = 1
-    #lex.input(txt)
-    #while True:
-    #    tok = lex.token()
-    #    if not tok:
-    #        break      # No more input
-    #    print(tok)
-    yacc.parse(txt, tracking=True)
-    if bsmdoc.rescan:
-        bsmdoc.scan += 1
-        # 2nd scan to resolve the references
-        image_next_tag.counter = 0
-        table_next_tag.counter = 0
-        bsmdoc_header.head = {}
-        bsmdoc_footnote.notes = []
-        bsmdoc_cite.refs = []
-        if bsmdoc_header.content:
-            bsmdoc.contents = bsmdoc_header.content
-        bsmdoc_header.content = []
+class bsmdocConfiguration(object):
+    """
+    class to hold all the global configurations
+    """
+    def __init__(self):
+        self.verbose = False
+        self.lex = False
+
+        self.html = ""
+        self.config = SafeConfigParser()
+        self.config.readfp(StringIO(bsmdoc_conf))
+        self.scan = 1
+        self.rescan = False
+        self.contents = None
+        self.refs = {}
+        # input stack to support dynamically changing the input text (e.g.,
+        # include)
+        self.lex_input_stack = []
+
+        # function block supports embedded block, remember the current block
+        # level to print the error message correspondingly when error occurs.
+        self.fblock_state = []
+        self.header_fblock_level = 0
+
+    def reset_options(self):
+        for k, v in self.config.items('DEFAULT'):
+            self.config.remove_option('DEFAULT', k)
+
+        self.set_option('updated', time.strftime('%Y-%m-%d %H:%M:%S %Z',
+                                                 time.localtime(time.time())))
+        self.set_option('title', '')
+        self.set_option('source', '')
+
+    def pop_input(self):
+        if len(self.lex_input_stack):
+            return self.lex_input_stack.pop()
+        return None
+
+    def push_input(self, t):
+        status = {'lexdata':t.lexer.lexdata, 'lexpos':t.lexer.lexpos,
+                  'lineno':t.lexer.lineno}
+        status['filename'] = self.get_cfg('bsmdoc', 'filename')
+        self.lex_input_stack.append(status)
+
+    def pop_block(self):
+        if len(self.fblock_state):
+            s, self.header_fblock_level = self.fblock_state.pop()
+            return s
+
+    def push_block(self, b):
+        self.fblock_state.append((b, self.header_fblock_level))
+
+    def get_cfg(self, sec, key):
+        if self.config.has_option(sec, key):
+            return self.config.get(sec, key)
+        return ''
+
+    def set_cfg(self, sec, key, val):
+        if sec is not 'DEFAULT' and not self.config.has_section(sec):
+            self.config.add_section(sec)
+        self.config.set(sec, key, val)
+
+    def get_option(self, key, default=None):
+        val = self.get_cfg('DEFAULT', key)
+        if val == '':
+            return str(default)
+        return val
+
+    def set_option(self, key, value):
+        return self.set_cfg('DEFAULT', key, str(value))
+
+    def get_option_int(self, key, default):
+        return int(self.get_option(key, default))
+
+    def get_option_bool(self, key, default):
+        return self.get_option(key, default).lower() in ("yes", "true", "t", "1")
+
+    def message(self, msg):
+        print(msg)
+    def info(self, msg):
+        if self.verbose:
+            self.message(msg)
+    def warning(self, msg):
+        self.message("warning: "+msg)
+    def error(self, msg):
+        self.message("error: "+msg)
+
+    def bsmdoc_raw(self, filename, encoding):
+        self.scan = 1
+        self.set_cfg('bsmdoc', 'filename', filename)
         lex.lexer.lineno = 1
-        # reset all the global options
-        for k, v in bsmdoc.config.items('DEFAULT'):
-            if k not in ['updated', 'title', 'source']:
-                bsmdoc.config.remove_option('DEFAULT', k)
-        bsmdoc.config.readfp(StringIO(bsmdoc_conf))
+        self.info("first pass scan...")
+        txt = bsmdoc_readfile(filename, encoding)
+        if self.lex:
+            # output the lexer token for debugging
+            lex.input(txt)
+            while True:
+                tok = lex.token()
+                if not tok:
+                    break      # No more input
+                print(tok)
+            sys.exit(0)
         yacc.parse(txt, tracking=True)
-    return bsmdoc
+        if self.rescan:
+            # 2nd scan to resolve the references
+            self.scan += 1
+            self.info("second pass scan...")
+            image_next_tag.counter = 0
+            table_next_tag.counter = 0
+            bsmdoc_header.head = {}
+            bsmdoc_footnote.notes = []
+            bsmdoc_cite.refs = []
+            if bsmdoc_header.content:
+                self.contents = bsmdoc_header.content
+            bsmdoc_header.content = []
+            lex.lexer.lineno = 1
+            self.reset_options()
+            yacc.parse(txt, tracking=True)
 
-def bsmdoc_readfile(filename, encoding=None):
-    if not encoding:
-        try:
-            # encoding is not define, try to detect it
-            import chardet
-            b = min(32, os.path.getsize(filename))
-            raw = open(filename, 'rb').read(b)
-            result = chardet.detect(raw)
-            encoding = result['encoding']
-        except:
-            pass
-    txt = ""
-    fp = io.open(filename, 'r', encoding=encoding)
-    txt = fp.read()
-    fp.close()
-    txt = txt.encode('unicode_escape')
-    txt = txt.decode()
-    r = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
-    m = r.search(txt)
-    while m:
-        qb = '&#x' + m.group(1) + ';'
-        txt = txt[:m.start()] + qb + txt[m.end():]
-        m = r.search(txt, m.start())
-    txt = txt.encode().decode('unicode_escape')
-    return txt
+    def bsmdoc_gen(self, filename, encoding=None):
+        self.bsmdoc_raw(filename, encoding)
+        self.set_option('THISFILE', os.path.basename(filename))
+        html = []
+        html.append(self.get_cfg('html', 'begin'))
+        # header
+        html.append(self.get_cfg('header', 'begin'))
+        html.append(self.get_cfg('header', 'content'))
+        temp = self.get_option('addcss', '')
+        if temp:
+            css = temp.split(' ')
+            for c in css:
+                html.append('<link rel="stylesheet" href="%s" type="text/css">'%c)
+        temp = self.get_option('addjs', '')
+        if temp:
+            js = temp.split(' ')
+            for j in js:
+                html.append('<script type="text/javascript" language="javascript" src="%s"></script>'%j)
+        html.append(self.get_cfg('header', 'end'))
+        # body
+        html.append(self.get_cfg('body', 'begin'))
+        subtitle = self.get_option('subtitle', '')
+        if subtitle:
+            subtitle = '<div class="subtitle">%s</div>\n'%(subtitle)
+        doctitle = self.get_option('doctitle', '')
+        if doctitle:
+            doctitle = '<div class="toptitle">%s%s</div>'%(doctitle, subtitle)
+        html.append(doctitle)
+        html.append(self.html)
+        # reference
+        if len(bsmdoc_cite.refs):
+            html.append('<div class="reference"><ol>')
+            html.append(os.linesep.join(["<li>%s</li>"%x[0] for x in bsmdoc_cite.refs]))
+            html.append('</ol></div>')
 
-def bsmdoc_gen(filename, encoding=None):
-    global bsmdoc
-    bsmdoc_raw(filename, encoding)
-    config_doc = bsmdoc.get_option('bsmdoc_conf', '')
-    if config_doc:
-        txt = bsmdoc_readfile(config_doc)
-        bsmdoc.config.readfp(StringIO(txt))
+        html.append(self.get_cfg('footer', 'begin'))
+        if len(bsmdoc_footnote.notes):
+            html.append('<div class="footnote"><ol>')
+            html.append(os.linesep.join(["<li>%s</li>"%x for x in bsmdoc_footnote.notes]))
+            html.append('</ol></div>')
 
-    bsmdoc.set_option('THISFILE', os.path.basename(filename))
-    html = []
-    html.append(bsmdoc.get_cfg('html', 'begin'))
-    # header
-    html.append(bsmdoc.get_cfg('header', 'begin'))
-    html.append(bsmdoc.get_cfg('header', 'content'))
-    temp = bsmdoc.get_option('addcss', '')
-    if temp:
-        css = temp.split(' ')
-        for c in css:
-            html.append('<link rel="stylesheet" href="%s" type="text/css">'%c)
-    temp = bsmdoc.get_option('addjs', '')
-    if temp:
-        js = temp.split(' ')
-        for j in js:
-            html.append('<script type="text/javascript" language="javascript" src="%s"></script>'%j)
-    html.append(bsmdoc.get_cfg('header', 'end'))
-    # body
-    html.append(bsmdoc.get_cfg('body', 'begin'))
-    subtitle = bsmdoc.get_option('subtitle', '')
-    if subtitle:
-        subtitle = '<div class="subtitle">%s</div>\n'%(subtitle)
-    doctitle = bsmdoc.get_option('doctitle', '')
-    if doctitle:
-        doctitle = '<div class="toptitle">%s%s</div>'%(doctitle, subtitle)
-    html.append(doctitle)
-    html.append(bsmdoc.html)
-    # reference
-    if len(bsmdoc_cite.refs):
-        html.append('<div class="reference"><ol>')
-        html.append(os.linesep.join(["<li>%s</li>"%x[0] for x in bsmdoc_cite.refs]))
-        html.append('</ol></div>')
+        if self.get_option('source', '') in ['1', 'on']:
+            self.set_option("SOURCE", '<a href="%s">(source)</a>'%filename)
+        else:
+            self.set_option("SOURCE", '')
+        html.append(self.get_cfg('footer', 'content'))
 
-    html.append(bsmdoc.get_cfg('footer', 'begin'))
-    if len(bsmdoc_footnote.notes):
-        html.append('<div class="footnote"><ol>')
-        html.append(os.linesep.join(["<li>%s</li>"%x for x in bsmdoc_footnote.notes]))
-        html.append('</ol></div>')
+        html.append(self.get_cfg('footer', 'end'))
 
-    if bsmdoc.get_option('source', '') in ['1', 'on']:
-        bsmdoc.set_option("SOURCE", '<a href="%s">(source)</a>'%filename)
-    else:
-        bsmdoc.set_option("SOURCE", '')
-    html.append(bsmdoc.get_cfg('footer', 'content'))
+        html.append(self.get_cfg('body', 'end'))
 
-    html.append(bsmdoc.get_cfg('footer', 'end'))
+        html.append(self.get_cfg('html', 'end'))
+        outname = os.path.splitext(filename)[0] + '.html'
+        fp = open(outname, 'w')
+        fp.write('\n'.join(html))
+        fp.close()
 
-    html.append(bsmdoc.get_cfg('body', 'end'))
-
-    html.append(bsmdoc.get_cfg('html', 'end'))
-    outname = os.path.splitext(filename)[0] + '.html'
-    fp = open(outname, 'w')
-    fp.write('\n'.join(html))
-    fp.close()
-    return outname
+bsmdoc = bsmdocConfiguration()
+@click.command()
+@click.option('--lex', is_flag=True, help="Show lexer output and exit.")
+@click.option('--encoding', help="Set the input file encoding, e.g. 'utf-8'.")
+@click.option('--verbose', is_flag=True)
+@click.argument('filename', type=click.Path(exists=True))
+def cli(filename, lex, encoding, verbose):
+    bsmdoc.lex = lex
+    bsmdoc.verbose = verbose
+    bsmdoc.bsmdoc_gen(click.format_filename(filename), encoding)
 
 if __name__ == '__main__':
-    for f in sys.argv[1:]:
-        bsmdoc_gen(f)
+    cli()
