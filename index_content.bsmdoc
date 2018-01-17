@@ -58,14 +58,14 @@ bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, 
 {!div|bs-example||
 # stop numbering the headers, so that the following headers will not affect
 # the structure of this doc
-\config{heading_numbering|0}
+\config{heading_numbering|False}
 = level 1
 == level 2
 === level 3
 ==== level 4
 ===== level 5
 ====== level 6
-\config{heading_numbering|1}
+\config{heading_numbering|True}
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 = level 1
 == level 2
@@ -82,14 +82,14 @@ heading text can spread over multiple lines as long as they are enclosed by "\ta
 {!div|bs-example||
 # stop numbering the headers, so that the following headers will not affect
 # the structure of this doc
-\config{heading_numbering|0}
+\config{heading_numbering|False}
 = {multiple\n
 line\n
 heading}
 = {multiple
 line
 heading}
-\config{heading_numbering|1}
+\config{heading_numbering|True}
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 = {multiple\n
 line\n
@@ -101,10 +101,10 @@ heading}
 
 To add reference to the \tag{code|heading} block, first you need to add a label to it with command "\tag{code|{%\label%}}". Then, it can be referenced as a normal in-page [#sec-link|link].
 {!div|bs-example||
-\config{heading_numbering|0}
+\config{heading_numbering|False}
 = {section with label\label{sec-label}}
 This [#sec-label|section] ...
-\config{heading_numbering|1}
+\config{heading_numbering|True}
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 = {section with label\label{sec-label}}
 This [#sec-label|section] ...
@@ -112,7 +112,7 @@ This [#sec-label|section] ...
 
 By default, the heading block will not be automatically numbered. The following configuration is used to turn on the automatic numbering
 {!highlight|bsmdoc||{%
-\config{heading_numbering|1}
+\config{heading_numbering|True}
 %}!}
 
 bsmdoc will not start the automatic heading numbering until you set the above flag. Thus if you want bsmdoc to add numbering to the whole doc, simply put the above configuration line at the beginning of the doc. You also can set the start heading level for automatic numbering. For example, the following line will tell bsmdoc to start heading numbering from level 2 (i.e., \tag{code|H2})
@@ -341,7 +341,7 @@ To add reference to an image, you need to
 }
 * { add reference to the image in your text
 {!div|bs-example||
-Fig. [#img-scatter] shows a scatter diagram
+Fig. \ref{img-scatter} shows a scatter diagram
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 Fig. [#img-scatter] shows a scatter diagram... or
 Fig. \ref{img-scatter} shows a scatter diagram
@@ -489,7 +489,7 @@ item3 | item4 ||-
 %}!}
 
 Furthermore, a caption can be added to the table block too
-\config{table_numbering|0}
+\config{table_numbering|False}
 {!div|bs-example||
 {{
 \caption{Example table title}
@@ -509,7 +509,7 @@ item3 | item4 ||-
 bsmdoc can also add the automatic indexing to the table caption. To do that, you need to
 - {turn on the option
 {!highlight|bsmdoc||{%
-\config{table_numbering|1}
+\config{table_numbering|True}
 %}!}
 bsmdoc will add the automatic indexing to all the tables defined after the above line, until you explicitly turn off the configuration.
 }
@@ -518,10 +518,10 @@ bsmdoc will add the automatic indexing to all the tables defined after the above
 \label{table_label}
 %}!}}
 
-\config{table_numbering_prefix|}
+\config{table_numbering_prefix|Table.}
 {!div|bs-example||
 {{
-\config{table_numbering|1}
+\config{table_numbering|True}
 \label{tbl-example}
 \caption{Example table title}
 Heading1 | Heading2||+
@@ -530,7 +530,7 @@ item3 | item4 ||-
 }}
 !}{!div|bs-example-src ||highlight|bsmdoc||{%
 {{
-\config{table_numbering|1}
+\config{table_numbering|True}
 \label{tbl-example}
 \caption{Example table title}
 Heading1 | Heading2||+
@@ -1051,7 +1051,7 @@ We have seen [#sec-heading|heading], [#sec-image|image], and [#sec-table|table] 
 #title | the title of the file | filename ||-
 #doctitle | the title of the doc | ''  ||-
 #subtitle | the subtitle of the doc| '' ||-
-#heading_numbering| order the headings| 0 ||-
+#heading_numbering| order the headings| False ||-
 #heading_numbering_start | the start level for ordered heading| 1 ||-
 #image_numbering | show the number of images| 0 ||-
 #table_numbering | show the number of tables| 0 ||-

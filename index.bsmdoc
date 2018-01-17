@@ -1,17 +1,16 @@
 \config{title|bsmdoc -- another technical html doc generator}
 #\config{doctitle|bsmdoc -- another technical html doc generator}
 #\config{subtitle|[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]}
-\config{heading_numbering|1}
-\config{image_numbering|1}
-\config{table_numbering|1}
-\config{source|1}
+\config{heading_numbering|True}
+\config{image_numbering|True}
+\config{table_numbering|True}
+\config{show_source|True}
 #\config{bsmdoc_conf|bsmdoc.cfg}
 
 {!config||{%
 [html]
-begin = <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
-    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+begin = <!doctype html"
+    <html lang="en">
 end= </html>
 
 [header]
