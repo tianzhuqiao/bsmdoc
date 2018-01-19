@@ -9,7 +9,7 @@
 
 {!config||{%
 [html]
-begin = <!doctype html"
+begin = <!DOCTYPE html>
     <html lang="en">
 end= </html>
 

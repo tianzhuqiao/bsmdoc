@@ -54,6 +54,7 @@ bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, 
 }
 
 = Heading \label{sec-heading}
+\config{heading_in_contents|False}
 \tag{code|heading} block is defined by the line starting with "\tag{code|=}"
 {!div|bs-example||
 # stop numbering the headers, so that the following headers will not affect
@@ -132,6 +133,7 @@ Sec. \ref{sec-heading}...
 !}{!div|bs-example-src||highlight|bsmdoc||{%
 Sec. \ref{sec-heading}...
 %}!}
+\config{heading_in_contents|True}
 = List
 bsmdoc defines two kinds of list blocks: \tag{code|unordered list} and \tag{code|ordered list}.
 A line leading with "\tag{code|-}" will be rendered as unordered list. In other words, "\tag{code|-}" will be ignored if it is not at the start of a line. Such rule holds for all \tag{code|heading}, \tag{code|unordered list}, and \tag{code|ordered list} blocks.
