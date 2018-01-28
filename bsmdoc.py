@@ -53,6 +53,17 @@ class BConfig(object):
                 return self.set_cfg(items[0], items[1], value)
         return ""
 
+    def get_vars(self):
+        if self.config.has_section('v'):
+            return self.config._sections['v']
+        return []
+
+    def set_vars(self, sec):
+        self.config.remove_section('v')
+        self.config.add_section('v')
+        for k, v in sec:
+            self.config.set('v', k, v)
+
     def reset_options(self):
         for k, _ in self.config.items('DEFAULT'):
             self.config.remove_option('DEFAULT', k)
@@ -120,8 +131,8 @@ class BConfig(object):
         if self.config.has_option(sec, '_type_'+key):
             types_old = self.config.get(sec, '_type_'+key)
             if types != types_old:
-                bsmdoc_warning_("%s:%s change type from %s to %s"
-                                %(sec, key, types_old, types))
+                bsmdoc_warning_("%s:%s change type from %s to %s (%s)"
+                                %(sec, key, types_old, types, val))
         self.config.set(sec, '_type_'+key, types)
 
     def load(self, txt):
@@ -167,16 +178,36 @@ class BParse(object):
 
         # function block supports embedded block, remember the current block
         # level to print the error message correspondingly when error occurs.
-        self.fblock_state = []
-        self.header_fblock_level = 0
+        self.block_state = []
+        self.heading_level = 0
+
+    def top_block(self):
+        if self.block_state:
+            return self.block_state[-1]
+        return None
 
     def pop_block(self):
-        if self.fblock_state:
-            s, self.header_fblock_level = self.fblock_state.pop()
-            return s
-        return None
-    def push_block(self, b):
-        self.fblock_state.append((b, self.header_fblock_level))
+        if self.block_state:
+            args = self.block_state.pop()
+            self.heading_level = args['heading_level']
+            self.config.set_vars(args['config'])
+            args.pop('config', None)
+            args.pop('heading_level', None)
+            return args
+        else:
+            bsmdoc_error_('no more blocks')
+            return None
+
+    def push_block(self, args):
+        assert(isinstance(args, dict))
+        if args['block'] == 'heading':
+            self.heading_level = len(self.block_state)
+        args['heading_level'] = self.heading_level
+        # save the default section in configuration, so that when leave the
+        # block, the configuration in the block will not change the upper level
+        args['config'] = self.config.get_vars()
+        self.config.set_vars([])
+        self.block_state.append(args)
 
     def _run(self, txt):
         self.config._scan += 1
@@ -517,22 +548,21 @@ class BParse(object):
         '''block : heading_start logicline'''
         # ignore the header level 7 or higher
         if len(p[1].strip()) <= 6:
-            p[0] = self.cmd_helper(['header', p[1].strip()], p[2].strip(),
+            p[0] = self.cmd_helper(['heading', p[1].strip()], p[2].strip(),
                                    lineno=p.lineno(1))
         else:
             p[0] = ""
+        self.pop_block()
     def p_heading_start(self, p):
         '''heading_start : HEADING'''
-        self.config['label'] = ''
+        self.push_block({'block':'heading', 'lineno':p.lineno(1)})
         p[0] = p[1]
-        self.header_fblock_level = len(self.fblock_state)
 
     def p_block_paragraph(self, p):
         '''block : paragraph'''
-        # add <P> tag to any text which is not in a function block and ended with
-        # '\n'
-        if len(self.fblock_state) == self.header_fblock_level and\
-           p[1].endswith('\n'):
+        # add <P> tag to any text which is not in a function block and ended
+        # with '\n'
+        if len(self.block_state) == self.heading_level and p[1].endswith('\n'):
             p[0] = bsmdoc_tag(p[1].strip(), ['p']) + '\n'
         else:
             p[0] = p[1]
@@ -557,15 +587,16 @@ class BParse(object):
     def p_table_title(self, p):
         '''table : tstart tbody TEND'''
         p[0] = self.cmd_helper(["table"], p[2])
+        self.pop_block()
 
     def p_table(self, p):
         '''table : tstart thead tbody TEND'''
         p[0] = self.cmd_helper(["table", p[2]], p[3])
+        self.pop_block()
 
     def p_table_start(self, p):
         '''tstart : TSTART'''
-        self.config['caption'] = ''
-        self.config['label'] = ''
+        self.push_block({'block':'table', 'lineno':p.lineno(1)})
         p[0] = ''
 
     def p_tbody_multi(self, p):
@@ -600,18 +631,16 @@ class BParse(object):
     def p_block_start(self, p):
         """bstart : BSTART"""
         p[0] = ''
-        self.push_block((p[1], p.lineno(1)))
-        self.config['caption'] = ''
-        self.config['label'] = ''
+        self.push_block({'block':'fun', 'lineno':p.lineno(1)})
 
     def p_block_end(self, p):
         """bend : BEND"""
         p[0] = ''
-        self.pop_block()
 
     def p_block(self, p):
         '''block : bstart sections bend'''
         p[0] = p[2]
+        self.pop_block()
 
     def p_block_arg(self, p):
         '''block : bstart blockargs sections bend'''
@@ -622,6 +651,7 @@ class BParse(object):
                 continue
             p[0] = self.cmd_helper(c, p[0].strip(), lineno=p.lineno(2))
 
+        self.pop_block()
     def p_blockargs_multi(self, p):
         '''blockargs : blockargs vtext TCELL'''
         p[0] = p[1] + [p[2]]
@@ -757,9 +787,9 @@ class BParse(object):
         p[0] = ''
 
     def p_error(self, p):
-        blk = self.pop_block()
+        blk = self.top_block()
         if blk:
-            kwargs = {'lineno': blk[1], 'filename': self.filename}
+            kwargs = {'lineno': blk['lineno'], 'filename': self.filename}
             bsmdoc_error_("unmatched block '%s'"%(blk[0]), **kwargs)
         else:
             click.echo("error: ", p)
@@ -848,22 +878,29 @@ def bsmdoc_config(data, args, **kwargs):
                     data = float(data)
                 except ValueError:
                     pass
-        cfg[args[0]] = data
+        key = args[0].lower()
+        if key in ['label', 'caption']:
+            bsmdoc_warning_('\\config{{{0}|}} is depreciated, use \\{0}{{}} instead'.format(key), **kwargs)
+            key = 'v:'+key
+        if len(args)>1 and args[1].lower() == 'add':
+            cfg[key] = cfg[key] + ' ' + data
+        else:
+            cfg[key] = data
 
     return ""
 
 def bsmdoc_label(data, args, **kwargs):
-    return bsmdoc_config(data, args+['label'], **kwargs)
+    return bsmdoc_config(data, args+['v:label'], **kwargs)
 
 def bsmdoc_caption(data, args, **kwargs):
-    return bsmdoc_config(data, args+['caption'], **kwargs)
+    return bsmdoc_config(data, args+['v:caption'], **kwargs)
 
 # deal with the equation reference: \ref{} or \eqref{}
 def bsmdoc_eqref(data, args, **kwargs):
     return "\\ref{%s}"%data
 
 def bsmdoc_ref(data, args, **kwargs):
-    # search in links defined with \config{label|}, so we can use the same
+    # search in links defined with \label{}, so we can use the same
     # syntax to add reference to images, sections, and tables.
     cfg = kwargs.get('cfg')
     v = cfg['ANCHOR:'+data]
@@ -1001,32 +1038,31 @@ def bsmdoc_footnote(data, args, **kwargs):
     tag = bsmdoc_tag(tag, ['sup'])
     return bsmdoc_tag(tag, ['a', 'name="%s"'%src, 'href="#%s"'%dec])
 
-def bsmdoc_header(data, args, **kwargs):
+def bsmdoc_heading(data, args, **kwargs):
     cfg = kwargs['cfg']
     txt = data
     pre = data
-    label = cfg['label']
+    label = cfg['v:label']
     level = len(args[0].strip())
     if cfg['heading_numbering']:
         start = cfg['heading_numbering_start']
-        c = level
-        if c >= start:
+        if level >= start:
             # build the header number, e.g., 1.1.1.
             # cfg.heading_tag stores the current tag for each level
             head_tag = cfg.heading_tag
             # build the prefix from parent headers
             pre = ''
-            for i in range(start, c):
+            for i in range(start, level):
                 pre = pre+str(head_tag.get(i, 1)) + '.'
             # increase the tag for current level
-            head_tag[c] = head_tag.get(c, 0) + 1
-            pre = pre + str(head_tag[c])
+            head_tag[level] = head_tag.get(level, 0) + 1
+            pre = pre + str(head_tag[level])
 
             # reset all the children level, e.g., if the previous level is
             # 1.1.1., and current level is 1.2, then reset the current num
             # for level 3 (===) to 0
             for key in head_tag.keys():
-                if key > c:
+                if key > level:
                     head_tag[key] = 0
             # generate the label (e.g., sec-1-1-1) if necessary
             if not label:
@@ -1080,8 +1116,8 @@ def bsmdoc_image(data, args, **kwargs):
     txt = bsmdoc_tag('', ['img', 'src="%s"'%data, 'alt="%s"'%data]+args)
     if inline:
         return txt
-    caption = cfg['caption']
-    label = cfg['label']
+    caption = cfg['v:caption']
+    label = cfg['v:label']
     tag = ''
     if label:
         (tag, num) = bsmdoc_next_tag('image', **kwargs)
@@ -1101,8 +1137,8 @@ def bsmdoc_video(data, args, **kwargs):
     src = bsmdoc_tag("", ['source', 'src="%s"'%data])
     src += "\nYour browser does not support the video tag."
     txt = bsmdoc_tag(src, ['video', '"controls"'])
-    caption = cfg['caption']
-    label = cfg['label']
+    caption = cfg['v:caption']
+    label = cfg['v:label']
     tag = ''
     if label:
         (tag, num) = bsmdoc_next_tag('image', **kwargs)
@@ -1127,7 +1163,7 @@ def bsmdoc_table(body, head, **kwargs):
     if body:
         body = bsmdoc_tag(body, ['tbody'])
 
-    label = cfg['label']
+    label = cfg['v:label']
     tag = ''
     # add the in-page link
     if label:
@@ -1135,7 +1171,7 @@ def bsmdoc_table(body, head, **kwargs):
         cfg['ANCHOR:%s'%label] = num
         label = 'id="%s"'%label
         tag = bsmdoc_tag(tag, ['span', 'tag'])
-    caption = cfg['caption']
+    caption = cfg['v:caption']
     if caption:
         caption = bsmdoc_tag(tag + ' ' + caption, ['caption'])
     tbl = bsmdoc_tag((caption+'\n '+head+body).strip(), ['table', label])
@@ -1283,12 +1319,12 @@ class Bdoc(object):
         # header
         html.append(cfg['header:begin'])
         html.append(cfg['header:content'])
-        for c in cfg['addcss'].split(' '):
+        for c in cfg['css'].split(' '):
             if not c:
                 continue
             html.append(bsmdoc_tag('', ['link', 'rel="stylesheet"',
                                         'href="%s"'%c, 'type="text/css"']))
-        for j in cfg['addjs'].split(' '):
+        for j in cfg['js'].split(' '):
             if not j:
                 continue
             html.append(bsmdoc_tag('', ['script', 'type="text/javascript"',

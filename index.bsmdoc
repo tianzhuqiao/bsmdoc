@@ -1,10 +1,13 @@
 \config{title|bsmdoc -- another technical html doc generator}
-#\config{doctitle|bsmdoc -- another technical html doc generator}
-#\config{subtitle|[mailto:ben.qiao@feiyilin.com|ben.qiao@feiyilin.com]}
 \config{heading_numbering|True}
 \config{image_numbering|True}
 \config{table_numbering|True}
 \config{show_source|True}
+\config{css|add|css/bsmdoc.css}
+\config{css|add|css/menu.css}
+\config{js|add|https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js}
+\config{js|add|https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML}
+\config{js|add|js/bsmdoc.js js/menu.js}
 #\config{bsmdoc_conf|bsmdoc.cfg}
 
 {!config||{%
@@ -17,12 +20,10 @@ end= </html>
 begin = <head>
     <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 end = <title>%(TITLE)s</title>
     </head>
-content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css" />
-    <script type="text/x-mathjax-config">
+content = <script type="text/x-mathjax-config">
       MathJax.Hub.Config({
           tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
           processClass: "mathjax",
@@ -30,21 +31,16 @@ content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css" />
       });
       MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
     </script>
-    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
-    <script src=https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js></script>
-    <script src="js/bsmdoc.js"></script>
-    <link rel="stylesheet" href="css/menu.css" type="text/css" />
 [body]
 begin = <body class="nomathjax">
     <div id="layout" class="">
 end = </div>
-    <script src="js/menu.js"></script>
     </body>
 
 [footer]
 begin = <div class="footer">
 end = </div>
-content = <div class="footer-text"> Last updated %(UPDATED)s, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s | <a href="mailto:tianzhu.qiao@feiyilin.com">Contact</a></div>
+content = <div class="footer-text"> Last updated %(UPDATED)s, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 %}!}
 
 {!exec|firstRunOnly||{%

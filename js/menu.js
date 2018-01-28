@@ -1,3 +1,4 @@
+$(window).load(function() {
 // Cache selectors
 var lastId,
     topMenu = $(".menu"),
@@ -19,7 +20,6 @@ menuItems.click(function(e){
     }, 300);
     e.preventDefault();
 });
-
 // Bind to scroll
 $(window).scroll(function(){
     // Get container scroll position
@@ -40,4 +40,5 @@ $(window).scroll(function(){
         menuItems.removeClass("active");
         menuItems.filter("[href='#"+id+"']").addClass("active");
     }
+});
 });

@@ -8,7 +8,7 @@ function isScrolledIntoView(elem) {
     return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
 }
 var simplePopup = (function() {
-    var simplePopup = function(pattern, roottag='div') {
+    var simplePopup = function(pattern, roottag) {
         this.pattern = pattern;
         this.roottag = roottag;
         this.target = false;
@@ -27,7 +27,7 @@ var simplePopup = (function() {
             '-moz-box-sizing': 'border-box',
             'box-sizing': 'border-box',
         });
-        var thispopup = this
+        var thispopup = this;
         $container.on('mouseover', thispopup.pattern, {thispopup:thispopup}, thispopup.mouseOver);
         $container.on('mouseout', thispopup.pattern,  {thispopup:thispopup}, thispopup.mouseOut);
         this.showTooltip = false;
@@ -97,9 +97,9 @@ var simplePopup = (function() {
 })();
 
 $( window ).load(function() {
-    new simplePopup('a[href*="mjx-eqn-"]');
+    new simplePopup('a[href*="mjx-eqn-"]', 'div');
     new simplePopup('a[href*="img-"]', 'figure');
-    new simplePopup('a[href*="tbl-"]');
-    new simplePopup('a[href*="footnote-"]');
-    new simplePopup('a[href*="reference-"]');
+    new simplePopup('a[href*="tbl-"]', 'div');
+    new simplePopup('a[href*="footnote-"]', 'div');
+    new simplePopup('a[href*="reference-"]', 'div');
 });
