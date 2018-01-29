@@ -29,27 +29,16 @@ bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, 
 > bsmdoc helloworld.bsmdoc
 %}!}}
 * {It will generate \tag{strong|helloworld.html} in the same folder, which may look like
-{!highlight|html||{%
-<!DOCTYPE html"
-"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-    <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="stylesheet" href="bsmdoc.css" type="text/css" />
-</head>
-<body>
-<div id="layout-content">
-    <h1>hello world!</h1>
-    <div id="footer">
-    <div id="footer-text"> Last updated 2017-03-17 23:30:10 Pacific Daylight Time, by
-    <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>.
-    </div>
-    </div>
-</div>
-</body>
-</html>
+{!exec||{%
+def bsmdoc_helloworld(data, args, **kwargs):
+    import os
+    os.system("bsmdoc helloworld.bsmdoc")
+    with open('helloworld.html', 'r') as f:
+        return ''.join(f.readlines())
+    return data
 %}!}
+{!highlight|html||helloworld||
+!}
 }
 
 = Heading \label{sec-heading}

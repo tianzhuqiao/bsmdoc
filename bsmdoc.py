@@ -55,13 +55,13 @@ class BConfig(object):
 
     def get_vars(self):
         if self.config.has_section('v'):
-            return self.config._sections['v']
-        return []
+            return dict(self.config._sections['v'])
+        return {}
 
     def set_vars(self, sec):
         self.config.remove_section('v')
         self.config.add_section('v')
-        for k, v in sec:
+        for k, v in six.iteritems(sec):
             self.config.set('v', k, v)
 
     def reset_options(self):
@@ -70,6 +70,7 @@ class BConfig(object):
 
         self['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z',
                                         time.localtime(time.time()))
+        self['verbose'] = self.verbose
         self['title'] = ''
         self['show_source'] = False
         self['heading_numbering'] = False
@@ -167,7 +168,7 @@ class BParse(object):
 
     def __init__(self, verbose):
         lex.lex(module=self, reflags=re.M)
-        yacc.yacc(module=self, debug=True)
+        yacc.yacc(module=self, debug=verbose)
 
         self.html = ""
         self.config = BConfig()
@@ -206,7 +207,7 @@ class BParse(object):
         # save the default section in configuration, so that when leave the
         # block, the configuration in the block will not change the upper level
         args['config'] = self.config.get_vars()
-        self.config.set_vars([])
+        self.config.set_vars({})
         self.block_state.append(args)
 
     def _run(self, txt):
@@ -219,7 +220,7 @@ class BParse(object):
         yacc.parse(txt, tracking=True)
 
     def run(self, filename, encoding, lexonly):
-        txt = bsmdoc_readfile(filename, encoding)
+        txt = bsmdoc_readfile(filename, encoding, silent=not self.verbose)
         self.filename = filename
         if lexonly:
             # output the lexer token for debugging
@@ -229,12 +230,12 @@ class BParse(object):
                 click.echo(tok)
                 tok = lex.token()
             return
-
-        bsmdoc_info_("first pass scan...")
+        bsmdoc_info_("first pass scan...", silent=not self.verbose)
         self._run(txt)
         if self.config._rescan:
             # 2nd scan to resolve the references
-            bsmdoc_info_("second pass scan...")
+            if self.verbose:
+                bsmdoc_info_("first pass scan...", silent=not self.verbose)
             self._run(txt)
 
     def pop_input(self):
@@ -279,7 +280,7 @@ class BParse(object):
         r'\#include[ ]+[^\s]+[\s]*'
         filename = t.value.strip()
         filename = filename.replace('#include', '', 1)
-        txt = bsmdoc_include(filename)
+        txt = bsmdoc_include(filename, silent=not self.verbose)
         if txt is not None:
             self.push_input(t, txt)
             self.filename = filename
@@ -795,7 +796,7 @@ class BParse(object):
             click.echo("error: ", p)
 
     def cmd_helper(self, cmds, data, default='', lineno=-1, inline=False):
-        kwargs = {'lineno': lineno, 'inline': inline,
+        kwargs = {'lineno': lineno, 'inline': inline, 'silent': not self.verbose,
                   'filename': self.filename, 'cfg': self.config}
         ldict = lex.get_caller_module_dict(1)
         fun = ldict.get('bsmdoc_'+cmds[0], 'none')
@@ -808,10 +809,10 @@ class BParse(object):
             return default
         return data
 
-def bsmdoc_include(data):
+def bsmdoc_include(data, **kwargs):
     filename = data.strip()
     if os.path.isfile(filename):
-        return bsmdoc_readfile(filename)
+        return bsmdoc_readfile(filename, **kwargs)
     return ""
 
 def bsmdoc_makecontent(contents):
@@ -845,6 +846,9 @@ def bsmdoc_unescape(data, *args, **kwargs):
 def bsmdoc_info_(msg, **kwargs):
     lineno = kwargs.get('lineno', -1)
     filename = kwargs.get('filename', '')
+    silent = kwargs.get('silent', False)
+    if silent:
+        return
     info = msg
     if lineno != -1:
         info = "%d %s"%(lineno, info)
@@ -853,19 +857,21 @@ def bsmdoc_info_(msg, **kwargs):
     click.echo(info)
 
 def bsmdoc_error_(msg, **kwargs):
+    kwargs['silent'] = False
     bsmdoc_info_('error: '+msg, **kwargs)
 
 def bsmdoc_warning_(msg, **kwargs):
+    kwargs['silent'] = False
     bsmdoc_info_('warning: '+msg, **kwargs)
 
 def bsmdoc_config(data, args, **kwargs):
     cfg = kwargs['cfg']
     if len(args) <= 0:
         # configuration as text
-        bsmdoc_info_("reading configuration...")
+        bsmdoc_info_("reading configuration...", **kwargs)
         cfg.load(data)
     elif args[0] == 'bsmdoc_conf':
-        bsmdoc_info_("read configuration from file %s..."%data)
+        bsmdoc_info_("read configuration from file %s..."%data, *kwargs)
         cfg.load(bsmdoc_readfile(data))
     else:
         if data.lower() in ['true', 'false']:
@@ -1246,7 +1252,7 @@ def bsmdoc_listbullet(data, args, **kwargs):
 def bsmdoc_anchor(data, args, **kwargs):
     return bsmdoc_tag(bsmdoc_tag("&#x2693;", ['sup']), ['a', 'name="%s"'%data])
 
-def bsmdoc_readfile(filename, encoding=None):
+def bsmdoc_readfile(filename, encoding=None, **kwargs):
     if not encoding:
         try:
             # encoding is not define, try to detect it
@@ -1256,7 +1262,7 @@ def bsmdoc_readfile(filename, encoding=None):
         except IOError:
             traceback.print_exc()
             return ""
-    bsmdoc_info_("open \"%s\" with encoding \"%s\""%(filename, encoding))
+    bsmdoc_info_("open \"%s\" with encoding \"%s\""%(filename, encoding), **kwargs)
     txt = ""
     fp = io.open(filename, 'r', encoding=encoding)
     txt = fp.read()
@@ -1275,7 +1281,7 @@ def bsmdoc_readfile(filename, encoding=None):
 # generate the html
 bsmdoc_conf = u"""
 [html]
-begin = <!doctype html"
+begin = <!doctype html>
     <html lang="en">
 end= </html>
 
@@ -1286,7 +1292,7 @@ begin = <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 end = <title>%(TITLE)s</title>
     </head>
-content = <link rel="stylesheet" href="bsmdoc.css" type="text/css">
+content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css">
 
 [body]
 begin = <body>
@@ -1297,7 +1303,7 @@ end = </div>
 [footer]
 begin = <div class="footer">
 end = </div>
-content = <div class="footer-text"> Last updated %(UPDATED)s, by
+content = <div class="footer-text"> Last updated %(UPDATED)s by
           <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
 """
 

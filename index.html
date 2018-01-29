@@ -78,22 +78,24 @@ In this case, there may be no need to worry about the html tags anymore, as they
 <div class="syntax"><pre><span></span>&gt; bsmdoc helloworld.bsmdoc
 </pre></div></li>
 <li><p>It will generate <strong>helloworld.html</strong> in the same folder, which may look like</p>
-<div class="syntax"><pre><span></span><span class="cp">&lt;!DOCTYPE html&quot;</span>
-<span class="cp">&quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;</span>
-<span class="p">&lt;</span><span class="nt">html</span> <span class="na">xmlns</span><span class="o">=</span><span class="s">&quot;http://www.w3.org/1999/xhtml&quot;</span> <span class="na">xml:lang</span><span class="o">=</span><span class="s">&quot;en&quot;</span> <span class="na">lang</span><span class="o">=</span><span class="s">&quot;en&quot;</span><span class="p">&gt;</span>
+<div class="syntax"><pre><span></span><span class="cp">&lt;!doctype html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">&quot;en&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc, see http://bsmdoc.feiyilin.com/&quot;</span> <span class="p">/&gt;</span>
-    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">http-equiv</span><span class="o">=</span><span class="s">&quot;Content-Type&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;text/html;charset=utf-8&quot;</span> <span class="p">/&gt;</span>
-    <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;bsmdoc.css&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/css&quot;</span> <span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc, see http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">http-equiv</span><span class="o">=</span><span class="s">&quot;Content-Type&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;text/html;charset=utf-8&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1, shrink-to-fit=no&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;css/bsmdoc.css&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/css&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;layout-content&quot;</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>hello world!<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;footer&quot;</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2017-03-17 23:30:10 Pacific Daylight Time, by
-    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>bsmdoc<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>.
-    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
-    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;layout&quot;</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">h2</span><span class="p">&gt;</span>hello world<span class="p">&lt;/</span><span class="nt">h2</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2018-01-28 22:45:50 Pacific Standard Time by
+<span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>bsmdoc<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span> .<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
@@ -1135,10 +1137,10 @@ Its input is a list that contains all the headings. The default implementation g
 </pre></div>
 <p>bsmdoc will replace the line <code>#include chapter1.bsmdoc</code> with the content of the file <code>chappter1.bsmdoc</code>.</p>
 <p>The <code>#include</code> is implemented with function <code>bsmdoc_include</code></p>
-<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">bsmdoc_readfile</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bsmdoc_readfile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 </pre></div>
 <p>Here <code>data</code> will be anything following <code>#include</code>. In the previous example, it will be "<code>chapter1.bsmdoc</code>" or "<code>chapter2.bsmdoc</code>". If the file is opened successfully, by default <code>bsmdoc_include</code> will return the filename and its content.</p>
@@ -1181,7 +1183,7 @@ Its input is a list that contains all the headings. The default implementation g
 <h1 id="sec-template">12 HTML template</h1>
 <p>By default, bsmdoc uses the following template to generate the html file, which defines 4 sections (i.e., <code>html</code>, <code>header</code>, <code>body</code> and <code>footer</code>)</p>
 <div class="syntax"><pre><span></span><span class="k">[html]</span>
-<span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;!doctype html&quot;</span>
+<span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;!doctype html&gt;</span>
 <span class="s">    &lt;html lang=&quot;en&quot;&gt;</span>
 <span class="na">end</span><span class="o">=</span> <span class="s">&lt;/html&gt;</span>
 
@@ -1192,7 +1194,7 @@ Its input is a list that contains all the headings. The default implementation g
 <span class="s">    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, shrink-to-fit=no&quot;&gt;</span>
 <span class="na">end</span> <span class="o">=</span> <span class="s">&lt;title&gt;%(TITLE)s&lt;/title&gt;</span>
 <span class="s">    &lt;/head&gt;</span>
-<span class="na">content</span> <span class="o">=</span> <span class="s">&lt;link rel=&quot;stylesheet&quot; href=&quot;bsmdoc.css&quot; type=&quot;text/css&quot;&gt;</span>
+<span class="na">content</span> <span class="o">=</span> <span class="s">&lt;link rel=&quot;stylesheet&quot; href=&quot;css/bsmdoc.css&quot; type=&quot;text/css&quot;&gt;</span>
 
 <span class="k">[body]</span>
 <span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;body&gt;</span>
@@ -1203,7 +1205,7 @@ Its input is a list that contains all the headings. The default implementation g
 <span class="k">[footer]</span>
 <span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;div class=&quot;footer&quot;&gt;</span>
 <span class="na">end</span> <span class="o">=</span> <span class="s">&lt;/div&gt;</span>
-<span class="na">content</span> <span class="o">=</span> <span class="s">&lt;div class=&quot;footer-text&quot;&gt; Last updated %(UPDATED)s, by</span>
+<span class="na">content</span> <span class="o">=</span> <span class="s">&lt;div class=&quot;footer-text&quot;&gt; Last updated %(UPDATED)s by</span>
 <span class="s">          &lt;a href=&quot;http://bsmdoc.feiyilin.com/&quot;&gt;bsmdoc&lt;/a&gt; %(SOURCE)s.&lt;/div&gt;</span>
 </pre></div>
 <p>Using a separate configuration file seems not to be compatible with our goal to include everything in a single file, although sometimes it may be convenient (for example, to use the same configuration file for multiple docs). bsmdoc also provides a way to include the customized template in your doc, for example</p>
@@ -1234,14 +1236,19 @@ Its input is a list that contains all the headings. The default implementation g
 <div class="syntax"><pre><span></span>...%(MYMACRO}s...
 </pre></div></li>
 </ul>
-<p>bsmdoc defines "<code>addcss</code>" configuration to insert additional <code>css</code> in the html file without change the html template</p>
-<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{addcss</span>|mycss.css<span class="nt">}</span>
+<p>bsmdoc defines "<code>css</code>" configuration to insert additional <code>css</code> in the html file without change the html template</p>
+<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{css</span>|my.css<span class="nt">}</span>
 </pre></div>
-<p>To insert multiple css, separate the multiple css files with white-space</p>
-<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{addcss</span>|mycss.css mycss2.css<span class="nt">}</span>
+<p>To insert multiple css files, separate them with white-space</p>
+<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{css</span>|my.css my2.css<span class="nt">}</span>
 </pre></div>
-<p>Similarly, bsmdoc also defines the "<code>addjs</code>" configuration to include javascripts in the html file</p>
-<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{addcss</span>|myjs.js myjs2.js<span class="nt">}</span>
+<p>or</p>
+<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{css</span>|my.css<span class="nt">}</span>
+<span class="nf">\config</span><span class="nt">{css</span>|<span class="nt">add</span>|my2.css<span class="nt">}</span>
+</pre></div>
+<p>where <code>add</code> option tells bsmdoc to append the configuration to the current one.</p>
+<p>Similarly, bsmdoc also defines the "<code>js</code>" configuration to include javascripts in the html file</p>
+<div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{js</span>|myjs.js myjs2.js<span class="nt">}</span>
 </pre></div>
 <p>There are two ways to define doc title. The first one is to use the <code>toptitle</code> configuration. For example, the following line will define the top title</p>
 <div class="bs-example">
@@ -1286,7 +1293,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2018-01-27 22:39:18 Pacific Standard Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2018-01-28 22:45:50 Pacific Standard Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>
