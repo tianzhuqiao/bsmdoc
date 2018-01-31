@@ -99,7 +99,7 @@ var simplePopup = (function() {
 $( window ).load(function() {
     new simplePopup('a[href*="mjx-eqn-"]', 'div');
     new simplePopup('a[href*="img-"]', 'figure');
-    new simplePopup('a[href*="tbl-"]', 'div');
+    new simplePopup('a[href*="tbl-"]', 'table');
     new simplePopup('a[href*="footnote-"]', 'div');
     new simplePopup('a[href*="reference-"]', 'div');
 });

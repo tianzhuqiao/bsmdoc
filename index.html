@@ -93,7 +93,7 @@ In this case, there may be no need to worry about the html tags anymore, as they
 <span class="p">&lt;</span><span class="nt">h2</span><span class="p">&gt;</span>hello world<span class="p">&lt;/</span><span class="nt">h2</span><span class="p">&gt;</span>
 
 <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2018-01-28 22:45:50 Pacific Standard Time by
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2018-01-30 21:41:18 Pacific Standard Time by
 <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>bsmdoc<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span> .<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
@@ -508,7 +508,6 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </ul>
 <p>The content in each column of each row can be anything defined above, for example, <a href="#sec-link">Link</a>, <a href="#sec-image">Image</a>, <a href="#sec-equation">Equation</a>,...</p>
 <div class="bs-example">
-<div class="tables">
 <table>
 <tbody>
 <tr>
@@ -522,7 +521,6 @@ Eq. (<span class="nf">\eqref</span><span class="nt">{</span>eqn:matrix<span clas
 </tbody>
 </table>
 </div>
-</div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 item1 | <span class="nt">$E=MC^2$</span> |<span class="k">|-</span>
@@ -535,7 +533,6 @@ item1 | <span class="nt">$E=MC^2$</span> |<span class="k">|-</span>
 <li>the heading line is delimited by "<code>|+</code>".</li>
 </ul>
 <div class="bs-example">
-<div class="tables">
 <table>
 <thead>
 <tr>
@@ -552,7 +549,6 @@ item1 | <span class="nt">$E=MC^2$</span> |<span class="k">|-</span>
 </tbody>
 </table>
 </div>
-</div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 Heading1 | Heading2|<span class="k">|+</span>
@@ -563,7 +559,6 @@ item3 | item4 |<span class="k">|-</span>
 </div>
 <p>Furthermore, a caption can be added to the table block too</p>
 <div class="bs-example">
-<div class="tables">
 <table>
 <caption>Example table title</caption>
  <thead>
@@ -580,7 +575,6 @@ item3 | item4 |<span class="k">|-</span>
 </tr>
 </tbody>
 </table>
-</div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
@@ -602,7 +596,6 @@ item3 | item4 |<span class="k">|-</span>
 </pre></div></li>
 </ul>
 <div class="bs-example">
-<div class="tables">
 <table id="tbl-example">
 <caption><span class="tag">Table.1.</span> Example table title</caption>
  <thead>
@@ -620,7 +613,6 @@ item3 | item4 |<span class="k">|-</span>
 </tbody>
 </table>
 </div>
-</div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
 <span class="nf">\config</span><span class="nt">{table_numbering</span>|True<span class="nt">}</span>
@@ -636,7 +628,6 @@ item3 | item4 |<span class="k">|-</span>
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{table_numbering_prefix</span>|TABLE <span class="nt">}</span>
 </pre></div>
 <div class="bs-example">
-<div class="tables">
 <table id="tbl-example2">
 <caption><span class="tag">TABLE 2.</span> Example table title</caption>
  <thead>
@@ -653,7 +644,6 @@ item3 | item4 |<span class="k">|-</span>
 </tr>
 </tbody>
 </table>
-</div>
 </div>
 <div class="bs-example-src">
 <div class="syntax"><pre><span></span><span class="nt">{{</span>
@@ -842,7 +832,6 @@ As you may have already figured out, the <code>command</code> section is defined
     <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">data</span>
 </pre></div>
 <p>Here <code>**kwargs</code> are additional arguments from bsmdoc, for example</p>
-<div class="tables">
 <table>
 <thead>
 <tr>
@@ -861,7 +850,6 @@ As you may have already figured out, the <code>command</code> section is defined
 </tr>
 </tbody>
 </table>
-</div>
 <p>Such info may be helpful to show debugging tips once some error happens.</p></li>
 <li><p>Now the <code>del</code> can be used as all the other blocks,</p>
 <div class="bs-example">
@@ -1113,7 +1101,7 @@ js/menu.js
 <p>Only the headings with automatic numbering will be included in the content list. <code>makecontent</code> will also trigger bsmdoc to scan the doc twice.</p>
 <p><code>makecontent</code> is implemented by a function <code>bsmdoc_makecontent</code>. 
 Its input is a list that contains all the headings. The default implementation generates an un-ordered list</p>
-<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_makecontent</span><span class="p">(</span><span class="n">contents</span><span class="p">):</span>
+<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_makecontent</span><span class="p">(</span><span class="n">contents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    contents is a list, each item</span>
 <span class="sd">    [level, text, label]</span>
@@ -1293,7 +1281,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2018-01-28 22:45:50 Pacific Standard Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2018-01-30 21:41:19 Pacific Standard Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>

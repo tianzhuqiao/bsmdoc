@@ -32,7 +32,17 @@ bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, 
 {!exec||{%
 def bsmdoc_helloworld(data, args, **kwargs):
     import os
-    os.system("bsmdoc helloworld.bsmdoc")
+    gen = True
+    try:
+        doc = os.path.getmtime('helloworld.bsmdoc')
+        html = os.path.getmtime('helloworld.html')
+        bsmdoc = os.path.getmtime(__file__)
+        if doc < html and bsmdoc < html:
+            gen = False
+    except:
+        gen = True
+    if gen:
+        os.system("bsmdoc helloworld.bsmdoc")
     with open('helloworld.html', 'r') as f:
         return ''.join(f.readlines())
     return data

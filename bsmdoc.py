@@ -815,7 +815,7 @@ def bsmdoc_include(data, **kwargs):
         return bsmdoc_readfile(filename, **kwargs)
     return ""
 
-def bsmdoc_makecontent(contents):
+def bsmdoc_makecontent(contents, **kwargs):
     """
     contents is a list, each item
     [level, text, label]
@@ -1009,7 +1009,7 @@ def bsmdoc_cite(data, args, **kwargs):
     ref_id = 'reference-%d'%ref_tag
     # add the reference to the list, which will show at the end of the page
     cite_all = []
-    for c in xrange(1, cite_tag+1):
+    for c in six.moves.range(1, cite_tag+1):
         anchor = 'href="#%s%d"'%(cite_id_prefix, c)
         cite_all.append(bsmdoc_tag('&#8617;', ['a', anchor]))
     fn = bsmdoc_tag(ref+' '+ ' '.join(cite_all), ['div', 'id="%s"'%ref_id])
@@ -1067,7 +1067,7 @@ def bsmdoc_heading(data, args, **kwargs):
             # reset all the children level, e.g., if the previous level is
             # 1.1.1., and current level is 1.2, then reset the current num
             # for level 3 (===) to 0
-            for key in head_tag.keys():
+            for key in six.iterkeys(head_tag):
                 if key > level:
                     head_tag[key] = 0
             # generate the label (e.g., sec-1-1-1) if necessary
@@ -1181,73 +1181,77 @@ def bsmdoc_table(body, head, **kwargs):
     if caption:
         caption = bsmdoc_tag(tag + ' ' + caption, ['caption'])
     tbl = bsmdoc_tag((caption+'\n '+head+body).strip(), ['table', label])
-    return bsmdoc_div(tbl, ['tables'])
+    return tbl
 
 def bsmdoc_listbullet(data, args, **kwargs):
+    # data is a list, for each item
+    # [tag, txt]
+    # where tag is [-*]+ (e.g., '---', '-*')
     def listbullet(stack):
-        l = r = ""
-        for j in range(len(t)):
-            if t[j] == r'-':
-                l = l + "<ul>\n"
-                r = "</ul>\n" + r
-            elif t[j] == r'*':
-                l = l + "<ol>\n"
-                r = "</ol>\n" + r
-        c = ''
-        while len(stack):
-            item = stack.pop()
-            c = bsmdoc_tag(item[1], ["li"]) + '\n' + c
-        return l+c+r
+        # stack is a list of
+        # [index in the parent, parent tag, tag, text]
+        c = '\n'.join([bsmdoc_tag(item[3], ["li"]) for item in stack])
+        # only take care of the current level, i.e., leave the parent level to
+        # parent
+        level = stack[0][2][len(stack[0][1]):]
+        for j in level:
+            tag = 'ul'
+            if j == r'*':
+                tag = 'ol'
+            c = bsmdoc_tag(c, [tag])
+        return c
 
-    if len(data) == 0:
+    if not data:
         return ""
+    # add an empty item for guard
+    data.append(['', ''])
     html = ""
-    # the current listbullet level
-    t = data[0][0]
+
+    tagp_p = "" # the current parent tag
+    idxp = 0 # the index of the last item relative to its parent
+    tagp = "" # the tag of last item
+
     # hold all the items with the current level
-    stack = [data[0]]
+    # [index in the parent, parent tag, tag, text]
+    stack = []
     # next item
-    i = 1
+    i = 0
     while i < len(data):
-        d = data[i]
-        if d[0] == t:
+        tag, txt = data[i]
+        if not stack or tag == tagp:
             # same level as the current one, add to the list
-            stack.append(d)
-            i = i + 1
+            idxp += 1
+            stack.append([idxp, tagp_p, tag, txt])
+            tagp = tag
+            i += 1 # retrieve next item
+        elif os.path.commonprefix([tagp, tag]) == tagp:
+            # d is the child item of the last item, e.g.,
+            # tagp = '--', and tag = '--*'
+            # then, tagp ('--') becomes the current parent level
+            idxp, tagp_p, tagp = 1, tagp, tag
+            stack.append([idxp, tagp_p, tag, txt])
+            i += 1
         else:
-            # the top level is the prefix, which means d is the child item of
-            # the previous item
-            c = os.path.commonprefix([t, d[0]])
-            if c == t:
-                j = i
-                # the number of child items
-                cnt = 0
-                while c and j < len(data):
-                    cj = os.path.commonprefix([data[j][0], t])
-                    if cj != c or data[j][0] == t:
-                        # the last child item
-                        break
-                    # remove the prefix
-                    data[j][0] = data[j][0][len(c):]
-                    cnt = cnt + 1
-                    j = j+1
-                # data[i:i+cnt] is data[i-1]'s children
-                tmp = bsmdoc_listbullet(data[i:i+cnt], args)
-                i = j
-                # update the previous item text
-                item = stack.pop()
-                item[1] = item[1] + tmp
-                stack.append(item)
+            # not the prefix of the current level, which means the previous
+            # listbullet ends; and start the new one
+            # the last idx items are from the same level, build the list
+            list_txt = listbullet(stack[-idxp:])
+            stack = stack[:-idxp]
+            if stack:
+                idxp, tagp_p, tagp = stack[-1][0], stack[-1][1], stack[-1][2]
+                stack[-1][3] += list_txt
             else:
-                # not the prefix of the current level, which means the previous
-                # listbullet ends; and start the new one
-
-                html = html+listbullet(stack)
-                stack = [d]
-                t = d[0]
-                i = i+1
-
-    return html+listbullet(stack)
+                # the list does not start with the highest level, e.g.
+                # -- level 2 item 1
+                # -- level 2 item 2
+                # - level 1
+                html += list_txt
+                idxp, tagp_p, tagp = 0, "", ""
+                if i<len(data)-1:
+                    # no warning for the guard item
+                    bsmdoc_warning_("potential wrong level in the list", **kwargs)
+    data.pop() # remove the guard
+    return html
 
 def bsmdoc_anchor(data, args, **kwargs):
     return bsmdoc_tag(bsmdoc_tag("&#x2693;", ['sup']), ['a', 'name="%s"'%data])
@@ -1279,7 +1283,7 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
     return txt
 
 # generate the html
-bsmdoc_conf = u"""
+bsmdoc_conf = """
 [html]
 begin = <!doctype html>
     <html lang="en">
