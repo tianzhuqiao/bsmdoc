@@ -436,6 +436,18 @@ table th[class*="col-"] {
     box-shadow: inset 0 3px 6px rgba(0,0,0,.05);
 }
 
+.bs-demo {
+    position: relative;
+    padding: 9px 14px;
+    margin: 0 -15px 15px;
+    border-color: #e5e5e5 #eee #eee;
+    border-style: solid;
+    border-width: 1px 0;
+    -webkit-box-shadow: inset 0 3px 6px rgba(0,0,0,.05);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,.05);
+    background-color: #f7f7f9;
+}
+
 .bs-example > h1 {
     padding-top: 15px;
 }
@@ -453,7 +465,7 @@ table th[class*="col-"] {
     content: "Example";
 }
 .bs-example-src,
-.bs-example-rst {
+.bs-demo-rst {
     width: auto;
     padding: 9px 14px;
     margin-bottom: 14px;
@@ -464,12 +476,12 @@ table th[class*="col-"] {
     border-radius: 0;
     border-color: #e1e1e8;
 }
-.bs-example-rst {
+.bs-demo-rst {
     background-color: #fff;
 }
 /* Tweak display of the code snippets when following an example */
 .bs-example + .bs-example-src,
-.bs-example-src + .bs-example-rst {
+.bs-demo-src + .bs-demo-rst {
     margin: -15px -15px 15px;
     border-width: 0 0 1px;
     border-radius: 0;
@@ -497,6 +509,25 @@ table th[class*="col-"] {
         -webkit-box-shadow: none;
         box-shadow: none;
     }
+    .bs-demo {
+        margin-right: 0;
+        margin-left: 0;
+        background-color: #f7f7f9;
+        border-color: #ddd;
+        border-width: 1px;
+        border-radius: 4px 4px 0 0;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+    }
+    .bs-demo + .bs-demo-rst {
+        margin-top: -16px;
+        margin-right: 0;
+        margin-left: 0;
+        border-width: 1px;
+        border-bottom-right-radius: 4px;
+        border-bottom-left-radius: 4px;
+    }
+
     .bs-example-src {
         width: auto;
         padding: 9px 14px;
@@ -510,12 +541,6 @@ table th[class*="col-"] {
         margin-top: -16px;
         margin-right: 0;
         margin-left: 0;
-        border-width: 1px;
-        border-bottom-right-radius: 4px;
-        border-bottom-left-radius: 4px;
-    }
-    .bs-example-src + .bs-example-rst {
-        margin-top: -16px;
         border-width: 1px;
         border-bottom-right-radius: 4px;
         border-bottom-left-radius: 4px;
@@ -538,6 +563,7 @@ table th[class*="col-"] {
   margin-bottom: 0;
 }
 
+.bs-demo pre,
 .bs-example-src pre {
     padding: 0;
     margin-top: 0;
@@ -621,3 +647,7 @@ table th[class*="col-"] {
     content: '\25a0';
 }
 
+.center_align {
+    width: 100%;
+    text-align: center;
+}
