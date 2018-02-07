@@ -45,6 +45,7 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 <li><a href="#sec-10-1">10.1 Generate images</a></li>
 <li><a href="#sec-10-2">10.2 Include source code</a></li>
 <li><a href="#sec-10-3">10.3 Inline function block</a></li>
+<li><a href="#sec-10-4">10.4 Express function</a></li>
 </ul></li>
 <li><a href="#sec-11">11 Input redirection</a></li>
 <li><a href="#sec-template">12 HTML template</a></li>
@@ -93,7 +94,7 @@ In this case, there may be no need to worry about the html tags anymore, as they
 <span class="p">&lt;</span><span class="nt">h2</span><span class="p">&gt;</span>hello world<span class="p">&lt;/</span><span class="nt">h2</span><span class="p">&gt;</span>
 
 <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2018-01-30 21:41:18 Pacific Standard Time by
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2018-02-06 21:18:50 Pacific Standard Time by
 <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>bsmdoc<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span> .<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
@@ -1094,6 +1095,26 @@ js/menu.js
 <div class="syntax"><pre><span></span><span class="nf">\config</span><span class="nt">{option</span>|value<span class="nt">}</span>}
 </pre></div>
 <p>We have seen <a href="#sec-heading">heading</a>, <a href="#sec-image">image</a>, and <a href="#sec-table">table</a> blocks use such feature to set the label and/or caption. We will see more configurations in Sec. <a href="#sec-template">12</a>.</p>
+<h2 id="sec-10-4">10.4 Express function</h2>
+<p>Besides the way mentioned above, there is a shortcut to define a function block, if it returns a simple string. The syntax to define a function is</p>
+<div class="bs-demo">
+<div class="syntax"><pre><span></span>\newfun{name|content}
+</pre></div>
+</div>
+<p>For example</p>
+<div class="syntax"><pre><span></span>\<span class="n">newfun</span><span class="p">{</span><span class="n">bsmdoc</span><span class="o">|</span>\<span class="n">tag</span><span class="p">{</span><span class="n">strong</span><span class="o">|</span><span class="n">bsmdoc</span><span class="p">}}</span>
+</pre></div>
+<p>Once it is defined, it can be used as</p>
+<div class="bs-example">
+<strong>bsmdoc</strong>
+</div>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span>\bsmdoc
+</pre></div>
+</div>
+<p>where <code>\bsmdoc</code> will be replaced with the result of <code>\tag{strong|bsmdoc}</code>, i.e., <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">strong</span><span class="p">&gt;</span>bsmdoc<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;</span>
+</pre></div>
+.</p>
 <h1 id="sec-11">11 Input redirection</h1>
 <p>bsmdoc can automatically generate the table of content with</p>
 <div class="syntax"><pre><span></span><span class="k">#makecontent</span>
@@ -1281,7 +1302,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2018-01-30 21:41:19 Pacific Standard Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2018-02-06 21:25:52 Pacific Standard Time, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> <a href="index.bsmdoc">(source)</a> | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>

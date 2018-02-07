@@ -802,6 +802,11 @@ class BParse(object):
         fun = ldict.get('bsmdoc_'+cmds[0], 'none')
         if fun and hasattr(fun, "__call__"):
             return str(eval('fun(data, cmds[1:], **kwargs)'))
+        elif fun and len(cmds) == 1 and not data \
+             and isinstance(fun, six.string_types):
+            # it is defined as an alias (e.g., with \newfun{bsmdoc|CONTENT}),
+            # then, \bsmdoc will be replaced with CONTENT
+            return fun
         else:
             f = 'bsmdoc_%s(%s)' %(cmds[0], ",".join(cmds[1:]))
             bsmdoc_warning_('undefined function block "%s".'%(f), **kwargs)
@@ -929,6 +934,14 @@ def bsmdoc_exec(data, args, **kwargs):
         bsmdoc_error_("bsmdoc_exec('%s',%s)"% (data, args), **kwargs)
         traceback.print_exc()
     return ''
+
+def bsmdoc_newfun(data, args, **kwargs):
+    if not args or len(args) != 1:
+        bsmdoc_error_("invalid function definition (%s, %s)"% (args[0], data), **kwargs)
+        return ''
+    if not re.match("^[A-Za-z0-9_-]*$", args[0]):
+        bsmdoc_error_("invalid function name: %s which should only contain letter, number, '-' and '_'"% (args[0]), **kwargs)
+    return bsmdoc_exec('bsmdoc_{0}="{1}"'.format(args[0], data), [], **kwargs)
 
 def bsmdoc_pre(data, args, **kwargs):
     if args and 'newlineonly' in args:

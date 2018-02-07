@@ -1038,21 +1038,25 @@ bsmdoc defines a special inline function block for configuration (\tag{code|{%\c
 
 We have seen [#sec-heading|heading], [#sec-image|image], and [#sec-table|table] blocks use such feature to set the label and/or caption. We will see more configurations in Sec. [#sec-template].
 
-#The options used by the default block function implementation
-#{{
-#option | description | default | |+
-#title | the title of the file | filename ||-
-#doctitle | the title of the doc | ''  ||-
-#subtitle | the subtitle of the doc| '' ||-
-#heading_numbering| order the headings| False ||-
-#heading_numbering_start | the start level for ordered heading| 1 ||-
-#image_numbering | show the number of images| 0 ||-
-#table_numbering | show the number of tables| 0 ||-
-#bsmdoc_conf | the configure file name | '' ||-
-#source | show the link to bsmdoc source | 0 ||-
-#addcss | add more css file links | '' ||-
-#addjs  | add more javascript file links | '' ||-
-#}}
+== Express function
+Besides the way mentioned above, there is a shortcut to define a function block, if it returns a simple string. The syntax to define a function is
+{!div|bs-demo||highlight|html||{%
+\newfun{name|content}
+%}!}
+For example
+{!highlight|python||{%
+\newfun{bsmdoc|\tag{strong|bsmdoc}}
+%}!}{
+\newfun{bsmdoc|\tag{strong|bsmdoc}}
+}
+Once it is defined, it can be used as
+{!div|bs-example||
+\bsmdoc
+!}
+{!div|bs-example-src||highlight|bsmdoc||{%
+\bsmdoc
+%}!}
+where \tag{code|\\bsmdoc} will be replaced with the result of \tag{code|{%\tag{strong|bsmdoc}%}}, i.e., \highlight{html|{%<strong>bsmdoc</strong>%}}.
 
 = Input redirection
 bsmdoc can automatically generate the table of content with
