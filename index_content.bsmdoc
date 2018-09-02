@@ -13,26 +13,13 @@ However, if you know nothing about python or some basic programming skill, bsmdo
 bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, ...). In the following sections, we will show each block in detail, as well as the way to extend the existing blocks.
 
 == Hello World
-* Download [https://github.com/tianzhuqiao/bsmdoc|bsmdoc]
-*- { to install the script, go the download bsmdoc folder
-{!highlight|shell||{%
-> pip install --editable .
-%}!}
-}
-* {Create a file (e.g., \tag{strong|helloworld.bsmdoc}) with content
-{!highlight|bsmdoc||{%
-= hello world!
-%}!}
-}
-* {Compile the file
-{!highlight|bash||{%
-> bsmdoc helloworld.bsmdoc
-%}!}}
-* {It will generate \tag{strong|helloworld.html} in the same folder, which may look like
 {!exec||{%
-def bsmdoc_helloworld(data, args, **kwargs):
+def bsmdoc_helloworld(data, *args, **kwargs):
     import os
     gen = True
+    if args and args[0] == 'bsmdoc':
+        with open('helloworld.bsmdoc', 'r') as f:
+            return ''.join(f.readlines())
     try:
         doc = os.path.getmtime('helloworld.bsmdoc')
         html = os.path.getmtime('helloworld.html')
@@ -47,6 +34,21 @@ def bsmdoc_helloworld(data, args, **kwargs):
         return ''.join(f.readlines())
     return data
 %}!}
+* Download [https://github.com/tianzhuqiao/bsmdoc|bsmdoc]
+*- { to install the script, go to bsmdoc folder
+{!highlight|shell||{%
+$ pip install --editable .
+%}!}
+}
+* {Create a file (e.g., \tag{strong|helloworld.bsmdoc}) with content
+{!highlight|bsmdoc||helloworld|bsmdoc||{%
+%}!}
+}
+* {Compile the file
+{!highlight|bash||{%
+$ bsmdoc helloworld.bsmdoc
+%}!}}
+* {It will generate \tag{strong|helloworld.html} in the same folder, which may look like
 {!highlight|html||helloworld||
 !}
 }
@@ -775,10 +777,10 @@ When bsmdoc sees the following function block
 it will search for the function with name "\tag{code|bsmdoc_command}". If found, it will execute the command with list "\tag{code|\[arg0, arg1\]}" as argument. For example, if you want to define a function block to achieve the "\tag{del|delete}" effect,
 - {first you need to define the function (e.g., "\tag{code|bsmdoc_del}"),
 {!highlight|python||{%
-def bsmdoc_del(data, args, **kwargs):
+def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%data
 %}!}{!exec||{%
-def bsmdoc_del(data, args, **kwargs):
+def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%data
 %}!}
 Here \tag{code|**kwargs} are additional arguments from bsmdoc, for example
@@ -816,7 +818,7 @@ which will execute the \tag{code|code} automatically.
 Thus, including the following code in your doc will automatically add the \tag{code|bsmdoc_del} function just as it is defined in \tag{code|bsmdoc.py} (but be careful, since bsmdoc will call python function "\tag{code|exec()}" for this feature, it may cause some security concerns).
 {!highlight|bsmdoc||{%
 {!exec||{%
-def bsmdoc_del(data, args, **kwargs):
+def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%content
 %}!}
 %}!}
@@ -824,7 +826,7 @@ def bsmdoc_del(data, args, **kwargs):
 With the \tag{code|exec} block, you can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library
 {!highlight|bsmdoc||{%
 {!exec||{%
-def bsmdoc_highlight(data, args, **kwargs):
+def bsmdoc_highlight(data, *args, **kwargs):
     ...
 %}!}
 %}!}
@@ -833,9 +835,9 @@ Or in some case, you just want to use your own function for some arguments. For 
 {!highlight|bsmdoc||{%
 {!exec||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(data, args, **kwargs):
+def bsmdoc_highlight(data, *args, **kwargs):
     if args[0] != 'mylang':
-        return bsmdoc_highlight_raw(data, args, **kwargs)
+        return bsmdoc_highlight_raw(data, *args, **kwargs)
     # highlight 'mylang'
     ...
 %}!}
@@ -845,9 +847,9 @@ It may work fine to compile most of your docs, until one day it fails and python
 {!highlight|bsmdoc||{%
 {!exec||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(data, args, **kwargs):
+def bsmdoc_highlight(data, *args, **kwargs):
     if args[0] != 'mylang':
-        return bsmdoc_highlight(data, args, **kwargs)
+        return bsmdoc_highlight(data, *args, **kwargs)
     # highlight 'mylang'
     ...
 %}!}
@@ -862,9 +864,9 @@ try:
     bsmdoc_highlight_raw
 except NameError:
     bsmdoc_highlight_raw = bsmdoc_highlight
-    def bsmdoc_highlight(data, args, **kwargs):
+    def bsmdoc_highlight(data, *args, **kwargs):
         if args[0] != 'mylang':
-            return bsmdoc_highlight(data, args, **kwargs)
+            return bsmdoc_highlight(data, *args, **kwargs)
         # highlight 'mylang'
         ...
 %}!}
@@ -874,9 +876,9 @@ Or you can tell bsmdoc to execute the code for the first scan only
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(data, args, **kwargs):
+def bsmdoc_highlight(data, *args, **kwargs):
     if lang != 'mylang':
-        return bsmdoc_highlight(data, args, **kwargs)
+        return bsmdoc_highlight(data, *args, **kwargs)
     # highlight 'mylang'
     ...
 %}!}
@@ -950,7 +952,7 @@ With function block, you can also easily include source code in your html doc. F
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 import inspect
-def bsmdoc_codesnippet(data, args, **kwargs):
+def bsmdoc_codesnippet(data, *args, **kwargs):
     d = eval(data)
     if isinstance(d, str):
         return d
@@ -960,9 +962,10 @@ def bsmdoc_codesnippet(data, args, **kwargs):
 %}!}
 {!exec|firstRunOnly||{%
 import inspect
-def bsmdoc_codesnippet(data, args, **kwargs):
+import six
+def bsmdoc_codesnippet(data, *args, **kwargs):
     d = eval(data)
-    if isinstance(d, basestring):
+    if isinstance(d, six.string_types):
         return d
     else:
         return inspect.getsource(d)
@@ -988,14 +991,14 @@ plt.plot
 It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write a function block to just return certain sections (e.g., a function), instead of the whole file.
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
-def bsmdoc_ccodesnippet(data, args, **kwargs):
+def bsmdoc_ccodesnippet(data, *args, **kwargs):
     with open(data, 'r') as f:
         return ''.join(f.readlines())
     return data
 %}!}
 %}!}
 {!exec|firstRunOnly||{%
-def bsmdoc_ccodesnippet(data, args, **kwargs):
+def bsmdoc_ccodesnippet(data, *args, **kwargs):
     with open(data, 'r') as f:
         return ''.join(f.readlines())
     return data

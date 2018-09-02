@@ -45,9 +45,9 @@ content = <div class="footer-text"> Last updated %(UPDATED)s, by <a href="http:/
 
 {!exec|firstRunOnly||{%
 bsmdoc_highlight_raw = bsmdoc_highlight
-def bsmdoc_highlight(code, lang, **kwargs):
-    if lang[0]!='bsmdoc':
-        return bsmdoc_highlight_raw(code, lang)
+def bsmdoc_highlight(code, *args, **kwargs):
+    if args[0]!='bsmdoc':
+        return bsmdoc_highlight_raw(code, *args, **kwargs)
     try:
         from pygments import highlight
         from pygments.lexers import load_lexer_from_file
