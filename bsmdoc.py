@@ -1,8 +1,4 @@
-#!python
-#!/usr/bin/env python
-# Tianzhu Qiao (tq@feiyilin.com).
-
-import sys, re, os, io, time
+import re, os, io, time
 import traceback
 import six
 from six.moves import configparser
@@ -92,6 +88,9 @@ class BConfig(object):
 
     def get_scan(self):
         return self._scan
+
+    def need_rescan(self):
+        return self._rescan
 
     def request_rescan(self):
         """request for a second scan, return false if it is the 2nd scan now"""
@@ -232,7 +231,7 @@ class BParse(object):
             return
         bsmdoc_info_("first pass scan...", silent=not self.verbose)
         self._run(txt)
-        if self.config._rescan:
+        if self.config.need_rescan():
             # 2nd scan to resolve the references
             if self.verbose:
                 bsmdoc_info_("first pass scan...", silent=not self.verbose)
@@ -997,7 +996,7 @@ def bsmdoc_cite(data, *args, **kwargs):
     ref_tag = 1 # the index of the reference
     cite_tag = 1 # the index of citation of the reference
     if not ref:
-        if not cfg.request_scan():
+        if not cfg.request_rescan():
             bsmdoc_error_("Can't find the reference: %s"%data, **kwargs)
         return ""
     i = 0
