@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='bsmdoc',
-      version='0.0.2',
+      version='0.0.3',
       description='another technical html doc generator',
       author='Tianzhu Qiao',
       author_email='tq@feiyilin.com',
