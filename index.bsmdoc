@@ -2,7 +2,7 @@
 \config{heading_numbering|True}
 \config{image_numbering|True}
 \config{table_numbering|True}
-\config{show_source|True}
+\config{show_source|False}
 \config{css|add|css/bsmdoc.css}
 \config{css|add|css/menu.css}
 \config{js|add|https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js}
