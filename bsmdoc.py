@@ -1,4 +1,4 @@
-import re, os, io, time
+import sys, re, os, io, time
 import traceback
 import six
 from six.moves import configparser
@@ -140,7 +140,7 @@ class BConfig(object):
 
 class BParse(object):
     """
-    class to parse the bdoc
+    class to parse the bsmdoc
     """
     # lexer definition
     tokens = (
@@ -229,12 +229,11 @@ class BParse(object):
                 click.echo(tok)
                 tok = lex.token()
             return
-        bsmdoc_info_("first pass scan...", silent=not self.verbose)
+        bsmdoc_info_("first pass scan ...", silent=not self.verbose)
         self._run(txt)
         if self.config.need_rescan():
             # 2nd scan to resolve the references
-            if self.verbose:
-                bsmdoc_info_("first pass scan...", silent=not self.verbose)
+            bsmdoc_info_("second pass scan ...", silent=not self.verbose)
             self._run(txt)
 
     def pop_input(self):
@@ -253,9 +252,13 @@ class BParse(object):
         self.config['lineno'] = t.lexer.lineno
         return self.config
 
+    def _error(self, msg, line=-1):
+        kwargs = {'filename':self.filename, 'lineno':line}
+        bsmdoc_error_(msg, **kwargs)
+
+    # lexer
     def t_error(self, t):
-        kwargs = {'filename':self.filename, 'lineno': t.lexer.lineno}
-        bsmdoc_error_("illegal character '%s'"%(t.value[0]), **kwargs)
+        self._error("illegal character '%s'"%(t.value[0]), t.lexer.lineno)
         t.lexer.skip(1)
 
     def t_eof(self, t):
@@ -276,17 +279,17 @@ class BParse(object):
     t_table_eof = t_eof
 
     def t_INCLUDE(self, t):
-        r'\#include[ ]+[^\s]+[\s]*'
+        r'\#include[ ]+[^\s]+[\s]*$'
         filename = t.value.strip()
         filename = filename.replace('#include', '', 1)
         txt = bsmdoc_include(filename, silent=not self.verbose)
+        t.lexer.lineno += t.value.count('\n')
         if txt is not None:
             self.push_input(t, txt)
             self.filename = filename
             return t.lexer.token()
         else:
-            kwargs = {'lineno': t.lexer.lineno, 'filename': filename}
-            bsmdoc_error_("can't not find %s"%filename, **kwargs)
+            self._error("can't not find %s"%filename, t.lexer.lineno)
 
     def t_MAKECONTENT(self, t):
         r'\#makecontent[ ]*'
@@ -330,7 +333,6 @@ class BParse(object):
     # everything except '$$'
     def t_equation_WORD(self, t):
         r'(?:\\.|(\$(?!\$))|[^\$])+'
-        #t.lexer.lineno += t.value.count('\n')
         pass
     t_equation_error = t_error
 
@@ -342,8 +344,8 @@ class BParse(object):
         t.value = t.value[1:-1]
         return t
 
-    # marks to ignore the parsing, and it supports nested statement ('{%{%
-    # %}%}') is valid)
+    # marks to ignore parsing, and it supports nested statement ('{%{% %}%}')
+    # is valid)
     def t_RSTART(self, t):
         r'\{\%'
         t.lexer.rblock_start = t.lexer.lexpos
@@ -652,6 +654,7 @@ class BParse(object):
             p[0] = self.cmd_helper(c, p[0].strip(), lineno=p.lineno(2))
 
         self.pop_block()
+
     def p_blockargs_multi(self, p):
         '''blockargs : blockargs vtext TCELL'''
         p[0] = p[1] + [p[2]]
@@ -789,8 +792,7 @@ class BParse(object):
     def p_error(self, p):
         blk = self.top_block()
         if blk:
-            kwargs = {'lineno': blk['lineno'], 'filename': self.filename}
-            bsmdoc_error_("unmatched block '%s'"%(blk[0]), **kwargs)
+            self._error("unmatched block '%s'"%(blk['block']), blk['lineno'])
         else:
             click.echo("error: ", p)
 
@@ -931,7 +933,7 @@ def bsmdoc_exec(data, *args, **kwargs):
         exec(data, globals())
     except:
         bsmdoc_error_("bsmdoc_exec('%s',%s)"% (data, args), **kwargs)
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stdout)
     return ''
 
 def bsmdoc_newfun(data, *args, **kwargs):
@@ -1276,7 +1278,7 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
             result = chardet.detect(raw)
             encoding = result['encoding']
         except IOError:
-            traceback.print_exc()
+            traceback.print_exc(file=sys.stdout)
             return ""
     bsmdoc_info_("open \"%s\" with encoding \"%s\""%(filename, encoding), **kwargs)
     txt = ""
