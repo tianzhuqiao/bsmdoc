@@ -1,8 +1,13 @@
 from setuptools import setup
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(name='bsmdoc',
       version='0.0.3',
       description='another technical html doc generator',
+      long_description=long_description,
+      long_description_content_type="text/markdown",
       author='Tianzhu Qiao',
       author_email='tq@feiyilin.com',
       url='http://bsmdoc.feiyilin.com',
