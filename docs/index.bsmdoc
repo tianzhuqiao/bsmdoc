@@ -69,7 +69,7 @@ def bsmdoc_highlight(code, *args, **kwargs):
 !}
 {!div|main||
 {!div|toptitle||
-bsmdoc -- another technical html doc generator
+bsmdoc -- another technical html doc generator [https://github.com/tianzhuqiao/bsmdoc|\image{width="32" height="32"|image/github.svg}]
 !}
 {!div|content||
 #include index_content.bsmdoc
