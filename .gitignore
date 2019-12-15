@@ -3,3 +3,4 @@
 temp/
 parsetab.py
 bsmdoc.egg-info/
+dist/

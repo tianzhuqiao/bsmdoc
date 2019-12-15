@@ -45,7 +45,7 @@ This is the parent `<div>` that contains the menu and the content area.
 All anchors inside the menu should be styled like this.
  */
  .menu a {
-        color: #ccc;
+        color: #999;
         border: none;
         padding: 0.3em 0 0.3em 0.3em;
     }
