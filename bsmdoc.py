@@ -1,4 +1,4 @@
-import sys, re, os, io, time
+import re, os, io, time
 import traceback
 import six
 from six.moves import configparser
@@ -18,7 +18,7 @@ class BConfig(object):
         self.verbose = False
         self.lex = False
 
-        self.config = configparser.SafeConfigParser()
+        self.config = configparser.SafeConfigParser(delimiters=('=',))
         self.load(bsmdoc_conf)
         # cite & reference
         self.refs = {}
@@ -36,8 +36,8 @@ class BConfig(object):
             items = item.split(':')
             if len(items) == 1:
                 return self.get_cfg('DEFAULT', items[0])
-            elif len(items) == 2:
-                return self.get_cfg(items[0], items[1])
+            elif len(items) >= 2:
+                return self.get_cfg(items[0], ':'.join(items[1:]))
         return ""
 
     def __setitem__(self, item, value):
@@ -45,8 +45,8 @@ class BConfig(object):
             items = item.split(':')
             if len(items) == 1:
                 return self.set_cfg('DEFAULT', items[0], value)
-            elif len(items) == 2:
-                return self.set_cfg(items[0], items[1], value)
+            elif len(items) >= 2:
+                return self.set_cfg(items[0], ':'.join(items[1:]), value)
         return ""
 
     def get_vars(self):
@@ -878,7 +878,7 @@ def bsmdoc_config(data, *args, **kwargs):
         cfg.load(data)
     elif args[0] == 'bsmdoc_conf':
         bsmdoc_info_("read configuration from file %s..."%data, **kwargs)
-        cfg.load(bsmdoc_readfile(data))
+        cfg.load(bsmdoc_readfile(data, silent=kwargs.get('silent', False)))
     else:
         if data.lower() in ['true', 'false']:
             data = data.lower() in ['true']
