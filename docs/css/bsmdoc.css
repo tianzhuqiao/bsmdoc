@@ -342,6 +342,23 @@ p + div.codeblock {
     white-space: -pre-wrap;      /* Opera 4-6 */
     white-space: -o-pre-wrap;    /* Opera 7 */
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    border-left: None;
+    border-right: None;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0;
+}
+
+.syntaxtable pre {
+    border: None;
+    border-radius: 0;
+}
+.syntaxtable .linenos {
+    background: #eee;
+    padding-right: 0;
+}
+.syntaxtable .linenos pre {
+    background: #eee
 }
 
 table {
@@ -650,4 +667,45 @@ table th[class*="col-"] {
 .center_align {
     width: 100%;
     text-align: center;
+}
+
+.quote {
+  width: auto;
+  font-family: Georgia, serif;
+  position: relative;
+  padding: 29px 20px 20px 45px;
+  line-height: 30px;
+  text-shadow: 0 1px 1px white;
+  display: inline-block;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.quote_content:before, .quote_content:after {
+  display: inline-block;
+  vertical-align: top;
+  height: 30px;
+  line-height: 48px;
+  font-size: 50px;
+  opacity: .2;
+}
+
+.quote_content:before {
+  content: '\201C';
+  margin-left: -8px;
+  margin-right: 4px;
+}
+
+.quote_content:after {
+  content: '\201D';
+  margin-left: 4px;
+  margin-right: -8px;
+}
+
+.quote_by {
+  display: block;
+  font-size: 13px;
+  font-style: italic;
+  padding-right: 10px;
+  text-align: right;
 }
