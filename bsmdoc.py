@@ -382,8 +382,9 @@ class BParse(object):
         return t
 
     def t_fblock_BEND(self, t):
-        r'\!\}'
+        r'[ ]*[\n]?\!\}'
         t.lexer.pop_state()
+        t.lexer.lineno += t.value.count('\n')
         return t
 
     # table
@@ -563,8 +564,10 @@ class BParse(object):
     def p_block_paragraph(self, p):
         '''block : paragraph'''
         # add <P> tag to any text which is not in a function block and ended
-        # with '\n'
-        if len(self.block_state) == self.heading_level and p[1].endswith('\n'):
+        # with '\n
+        if not p[1].strip():
+            p[0] = ""
+        elif len(self.block_state) == self.heading_level and p[1].endswith('\n'):
             p[0] = bsmdoc_tag(p[1].strip(), 'p') + '\n'
         else:
             p[0] = p[1]
@@ -651,7 +654,7 @@ class BParse(object):
         for c in reversed(cmds):
             if not c:
                 continue
-            p[0] = self.cmd_helper(c, p[0].strip(), lineno=p.lineno(2))
+            p[0] = self.cmd_helper(c, p[0], lineno=p.lineno(2))
 
         self.pop_block()
 
@@ -981,9 +984,38 @@ def bsmdoc_div(data, *args, **kwargs):
         return data
     return bsmdoc_tag(data, 'div', *args, **kwargs)
 
+def get_opts(*args):
+    opts = dict((n.strip(), v.strip()) for n, v in (a.split('=') for a in args if '=' in a))
+    args = [a for a in args if '=' not in a]
+    return args, opts
+
+def to_int(val, default=0):
+    try:
+        return int(val)
+    except ValueError:
+        return default
+
 def bsmdoc_highlight(code, *args, **kwargs):
-    lexer = get_lexer_by_name(args[0], stripall=True)
-    formatter = HtmlFormatter(linenos=False, cssclass="syntax")
+    args, opts = get_opts(*args)
+    # replace tab with space
+    if not 'obeytabs' in args:
+        code = code.replace('\t', ' '*4)
+    code = code.split('\n')
+    # remove leading empty lines
+    while code and not code[0].strip():
+        code.pop(0)
+
+    # remove leading space of each line
+    gobble = to_int(opts.get('gobble', 0))
+    if 'autogobble' in args:
+        gobble = len(code[0]) - len(code[0].lstrip())
+    if gobble > 0:
+        for i in range(len(code)):
+            code[i] = code[i][gobble:]
+    code = '\n'.join(code)
+    lineno = 'inline' if 'lineno' in args else False
+    lexer = get_lexer_by_name(args[0], stripnl=False, tabsize=4)
+    formatter = HtmlFormatter(linenos=lineno, cssclass="syntax")
     # pygments will replace '&' with '&amp;', which will make the unicode
     # (e.g., &#xNNNN) shown incorrectly.
     txt = highlight(bsmdoc_unescape(code), lexer, formatter)
@@ -1131,6 +1163,7 @@ def bsmdoc_style_(args, default_class=None):
     return ' '.join(style)
 
 def bsmdoc_image(data, *args, **kwargs):
+    data = data.strip()
     cfg = kwargs.get('cfg')
     inline = kwargs.get('inline', False)
     txt = bsmdoc_tag('', 'img', 'src="%s"'%data, 'alt="%s"'%data, *args)
@@ -1274,7 +1307,7 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
     if not encoding:
         try:
             # encoding is not define, try to detect it
-            raw = open(filename, 'rb').read()
+            raw = open(filename.strip(), 'rb').read()
             result = chardet.detect(raw)
             encoding = result['encoding']
         except IOError:

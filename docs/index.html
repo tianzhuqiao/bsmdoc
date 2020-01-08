@@ -97,7 +97,7 @@ bsmdoc -- another technical html doc generator <a href="https://github.com/tianz
 <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>hello world<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
 
 <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2019-12-15 10:23:08 PST by
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2020-01-06 22:58:44 PST by
 <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>bsmdoc<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span> .<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
@@ -462,14 +462,16 @@ Latex Equation
 <p>For example</p>
 <div class="bs-example">
 <div class="mathjax">
-$$\begin{align}
+$$
+\begin{align}
 \begin{bmatrix}
 0      & \cdots & 0      \\
 \vdots & \ddots & \vdots \\
 0      & \cdots & 0
 \label{eqn:matrix}
 \end{bmatrix}
-\end{align}$$
+\end{align}
+$$
 </div>
 </div>
 <div class="bs-example-src">
@@ -1007,7 +1009,7 @@ plt.plot
 <p>It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write a function block to just return certain sections (e.g., a function), instead of the whole file.</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
 <span class="k">def</span> <span class="nf">bsmdoc_ccodesnippet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">data</span>
 <span class="nt">%}!}</span>
@@ -1311,7 +1313,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2019-12-15 10:24:43 PST, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2020-01-06 22:58:50 PST, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>

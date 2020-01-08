@@ -4,8 +4,6 @@ bsmdoc is a tool to generate technical static html docs:
 -\tag{b|Highly extendable}: extend the tool to solve your own problem easily;
 -\tag{b|Single file doc}: generate images, equations in a single file.
 
-#However, if you know nothing about python or some basic programming skill, bsmdoc may not be ideal for you, unless the very limited pre-defined features is what you want.
-
 bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, ...). In the following sections, we will show each block in detail, as well as the way to extend the existing blocks.
 
 == Installation
@@ -890,14 +888,14 @@ It can be easily extended to include arbitrary code. For example, the following 
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 def bsmdoc_ccodesnippet(data, *args, **kwargs):
-    with open(data, 'r') as f:
+    with open(data.strip(), 'r') as f:
         return ''.join(f.readlines())
     return data
 %}!}
 %}!}
 {!exec|firstRunOnly||{%
 def bsmdoc_ccodesnippet(data, *args, **kwargs):
-    with open(data, 'r') as f:
+    with open(data.strip(), 'r') as f:
         return ''.join(f.readlines())
     return data
 %}!}
