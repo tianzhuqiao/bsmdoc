@@ -1,4 +1,4 @@
-import re, os, io, time
+import sys, re, os, io, time
 import traceback
 import six
 from six.moves import configparser
@@ -279,7 +279,7 @@ class BParse(object):
     t_table_eof = t_eof
 
     def t_INCLUDE(self, t):
-        r'\#include[ ]+[^\s]+[\s]*$'
+        r'\#include[^\S\r\n]+[\S]+[\s]*$'
         filename = t.value.strip()
         filename = filename.replace('#include', '', 1)
         txt = bsmdoc_include(filename, silent=not self.verbose)
@@ -292,7 +292,7 @@ class BParse(object):
             self._error("can't not find %s"%filename, t.lexer.lineno)
 
     def t_MAKECONTENT(self, t):
-        r'\#makecontent[ ]*'
+        r'\#makecontent[^\S\r\n]*$'
         if self._contents:
             content = bsmdoc_makecontent(self._contents)
             self.push_input(t, content)
@@ -307,18 +307,18 @@ class BParse(object):
         pass
 
     def t_HEADING(self, t):
-        r'^[ ]*[\=]+[ ]*'
+        r'^[^\S\r\n]*[\=]+[^\S\r\n]*'
         t.value = t.value.strip()
         return t
 
     def t_LISTBULLET(self, t):
-        r'^[ ]*[\-\*]+[ ]*'
+        r'^[^\S\r\n]*[\-\*]+[^\S\r\n]*'
         t.value = t.value.strip()
         return t
 
     # shortcut to define the latex equations, does not support nested statement
     def t_EQN(self, t):
-        r'\$\$'
+        r'^[^\S\r\n]*\$\$'
         t.lexer.equation_start = t.lexer.lexpos
         t.lexer.push_state('equation')
 
@@ -382,19 +382,19 @@ class BParse(object):
         return t
 
     def t_fblock_BEND(self, t):
-        r'[ ]*[\n]?\!\}'
+        r'[^\S\r\n]*[\n]?\!\}'
         t.lexer.pop_state()
         t.lexer.lineno += t.value.count('\n')
         return t
 
     # table
     def t_TSTART(self, t):
-        r'^[ ]*\{\{'
+        r'^[^\S\r\n]*\{\{'
         t.lexer.push_state('table')
         return t
 
     def t_table_TEND(self, t):
-        r'^[ ]*\}\}'
+        r'^[^\S\r\n]*\}\}'
         t.lexer.pop_state()
         return t
 
@@ -452,7 +452,8 @@ class BParse(object):
         return t
 
     def t_SPACE(self, t):
-        r'[ ]+'
+        r'[^\S\r\n]+'
+        t.value = ' '
         return t
 
     # default state, ignore, '!}', '%}', '|', '[', ']', '{', '}', '\n', ' ', '#', '$'
