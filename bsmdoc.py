@@ -971,12 +971,37 @@ def bsmdoc_tag(data, *args, **kwargs):
         return "<{0}>{1}</{2}>".format(tag_start, data, tag_end)
     return data
 
+def code_format(code, obeytabs=False, gobble=0, autogobble=False):
+    # replace tab with space
+    if not obeytabs:
+        code = code.replace('\t', ' '*4)
+    code = code.split('\n')
+    # remove leading/tailing empty lines
+    while code and not code[0].strip():
+        code.pop(0)
+    while code and not code[-1].strip():
+        code.pop()
+
+    if not code:
+        return ''
+
+    # remove leading space of each line
+    if autogobble:
+        gobble = len(code[0]) - len(code[0].lstrip())
+        for c in code:
+            if gobble > len(c) - len(c.lstrip()) and len(c.strip()) >0:
+                gobble = 0
+                break
+    for i in range(len(code)):
+        code[i] = code[i][gobble:].rstrip()
+    return '\n'.join(code)
+
 def bsmdoc_math(data, *args, **kwargs):
     eqn = bsmdoc_escape(data)
     if args and args[0] == 'inline':
         return '${0}$'.format(eqn)
 
-    return bsmdoc_div('$${0}$$'.format(eqn), 'mathjax')
+    return bsmdoc_div('$$\n{0}\n$$'.format(code_format(eqn, autogobble=True)), 'mathjax')
 
 def bsmdoc_div(data, *args, **kwargs):
     data = data.strip()
@@ -998,22 +1023,12 @@ def to_int(val, default=0):
 
 def bsmdoc_highlight(code, *args, **kwargs):
     args, opts = get_opts(*args)
-    # replace tab with space
-    if not 'obeytabs' in args:
-        code = code.replace('\t', ' '*4)
-    code = code.split('\n')
-    # remove leading empty lines
-    while code and not code[0].strip():
-        code.pop(0)
-
-    # remove leading space of each line
+    # format code
+    obeytabs = 'obeytabs' in args
     gobble = to_int(opts.get('gobble', 0))
-    if 'autogobble' in args:
-        gobble = len(code[0]) - len(code[0].lstrip())
-    if gobble > 0:
-        for i in range(len(code)):
-            code[i] = code[i][gobble:]
-    code = '\n'.join(code)
+    autogobble = 'autogobble' in args
+    code = code_format(code, obeytabs=obeytabs, gobble=gobble, autogobble=autogobble)
+
     lineno = 'inline' if 'lineno' in args else False
     lexer = get_lexer_by_name(args[0], stripnl=False, tabsize=4)
     formatter = HtmlFormatter(linenos=lineno, cssclass="syntax")
