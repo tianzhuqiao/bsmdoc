@@ -11,15 +11,10 @@
 #\config{bsmdoc_conf|bsmdoc.cfg}
 
 {!config||{%
-[html]
-begin = <!DOCTYPE html>
-    <html lang="en">
-end= </html>
-
 [header]
 begin = <head>
-    <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="generator" content="bsmdoc">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 end = <title>%(TITLE)s</title>
     </head>

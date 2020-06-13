@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/" />
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="generator" content="bsmdoc">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
@@ -25,14 +25,14 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 
 <div class="menu">
 <ul>
-<li><a href="#sec-1">1 What is bsmdoc?</a> 
+<li><a href="#sec-1">1 What is bsmdoc?</a>
 <ul>
 <li><a href="#sec-1-1">1.1 Installation</a></li>
 <li><a href="#sec-1-2">1.2 Get Started</a></li>
 </ul></li>
 <li><a href="#sec-heading">2 Heading</a></li>
 <li><a href="#sec-3">3 List</a></li>
-<li><a href="#sec-link">4 Link</a> 
+<li><a href="#sec-link">4 Link</a>
 <ul>
 <li><a href="#sec-4-1">4.1 Footnote</a></li>
 <li><a href="#sec-4-2">4.2 Reference And Citation</a></li>
@@ -42,7 +42,7 @@ MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
 <li><a href="#sec-table">7 Table</a></li>
 <li><a href="#sec-highlight">8 Syntax Highlighting</a></li>
 <li><a href="#sec-9">9 Raw Text Block</a></li>
-<li><a href="#sec-funblock">10 Function Block</a> 
+<li><a href="#sec-funblock">10 Function Block</a>
 <ul>
 <li><a href="#sec-10-1">10.1 Generate Images</a></li>
 <li><a href="#sec-10-2">10.2 Include Source Code</a></li>
@@ -82,12 +82,12 @@ bsmdoc -- another technical html doc generator <a href="https://github.com/tianz
 <div class="syntax"><pre><span></span>$ bsmdoc helloworld.bsmdoc
 </pre></div></li>
 <li><p>It will generate <strong>helloworld.html</strong> in the same folder, which may look like</p>
-<div class="syntax"><pre><span></span><span class="cp">&lt;!doctype html&gt;</span>
-<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">&quot;en&quot;</span><span class="p">&gt;</span>
+<div class="syntax"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc, see http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">http-equiv</span><span class="o">=</span><span class="s">&quot;Content-Type&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;text/html;charset=utf-8&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1, shrink-to-fit=no&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;css/bsmdoc.css&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/css&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
@@ -97,7 +97,7 @@ bsmdoc -- another technical html doc generator <a href="https://github.com/tianz
 <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>hello world<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
 
 <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2020-01-06 22:58:44 PST by
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;footer-text&quot;</span><span class="p">&gt;</span> Last updated 2019-12-15 18:12:06 GMT by
 <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://bsmdoc.feiyilin.com/&quot;</span><span class="p">&gt;</span>bsmdoc<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span> .<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
@@ -124,15 +124,15 @@ bsmdoc -- another technical html doc generator <a href="https://github.com/tianz
 <span class="gh">====== level 6</span>
 </pre></div>
 </div>
-<p>As you have seen, heading block must start at a new line. Otherwise, <code>=</code> (e.g., in a paragraph) is just normal equal sign. 
+<p>As you have seen, heading block must start at a new line. Otherwise, <code>=</code> (e.g., in a paragraph) is just normal equal sign.
 bsmdoc supports all 6 heading levels as shown above. However, we don't think anyone needs all these 6 levels (remember, <a href="http://www.feynmanlectures.caltech.edu/">"The Feynman Lectures on Physics"</a> only uses 2 levels).</p>
 <p>heading text can spread over multiple lines as long as they are enclosed by "<code>{}</code>", as shown in the following example. Actually, "<code>{}</code>" also define a basic block in bsmdoc. It is quite flexible to define the heading text; generally, you are allowed to put everything in it.</p>
 <div class="bs-example">
-<h1>multiple<br> 
-line<br> 
+<h1>multiple<br>
+line<br>
 heading</h1>
-<h1>multiple 
-line 
+<h1>multiple
+line
 heading</h1>
 </div>
 <div class="bs-example-src">
@@ -177,19 +177,19 @@ Sec. <a href="#sec-heading">2</a>...
 </pre></div>
 </div>
 <h1 id="sec-3">3 List</h1>
-<p>bsmdoc defines two kinds of list blocks: <b>unordered list</b> and <b>ordered list</b>. 
+<p>bsmdoc defines two kinds of list blocks: <b>unordered list</b> and <b>ordered list</b>.
 A line leading with "<code>-</code>" will be rendered as unordered list. "<code>-</code>" will be ignored if it is not at the start of a line. Such rule holds for all <b>heading</b>, <b>unordered list</b>, and <b>ordered list</b> blocks.</p>
 <div class="bs-example">
 <ul>
 <li>start each line</li>
-<li>with an hyphen -. 
+<li>with an hyphen -.
 <ul>
-<li>more asterisks gives deeper 
+<li>more asterisks gives deeper
 <ul>
 <li>and deeper levels.</li>
 </ul></li>
 </ul></li>
-<li>line breaks<br> don't break levels. 
+<li>line breaks<br> don't break levels.
 <ul>
 <ul>
 <li>but jumping levels creates empty space.</li>
@@ -212,14 +212,14 @@ any other start ends the list.
 <div class="bs-example">
 <ol>
 <li>start each line</li>
-<li>with a start '*' 
+<li>with a start '*'
 <ol>
-<li>more asterisks gives deeper 
+<li>more asterisks gives deeper
 <ol>
 <li>and deeper levels.</li>
 </ol></li>
 </ol></li>
-<li>line breaks<br> don't break levels. 
+<li>line breaks<br> don't break levels.
 <ol>
 <ol>
 <li>but jumping levels creates empty space.</li>
@@ -241,7 +241,7 @@ any other start ends the list.
 <p><b>unordered</b> and <b>ordered</b> lists can also be arbitrarily combined</p>
 <div class="bs-example">
 <ul>
-<li>unordered level 1 
+<li>unordered level 1
 <ol>
 <li>ordered item 1</li>
 <li>ordered item 2</li>
@@ -263,9 +263,9 @@ any other start ends the list.
 <p>Each item of a list can spread over multiple lines as long as they are enclosed by "<code>{}</code>":</p>
 <div class="bs-example">
 <ul>
-<li>unordered level 1<br> 
-more text here 
-<a href="bsmdoc.feiyilin.com ">bsmdoc</a> 
+<li>unordered level 1<br>
+more text here
+<a href="bsmdoc.feiyilin.com ">bsmdoc</a>
 <ol>
 <li>ordered item2</li>
 </ol></li>
@@ -497,7 +497,7 @@ $$
 </div>
 <p>Unlike the <a href="#sec-image">image</a> block mentioned above, the reference to equation is also handled by <a href="http://www.mathjax.org">mathjax</a>. The syntax is same as $Latex$</p>
 <div class="bs-example">
-Eq. (\ref{eqn:matrix}) or 
+Eq. (\ref{eqn:matrix}) or
 Eq. (\ref{eqn:matrix})
 </div>
 <div class="bs-example-src">
@@ -730,7 +730,7 @@ int main ()
 </ul>
 <p>It is also possible to use other packages for syntax highlighting, which will be discussed in detail in Sec. <a href="#sec-funblock">10</a>.</p>
 <h1 id="sec-9">9 Raw Text Block</h1>
-<p>Sometimes you may want to skip the parsing from bsmdoc. For example, to highlight the code, it is basically not a good idea to let bsmdoc parse the code. Instead, the raw data should be sent to the code highlighting block. In another example, you may have seen similar syntax between the latex macro and the bsmdoc commands (e.g., both are preceded by "<code>\</code>"). If bsmdoc tries to parse these latex macros, the result is obviously not what you want. Thus, bsmdoc defines the raw text block. It basically tells bsmdoc to ignore all the rules on its content. 
+<p>Sometimes you may want to skip the parsing from bsmdoc. For example, to highlight the code, it is basically not a good idea to let bsmdoc parse the code. Instead, the raw data should be sent to the code highlighting block. In another example, you may have seen similar syntax between the latex macro and the bsmdoc commands (e.g., both are preceded by "<code>\</code>"). If bsmdoc tries to parse these latex macros, the result is obviously not what you want. Thus, bsmdoc defines the raw text block. It basically tells bsmdoc to ignore all the rules on its content.
 The syntax of the raw text block is</p>
 <div class="syntax"><pre><span></span><span class="nt">{%</span>
 Content
@@ -748,14 +748,14 @@ The <a href="#sec-equation">equation</a> block will automatically replace <code>
 </div>
 <p>By symmetry, bsmdoc also defines the <b>unescape</b> function block, which will replace <code>&amp;lt;</code> (<code>&amp;gt;</code>) with <code>&lt;</code> (<code>&gt;</code>).</p>
 <h1 id="sec-funblock">10 Function Block</h1>
-<p>Function block makes things really interesting. Without function block, bsmdoc is almost useless. Function block provides a easy way to allow the content to be processed before sent to the final html file. 
+<p>Function block makes things really interesting. Without function block, bsmdoc is almost useless. Function block provides a easy way to allow the content to be processed before sent to the final html file.
 As you have seen above, the syntax of a function block looks like</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span>command
 content
 <span class="nt">!}</span>
 </pre></div>
 <p>where <code>command</code> is optional and may contain the name and arguments of the corresponding function block.</p>
-<p>As described above, many features mentioned above are implemented with function blocks. 
+<p>As described above, many features mentioned above are implemented with function blocks.
 For example,</p>
 <ul>
 <li><p><a href="#sec-image">image</a> block:</p>
@@ -813,7 +813,7 @@ content
 </pre></div>
 </div></li>
 </ul>
-<p>The <code>command</code> section is optional. When the <code>command</code> section is not defined, the function block behaves exactly same as the simple block (<code>{}</code>). Otherwise, the corresponding function will be called to process the content. 
+<p>The <code>command</code> section is optional. When the <code>command</code> section is not defined, the function block behaves exactly same as the simple block (<code>{}</code>). Otherwise, the corresponding function will be called to process the content.
 As you may have already figured out, the <code>command</code> section is defined as</p>
 <div class="syntax"><pre><span></span>command|arg0|arg1|arg2|...|argN||
 </pre></div>
@@ -881,7 +881,7 @@ delete
 <span class="n">code</span>
 <span class="nt">%}!}</span>
 </pre></div>
-<p>which will execute the <code>code</code> automatically. 
+<p>which will execute the <code>code</code> automatically.
 Thus, including the following code in your doc will automatically add the <code>bsmdoc_del</code> function just as it is defined in <code>bsmdoc.py</code> (but be careful, since bsmdoc will call python function "<code>exec()</code>" for this feature, it may cause some security concerns).</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1093,7 +1093,7 @@ js/menu.js
 </pre></div>
 <p>In general, the blocks defined in the above section can also be used as inline block. For example</p>
 <div class="bs-example">
-<div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">code</span><span class="p">&gt;</span>content<span class="p">&lt;/</span><span class="nt">code</span><span class="p">&gt;</span> 
+<div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">code</span><span class="p">&gt;</span>content<span class="p">&lt;/</span><span class="nt">code</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">pre</span><span class="p">&gt;</span>content<span class="p">&lt;/</span><span class="nt">pre</span><span class="p">&gt;</span>
 </pre></div>
 </div>
@@ -1131,7 +1131,7 @@ js/menu.js
 <div class="syntax"><pre><span></span><span class="k">#makecontent</span>
 </pre></div>
 <p>Only the headings with automatic numbering will be included in the content list. <b>makecontent</b> will also trigger bsmdoc to scan the doc twice.</p>
-<p><b>makecontent</b> is implemented by a function <b>bsmdoc_makecontent</b>. 
+<p><b>makecontent</b> is implemented by a function <b>bsmdoc_makecontent</b>.
 Its input is a list that contains all the headings. The default implementation generates an un-ordered list</p>
 <div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_makecontent</span><span class="p">(</span><span class="n">contents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1148,7 +1148,7 @@ Its input is a list that contains all the headings. The default implementation g
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">contents</span><span class="p">:</span>
         <span class="c1"># the text has been parsed, so ignore the parsing here</span>
         <span class="n">txt</span> <span class="o">=</span> <span class="s1">&#39;[#{0}|{{%{1}%}}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">call</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">first_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">txt</span><span class="p">)</span>
+        <span class="n">call</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">first_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">txt</span><span class="p">)</span>
     <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">call</span><span class="p">)</span>
 </pre></div>
 <p>When the doc becomes large, you can split your doc into several docs and includes them in the top doc with the "<code>#include</code>" directive. For example, suppose you are writing a book, and have created <b>chappter1.bsmdoc</b>, <b>chapter2.bsmdoc</b>, .... Then, you can include all the chapters in your <b>book.bsmdoc</b></p>
@@ -1203,15 +1203,15 @@ Its input is a list that contains all the headings. The default implementation g
 <h1 id="sec-template">12 HTML Template</h1>
 <p>By default, bsmdoc uses the following template to generate the html file, which defines 4 sections (i.e., <b>html</b>, <b>header</b>, <b>body</b> and <b>footer</b>)</p>
 <div class="syntax"><pre><span></span><span class="k">[html]</span>
-<span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;!doctype html&gt;</span>
-<span class="s">    &lt;html lang=&quot;en&quot;&gt;</span>
+<span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;!DOCTYPE html&gt;</span>
+<span class="s">    &lt;html&gt;</span>
 <span class="na">end</span><span class="o">=</span> <span class="s">&lt;/html&gt;</span>
 
 <span class="k">[header]</span>
 <span class="na">begin</span> <span class="o">=</span> <span class="s">&lt;head&gt;</span>
-<span class="s">    &lt;meta name=&quot;generator&quot; content=&quot;bsmdoc, see http://bsmdoc.feiyilin.com/&quot;&gt;</span>
-<span class="s">    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=utf-8&quot;&gt;</span>
-<span class="s">    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, shrink-to-fit=no&quot;&gt;</span>
+<span class="s">    &lt;meta name=&quot;generator&quot; content=&quot;bsmdoc&quot;&gt;</span>
+<span class="s">    &lt;meta charset=&quot;UTF-8&quot;&gt;</span>
+<span class="s">    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;</span>
 <span class="na">end</span> <span class="o">=</span> <span class="s">&lt;title&gt;%(TITLE)s&lt;/title&gt;</span>
 <span class="s">    &lt;/head&gt;</span>
 <span class="na">content</span> <span class="o">=</span> <span class="s">&lt;link rel=&quot;stylesheet&quot; href=&quot;css/bsmdoc.css&quot; type=&quot;text/css&quot;&gt;</span>
@@ -1313,7 +1313,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2020-01-06 22:58:50 PST, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2020-06-13 23:40:35 GMT, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>

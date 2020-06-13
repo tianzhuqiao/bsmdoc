@@ -1441,15 +1441,15 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
 # generate the html
 bsmdoc_conf = """
 [html]
-begin = <!doctype html>
+begin = <!DOCTYPE html>
     <html>
 end= </html>
 
 [header]
 begin = <head>
-    <meta name="generator" content="bsmdoc, see http://bsmdoc.feiyilin.com/">
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="generator" content="bsmdoc">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 end = <title>%(TITLE)s</title>
     </head>
 content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css">
