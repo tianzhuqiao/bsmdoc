@@ -10,6 +10,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
+
 class BConfig(object):
     """
     class to hold all the configurations
@@ -18,7 +19,7 @@ class BConfig(object):
         self.verbose = False
         self.lex = False
 
-        self.config = configparser.SafeConfigParser(delimiters=('=',))
+        self.config = configparser.SafeConfigParser(delimiters=('=', ))
         self.load(bsmdoc_conf)
         # cite & reference
         self.refs = {}
@@ -33,6 +34,7 @@ class BConfig(object):
         self.alias = {}
         self._scan = 0
         self._rescan = False
+
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
             items = item.split(':')
@@ -105,9 +107,9 @@ class BConfig(object):
         val = ''
         if self.config.has_option(sec, key):
             val = self.config.get(sec, key)
-            if not self.config.has_option(sec, '_type_'+key):
+            if not self.config.has_option(sec, '_type_' + key):
                 return val
-            types = self.config.get(sec, '_type_'+key)
+            types = self.config.get(sec, '_type_' + key)
             if types == 'int':
                 return self.config.getint(sec, key)
             elif types == 'float':
@@ -130,15 +132,16 @@ class BConfig(object):
             types = 'float'
         else:
             pass
-        if self.config.has_option(sec, '_type_'+key):
-            types_old = self.config.get(sec, '_type_'+key)
+        if self.config.has_option(sec, '_type_' + key):
+            types_old = self.config.get(sec, '_type_' + key)
             if types != types_old:
-                bsmdoc_warning_("%s:%s change type from %s to %s (%s)"
-                                %(sec, key, types_old, types, val))
-        self.config.set(sec, '_type_'+key, types)
+                bsmdoc_warning_("%s:%s change type from %s to %s (%s)" %
+                                (sec, key, types_old, types, val))
+        self.config.set(sec, '_type_' + key, types)
 
     def load(self, txt):
         self.config.readfp(six.StringIO(txt))
+
 
 class BParse(object):
     """
@@ -146,20 +149,35 @@ class BParse(object):
     """
     # lexer definition
     tokens = (
-        'HEADING', 'NEWPARAGRAPH', 'NEWLINE', 'WORD', 'SPACE',
-        'TSTART', 'TEND', 'TCELL', 'THEAD', 'TROW',
-        'RBLOCK', 'BSTART', 'BEND', 'CMD', 'EQUATION', 'INLINEEQ',
+        'HEADING',
+        'NEWPARAGRAPH',
+        'NEWLINE',
+        'WORD',
+        'SPACE',
+        'TSTART',
+        'TEND',
+        'TCELL',
+        'THEAD',
+        'TROW',
+        'RBLOCK',
+        'BSTART',
+        'BEND',
+        'CMD',
+        'EQUATION',
+        'INLINEEQ',
         'LISTBULLET',
-        'BRACKETL', 'BRACKETR',
-        'BRACEL', 'BRACER',
+        'BRACKETL',
+        'BRACKETR',
+        'BRACEL',
+        'BRACER',
     )
 
     states = (
-        ('fblock', 'inclusive'), # function block (parsed normally)
-        ('rblock', 'exclusive'), # raw block (not parsed)
-        ('equation', 'exclusive'), # equation block (not parsed)
-        ('table', 'inclusive'), # table block
-        ('link', 'inclusive') # link block
+        ('fblock', 'inclusive'),  # function block (parsed normally)
+        ('rblock', 'exclusive'),  # raw block (not parsed)
+        ('equation', 'exclusive'),  # equation block (not parsed)
+        ('table', 'inclusive'),  # table block
+        ('link', 'inclusive')  # link block
     )
 
     # Tokens
@@ -201,7 +219,7 @@ class BParse(object):
             return None
 
     def push_block(self, args):
-        assert(isinstance(args, dict))
+        assert (isinstance(args, dict))
         if args['block'] == 'heading':
             self.heading_level = len(self.block_state)
         args['heading_level'] = self.heading_level
@@ -244,8 +262,12 @@ class BParse(object):
         return None
 
     def push_input(self, t, txt):
-        status = {'lexdata': t.lexer.lexdata, 'lexpos': t.lexer.lexpos,
-                  'lineno': t.lexer.lineno, 'filename': self.filename}
+        status = {
+            'lexdata': t.lexer.lexdata,
+            'lexpos': t.lexer.lexpos,
+            'lineno': t.lexer.lineno,
+            'filename': self.filename
+        }
         self._input_stack.append(status)
         t.lexer.input(txt)
         t.lexer.lineno = 1
@@ -255,12 +277,12 @@ class BParse(object):
         return self.config
 
     def _error(self, msg, line=-1):
-        kwargs = {'filename':self.filename, 'lineno':line}
+        kwargs = {'filename': self.filename, 'lineno': line}
         bsmdoc_error_(msg, **kwargs)
 
     # lexer
     def t_error(self, t):
-        self._error("illegal character '%s'"%(t.value[0]), t.lexer.lineno)
+        self._error("illegal character '%s'" % (t.value[0]), t.lexer.lineno)
         t.lexer.skip(1)
 
     def t_eof(self, t):
@@ -291,7 +313,7 @@ class BParse(object):
             self.filename = filename
             return t.lexer.token()
         else:
-            self._error("can't not find %s"%filename, t.lexer.lineno)
+            self._error("can't not find %s" % filename, t.lexer.lineno)
 
     def t_MAKECONTENT(self, t):
         r'\#makecontent[^\S\r\n]*$'
@@ -326,7 +348,7 @@ class BParse(object):
 
     def t_equation_EQN(self, t):
         r'\$\$'
-        t.value = t.lexer.lexdata[t.lexer.equation_start:t.lexer.lexpos-2]
+        t.value = t.lexer.lexdata[t.lexer.equation_start:t.lexer.lexpos - 2]
         t.type = 'EQUATION'
         t.lexer.lineno += t.value.count('\n')
         t.lexer.pop_state()
@@ -336,6 +358,7 @@ class BParse(object):
     def t_equation_WORD(self, t):
         r'(?:\\.|(\$(?!\$))|[^\$])+'
         pass
+
     t_equation_error = t_error
 
     # shortcuts for inline equation
@@ -554,14 +577,16 @@ class BParse(object):
         '''block : heading_start logicline'''
         # ignore the header level 7 or higher
         if len(p[1].strip()) <= 6:
-            p[0] = self.cmd_helper(['heading', p[1].strip()], p[2].strip(),
+            p[0] = self.cmd_helper(['heading', p[1].strip()],
+                                   p[2].strip(),
                                    lineno=p.lineno(1))
         else:
             p[0] = ""
         self.pop_block()
+
     def p_heading_start(self, p):
         '''heading_start : HEADING'''
-        self.push_block({'block':'heading', 'lineno':p.lineno(1)})
+        self.push_block({'block': 'heading', 'lineno': p.lineno(1)})
         p[0] = p[1]
 
     def p_block_paragraph(self, p):
@@ -604,7 +629,7 @@ class BParse(object):
 
     def p_table_start(self, p):
         '''tstart : TSTART'''
-        self.push_block({'block':'table', 'lineno':p.lineno(1)})
+        self.push_block({'block': 'table', 'lineno': p.lineno(1)})
         p[0] = ''
 
     def p_tbody_multi(self, p):
@@ -639,7 +664,7 @@ class BParse(object):
     def p_block_start(self, p):
         """bstart : BSTART"""
         p[0] = ''
-        self.push_block({'block':'fun', 'lineno':p.lineno(1)})
+        self.push_block({'block': 'fun', 'lineno': p.lineno(1)})
 
     def p_block_end(self, p):
         """bend : BEND"""
@@ -749,7 +774,10 @@ class BParse(object):
     def p_inlineblock_cmd_multi(self, p):
         """inlineblock : CMD bracetext"""
         cmd = p[1]
-        p[0] = self.cmd_helper([cmd[1:]], p[2], lineno=p.lineno(1), inline=True)
+        p[0] = self.cmd_helper([cmd[1:]],
+                               p[2],
+                               lineno=p.lineno(1),
+                               inline=True)
 
     def p_inlineblock_cmd_args(self, p):
         """inlineblock : CMD BRACEL vtext sections BRACER"""
@@ -763,7 +791,7 @@ class BParse(object):
 
     def p_inlineblock_link_withname(self, p):
         '''inlineblock : BRACKETL sections TCELL sections BRACKETR'''
-        p[0] = bsmdoc_tag(p[4], 'a', 'href="%s"'%p[2])
+        p[0] = bsmdoc_tag(p[4], 'a', 'href="%s"' % p[2])
 
     def p_inlineblock_link(self, p):
         '''inlineblock : BRACKETL sections BRACKETR'''
@@ -771,14 +799,14 @@ class BParse(object):
         v = s
         if s[0] == '#':
             # internal anchor
-            v = self.config['ANCHOR:%s'%s[1:]]
+            v = self.config['ANCHOR:%s' % s[1:]]
             if not v:
                 v = s[1:]
                 # do not find the anchor, wait for the 2nd scan
                 if not self.config.request_rescan():
-                    kwargs = {'lineno': p.lineno(2), 'filename':self.filename}
-                    bsmdoc_warning_("broken anchor '%s'"%v, **kwargs)
-        p[0] = bsmdoc_tag(v, 'a', 'href="%s"'%s)
+                    kwargs = {'lineno': p.lineno(2), 'filename': self.filename}
+                    bsmdoc_warning_("broken anchor '%s'" % v, **kwargs)
+        p[0] = bsmdoc_tag(v, 'a', 'href="%s"' % s)
 
     def p_plaintext_multi(self, p):
         '''plaintext : plaintext WORD
@@ -798,15 +826,20 @@ class BParse(object):
     def p_error(self, p):
         blk = self.top_block()
         if blk:
-            self._error("unmatched block '%s'"%(blk['block']), blk['lineno'])
+            self._error("unmatched block '%s'" % (blk['block']), blk['lineno'])
         else:
             click.echo("error: ", p)
 
     def cmd_helper(self, cmds, data, default='', lineno=-1, inline=False):
-        kwargs = {'lineno': lineno, 'inline': inline, 'silent': not self.verbose,
-                  'filename': self.filename, 'cfg': self.config}
+        kwargs = {
+            'lineno': lineno,
+            'inline': inline,
+            'silent': not self.verbose,
+            'filename': self.filename,
+            'cfg': self.config
+        }
         ldict = lex.get_caller_module_dict(1)
-        fun = ldict.get('bsmdoc_'+cmds[0], 'none')
+        fun = ldict.get('bsmdoc_' + cmds[0], 'none')
         if fun and hasattr(fun, "__call__"):
             return str(eval('fun(data, *cmds[1:], **kwargs)'))
         elif fun and len(cmds) == 1 and not data \
@@ -815,17 +848,19 @@ class BParse(object):
             # then, \bsmdoc will be replaced with CONTENT
             return fun
         else:
-            f = 'bsmdoc_%s(%s)' %(cmds[0], ",".join(cmds[1:]))
-            bsmdoc_warning_('undefined function block "%s".'%(f), **kwargs)
+            f = 'bsmdoc_%s(%s)' % (cmds[0], ",".join(cmds[1:]))
+            bsmdoc_warning_('undefined function block "%s".' % (f), **kwargs)
         if default:
             return default
         return data
+
 
 def bsmdoc_include(data, **kwargs):
     filename = data.strip()
     if os.path.isfile(filename):
         return bsmdoc_readfile(filename, **kwargs)
     return ""
+
 
 def bsmdoc_makecontent(contents, **kwargs):
     """
@@ -842,18 +877,21 @@ def bsmdoc_makecontent(contents, **kwargs):
     for c in contents:
         # the text has been parsed, so ignore the parsing here
         txt = '[#{0}|{{%{1}%}}]'.format(c[2], c[1])
-        call.append('-'*(c[0] - first_level + 1) + txt)
+        call.append('-' * (c[0] - first_level + 1) + txt)
     return '\n'.join(call)
+
 
 def bsmdoc_escape(data, *args, **kwargs):
     txt = re.sub(r'(<)', r'&lt;', data)
     txt = re.sub(r'(>)', r'&gt;', txt)
     return txt
 
+
 def bsmdoc_unescape(data, *args, **kwargs):
     txt = re.sub(r'(&lt;)', r'<', data)
     txt = re.sub(r'&gt;', r'>', txt)
     return txt
+
 
 def bsmdoc_info_(msg, **kwargs):
     lineno = kwargs.get('lineno', -1)
@@ -863,18 +901,21 @@ def bsmdoc_info_(msg, **kwargs):
         return
     info = msg
     if lineno != -1:
-        info = "%d %s"%(lineno, info)
+        info = "%d %s" % (lineno, info)
     if filename:
         info = ' '.join([filename, info])
     click.echo(info)
 
+
 def bsmdoc_error_(msg, **kwargs):
     kwargs['silent'] = False
-    bsmdoc_info_('error: '+msg, **kwargs)
+    bsmdoc_info_('error: ' + msg, **kwargs)
+
 
 def bsmdoc_warning_(msg, **kwargs):
     kwargs['silent'] = False
-    bsmdoc_info_('warning: '+msg, **kwargs)
+    bsmdoc_info_('warning: ' + msg, **kwargs)
+
 
 def bsmdoc_config(data, *args, **kwargs):
     cfg = kwargs['cfg']
@@ -883,7 +924,7 @@ def bsmdoc_config(data, *args, **kwargs):
         bsmdoc_info_("reading configuration...", **kwargs)
         cfg.load(data)
     elif args[0] == 'bsmdoc_conf':
-        bsmdoc_info_("read configuration from file %s..."%data, **kwargs)
+        bsmdoc_info_("read configuration from file %s..." % data, **kwargs)
         cfg.load(bsmdoc_readfile(data, silent=kwargs.get('silent', False)))
     else:
         if data.lower() in ['true', 'false']:
@@ -898,8 +939,10 @@ def bsmdoc_config(data, *args, **kwargs):
                     pass
         key = args[0].lower()
         if key in ['label', 'caption']:
-            bsmdoc_warning_('\\config{{{0}|}} is depreciated, use \\{0}{{}} instead'.format(key), **kwargs)
-            key = 'v:'+key
+            bsmdoc_warning_(
+                '\\config{{{0}|}} is depreciated, use \\{0}{{}} instead'.
+                format(key), **kwargs)
+            key = 'v:' + key
         if len(args) > 1 and args[1].lower() == 'add':
             cfg[key] = cfg[key] + ' ' + data
         else:
@@ -907,28 +950,33 @@ def bsmdoc_config(data, *args, **kwargs):
 
     return ""
 
+
 def bsmdoc_label(data, *args, **kwargs):
     return bsmdoc_config(data, 'v:label', *args, **kwargs)
+
 
 def bsmdoc_caption(data, *args, **kwargs):
     return bsmdoc_config(data, 'v:caption', *args, **kwargs)
 
+
 # deal with the equation reference: \ref{} or \eqref{}
 def bsmdoc_eqref(data, *args, **kwargs):
-    return "\\ref{%s}"%data
+    return "\\ref{%s}" % data
+
 
 def bsmdoc_ref(data, *args, **kwargs):
     # search in links defined with \label{}, so we can use the same
     # syntax to add reference to images, sections, and tables.
     cfg = kwargs.get('cfg')
-    v = cfg['ANCHOR:'+data]
+    v = cfg['ANCHOR:' + data]
     if v:
-        return bsmdoc_tag(v, 'a', 'href="#%s"'%data)
+        return bsmdoc_tag(v, 'a', 'href="#%s"' % data)
     elif not cfg.request_rescan() and not data.startswith('eq'):
         # do not find the anchor, wait for the 2nd scan
-        bsmdoc_warning_("Probably broken anchor '%s'"%data, **kwargs)
+        bsmdoc_warning_("Probably broken anchor '%s'" % data, **kwargs)
     # can not find the anchor, assume its a equation reference for now
     return bsmdoc_eqref(data, *args, **kwargs)
+
 
 def bsmdoc_exec(data, *args, **kwargs):
     cfg = kwargs.get('cfg')
@@ -938,23 +986,29 @@ def bsmdoc_exec(data, *args, **kwargs):
     try:
         exec(data, globals())
     except:
-        bsmdoc_error_("bsmdoc_exec('%s',%s)"% (data, args), **kwargs)
+        bsmdoc_error_("bsmdoc_exec('%s',%s)" % (data, args), **kwargs)
         traceback.print_exc(file=sys.stdout)
     return ''
 
+
 def bsmdoc_newfun(data, *args, **kwargs):
     if not args or len(args) != 1:
-        bsmdoc_error_("invalid function definition (%s, %s)"% (args[0], data), **kwargs)
+        bsmdoc_error_("invalid function definition (%s, %s)" % (args[0], data),
+                      **kwargs)
         return ''
     if not re.match("^[A-Za-z0-9_-]*$", args[0]):
-        bsmdoc_error_("invalid function name: %s which should only contain letter, number, '-' and '_'"% (args[0]), **kwargs)
+        bsmdoc_error_(
+            "invalid function name: %s which should only contain letter, number, '-' and '_'"
+            % (args[0]), **kwargs)
     return bsmdoc_exec('bsmdoc_{0}="{1}"'.format(args[0], data), [], **kwargs)
+
 
 def bsmdoc_pre(data, *args, **kwargs):
     if args and 'newlineonly' in args:
         # only replace newline with '<br>'
         return "<br>\n".join(data.split("\n"))
     return bsmdoc_tag(data, "pre")
+
 
 def bsmdoc_tag(data, *args, **kwargs):
     if len(args) >= 1:
@@ -965,7 +1019,9 @@ def bsmdoc_tag(data, *args, **kwargs):
         data = str(data).strip()
         if style:
             tag_start = tag_start + ' ' + style
-        if tag in ['div', 'ol', 'ul', 'tr', 'table', 'thead', 'tbody', 'figure']:
+        if tag in [
+                'div', 'ol', 'ul', 'tr', 'table', 'thead', 'tbody', 'figure'
+        ]:
             return "<{0}>\n{1}\n</{2}>\n".format(tag_start, data, tag_end)
         elif tag in ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', \
                 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']:
@@ -973,10 +1029,11 @@ def bsmdoc_tag(data, *args, **kwargs):
         return "<{0}>{1}</{2}>".format(tag_start, data, tag_end)
     return data
 
+
 def code_format(code, obeytabs=False, gobble=0, autogobble=False):
-    # replace tab with space
+    # replace tab with 4 space
     if not obeytabs:
-        code = code.replace('\t', ' '*4)
+        code = code.replace('\t', ' ' * 4)
     code = code.split('\n')
     # remove leading/tailing empty lines
     while code and not code[0].strip():
@@ -991,19 +1048,22 @@ def code_format(code, obeytabs=False, gobble=0, autogobble=False):
     if autogobble:
         gobble = len(code[0]) - len(code[0].lstrip())
         for c in code:
-            if gobble > len(c) - len(c.lstrip()) and len(c.strip()) >0:
+            if gobble > len(c) - len(c.lstrip()) and len(c.strip()) > 0:
                 gobble = 0
                 break
     for i in range(len(code)):
         code[i] = code[i][gobble:].rstrip()
     return '\n'.join(code)
 
+
 def bsmdoc_math(data, *args, **kwargs):
     eqn = bsmdoc_escape(data)
     if args and args[0] == 'inline':
         return '${0}$'.format(eqn)
 
-    return bsmdoc_div('$$\n{0}\n$$'.format(code_format(eqn, autogobble=True)), 'mathjax')
+    return bsmdoc_div('$$\n{0}\n$$'.format(code_format(eqn, autogobble=True)),
+                      'mathjax')
+
 
 def bsmdoc_div(data, *args, **kwargs):
     data = data.strip()
@@ -1012,16 +1072,20 @@ def bsmdoc_div(data, *args, **kwargs):
         return data
     return bsmdoc_tag(data, 'div', *args, **kwargs)
 
+
 def get_opts(*args):
-    opts = dict((n.strip(), v.strip()) for n, v in (a.split('=') for a in args if '=' in a))
+    opts = dict((n.strip(), v.strip())
+                for n, v in (a.split('=') for a in args if '=' in a))
     args = [a for a in args if '=' not in a]
     return args, opts
+
 
 def to_int(val, default=0):
     try:
         return int(val)
     except ValueError:
         return default
+
 
 def bsmdoc_alias(data, *args, **kwargs):
     cfg = kwargs.get('cfg')
@@ -1031,13 +1095,17 @@ def bsmdoc_alias(data, *args, **kwargs):
         cfg.alias[args[0].strip()] = data
     return ""
 
+
 def bsmdoc_highlight(code, *args, **kwargs):
     args, opts = get_opts(*args)
     # format code
     obeytabs = 'obeytabs' in args
     gobble = to_int(opts.get('gobble', 0))
     autogobble = 'autogobble' in args
-    code = code_format(code, obeytabs=obeytabs, gobble=gobble, autogobble=autogobble)
+    code = code_format(code,
+                       obeytabs=obeytabs,
+                       gobble=gobble,
+                       autogobble=autogobble)
 
     lineno = 'inline' if 'lineno' in args else False
     lexer = get_lexer_by_name(args[0], stripnl=False, tabsize=4)
@@ -1049,15 +1117,16 @@ def bsmdoc_highlight(code, *args, **kwargs):
     txt = txt.replace('&amp;lt;', '&lt;')
     return txt.replace('&amp;gt', '&gt;')
 
+
 def bsmdoc_cite(data, *args, **kwargs):
     cfg = kwargs.get('cfg')
     hide = args and args[0] == 'hide'
     ref = cfg.refs.get(data, '')
-    ref_tag = 1 # the index of the reference
-    cite_tag = 1 # the index of citation of the reference
+    ref_tag = 1  # the index of the reference
+    cite_tag = 1  # the index of citation of the reference
     if not ref:
         if not cfg.request_rescan():
-            bsmdoc_error_("Can't find the reference: %s"%data, **kwargs)
+            bsmdoc_error_("Can't find the reference: %s" % data, **kwargs)
         return ""
     i = 0
     for i, c in enumerate(cfg.cited):
@@ -1077,21 +1146,22 @@ def bsmdoc_cite(data, *args, **kwargs):
         cfg.cited.append(['', ref_tag, data, cite_tag])
         i = -1
     #
-    cite_id_prefix = 'cite-%d-'%(ref_tag)
-    ref_id = 'reference-%d'%ref_tag
+    cite_id_prefix = 'cite-%d-' % (ref_tag)
+    ref_id = 'reference-%d' % ref_tag
     # add the reference to the list, which will show at the end of the page
     cite_all = []
-    for c in six.moves.range(1, cite_tag+1):
-        anchor = 'href="#%s%d"'%(cite_id_prefix, c)
+    for c in six.moves.range(1, cite_tag + 1):
+        anchor = 'href="#%s%d"' % (cite_id_prefix, c)
         cite_all.append(bsmdoc_tag('&#8617;', 'a', anchor))
-    fn = bsmdoc_tag(ref+' '+ ' '.join(cite_all), 'div', 'id="%s"'%ref_id)
+    fn = bsmdoc_tag(ref + ' ' + ' '.join(cite_all), 'div', 'id="%s"' % ref_id)
     cfg.cited[i][0] = fn
     ach = ""
     if not hide:
-        cite_id = 'id="%s%d"'%(cite_id_prefix, cite_tag)
-        ach = bsmdoc_tag(ref_tag, 'a', cite_id, 'href="#%s"'%ref_id)
+        cite_id = 'id="%s%d"' % (cite_id_prefix, cite_tag)
+        ach = bsmdoc_tag(ref_tag, 'a', cite_id, 'href="#%s"' % ref_id)
         ach = '[{0}]'.format(ach)
     return ach
+
 
 def bsmdoc_reference(data, *args, **kwargs):
     cfg = kwargs['cfg']
@@ -1102,19 +1172,21 @@ def bsmdoc_reference(data, *args, **kwargs):
         cfg.refs[k] = data
     return ""
 
+
 def bsmdoc_footnote(data, *args, **kwargs):
     cfg = kwargs['cfg']
     tag = len(cfg.footnotes) + 1
     # the footnote definition id
-    src = 'footnote_src-%d'%tag
+    src = 'footnote_src-%d' % tag
     # the footnote id
-    dec = 'footnote-%d'%tag
+    dec = 'footnote-%d' % tag
     # add the footnote to the list, which will show at the end of the page
-    data = data + ' ' + bsmdoc_tag('&#8617;', 'a', 'href="#%s"'%(src))
-    fn = bsmdoc_div(data, 'id="%s"'%dec)
+    data = data + ' ' + bsmdoc_tag('&#8617;', 'a', 'href="#%s"' % (src))
+    fn = bsmdoc_div(data, 'id="%s"' % dec)
     cfg.footnotes.append(fn)
     tag = bsmdoc_tag(tag, 'sup')
-    return bsmdoc_tag(tag, 'a', 'name="%s"'%src, 'href="#%s"'%dec)
+    return bsmdoc_tag(tag, 'a', 'name="%s"' % src, 'href="#%s"' % dec)
+
 
 def bsmdoc_heading(data, *args, **kwargs):
     cfg = kwargs['cfg']
@@ -1131,7 +1203,7 @@ def bsmdoc_heading(data, *args, **kwargs):
             # build the prefix from parent headers
             pre = ''
             for i in range(start, level):
-                pre = pre+str(head_tag.get(i, 1)) + '.'
+                pre = pre + str(head_tag.get(i, 1)) + '.'
             # increase the tag for current level
             head_tag[level] = head_tag.get(level, 0) + 1
             pre = pre + str(head_tag[level])
@@ -1151,18 +1223,20 @@ def bsmdoc_heading(data, *args, **kwargs):
     if cfg['heading_in_contents']:
         cfg.contents.append([level, txt, label])
     if label:
-        cfg['ANCHOR:%s'%label] = pre
-        label = 'id="%s"'%label
-    return bsmdoc_tag(txt, 'h%d'%level, label) + '\n'
+        cfg['ANCHOR:%s' % label] = pre
+        label = 'id="%s"' % label
+    return bsmdoc_tag(txt, 'h%d' % level, label) + '\n'
+
 
 def bsmdoc_next_tag(sec, **kwargs):
     cfg = kwargs['cfg']
-    if cfg[sec+'_numbering']:
-        cfg[sec+'_next_tag'] += 1
-        prefix = cfg[sec+'_numbering_prefix']
-        num = cfg[sec+'_numbering_num_prefix'] + str(cfg[sec+'_next_tag'])
+    if cfg[sec + '_numbering']:
+        cfg[sec + '_next_tag'] += 1
+        prefix = cfg[sec + '_numbering_prefix']
+        num = cfg[sec + '_numbering_num_prefix'] + str(cfg[sec + '_next_tag'])
         return (str(prefix) + num + '.', num)
     return ("", "")
+
 
 def bsmdoc_style_(args, default_class=None):
     style = []
@@ -1185,14 +1259,15 @@ def bsmdoc_style_(args, default_class=None):
     if not style_class and default_class:
         style_class.append(default_class)
     if style_class:
-        style.append('class="%s"'%(' '.join(style_class)))
+        style.append('class="%s"' % (' '.join(style_class)))
     return ' '.join(style)
+
 
 def bsmdoc_image(data, *args, **kwargs):
     data = data.strip()
     cfg = kwargs.get('cfg')
     inline = kwargs.get('inline', False)
-    txt = bsmdoc_tag('', 'img', 'src="%s"'%data, 'alt="%s"'%data, *args)
+    txt = bsmdoc_tag('', 'img', 'src="%s"' % data, 'alt="%s"' % data, *args)
     if inline:
         return txt
     caption = cfg['v:caption']
@@ -1200,20 +1275,21 @@ def bsmdoc_image(data, *args, **kwargs):
     tag = ''
     if label:
         (tag, num) = bsmdoc_next_tag('image', **kwargs)
-        if cfg.get_scan() == 1 and cfg['ANCHOR%s:'%label]:
-            bsmdoc_warning_('duplicated label "%s".'%(label), **kwargs)
+        if cfg.get_scan() == 1 and cfg['ANCHOR%s:' % label]:
+            bsmdoc_warning_('duplicated label "%s".' % (label), **kwargs)
 
-        cfg['ANCHOR:%s'%label] = num
-        label = 'id="%s"'%label
+        cfg['ANCHOR:%s' % label] = num
+        label = 'id="%s"' % label
         tag = bsmdoc_tag(tag, 'span', 'tag')
     if caption:
         caption = bsmdoc_tag(tag + ' ' + caption, 'figcaption', "caption")
         txt = txt + '\n' + caption
     return bsmdoc_tag(txt, 'figure', label, 'figure')
 
+
 def bsmdoc_video(data, *args, **kwargs):
     cfg = kwargs['cfg']
-    src = bsmdoc_tag("", 'source', 'src="%s"'%data)
+    src = bsmdoc_tag("", 'source', 'src="%s"' % data)
     src += "\nYour browser does not support the video tag."
     txt = bsmdoc_tag(src, 'video', '"controls"')
     caption = cfg['v:caption']
@@ -1221,17 +1297,18 @@ def bsmdoc_video(data, *args, **kwargs):
     tag = ''
     if label:
         (tag, num) = bsmdoc_next_tag('image', **kwargs)
-        if cfg.get_scan() == 1 and cfg['ANCHOR:'+label]:
-            bsmdoc_warning_('duplicated label %s".'%(label), **kwargs)
+        if cfg.get_scan() == 1 and cfg['ANCHOR:' + label]:
+            bsmdoc_warning_('duplicated label %s".' % (label), **kwargs)
 
-        cfg['ANCHOR:%s'%label] = num
-        label = 'id="%s"'%label
+        cfg['ANCHOR:%s' % label] = num
+        label = 'id="%s"' % label
         tag = bsmdoc_tag(tag, 'span', 'tag')
 
     if caption:
         caption = bsmdoc_tag(tag + ' ' + caption, 'div', 'caption')
         txt += '\n' + caption
     return bsmdoc_tag(txt, 'div', label, 'video')
+
 
 def bsmdoc_table(data, *args, **kwargs):
     cfg = kwargs['cfg']
@@ -1247,14 +1324,15 @@ def bsmdoc_table(data, *args, **kwargs):
     # add the in-page link
     if label:
         (tag, num) = bsmdoc_next_tag('table', **kwargs)
-        cfg['ANCHOR:%s'%label] = num
-        label = 'id="%s"'%label
+        cfg['ANCHOR:%s' % label] = num
+        label = 'id="%s"' % label
         tag = bsmdoc_tag(tag, 'span', 'tag')
     caption = cfg['v:caption']
     if caption:
         caption = bsmdoc_tag(tag + ' ' + caption, 'caption')
-    tbl = bsmdoc_tag((caption+'\n '+head+body).strip(), 'table', label)
+    tbl = bsmdoc_tag((caption + '\n ' + head + body).strip(), 'table', label)
     return tbl
+
 
 def bsmdoc_listbullet(data, *args, **kwargs):
     # data is a list, for each item
@@ -1280,9 +1358,9 @@ def bsmdoc_listbullet(data, *args, **kwargs):
     data.append(['', ''])
     html = ""
 
-    tagp_p = "" # the current parent tag
-    idxp = 0 # the index of the last item relative to its parent
-    tagp = "" # the tag of last item
+    tagp_p = ""  # the current parent tag
+    idxp = 0  # the index of the last item relative to its parent
+    tagp = ""  # the tag of last item
 
     # hold all the items with the current level
     # [index in the parent, parent tag, tag, text]
@@ -1296,7 +1374,7 @@ def bsmdoc_listbullet(data, *args, **kwargs):
             idxp += 1
             stack.append([idxp, tagp_p, tag, txt])
             tagp = tag
-            i += 1 # retrieve next item
+            i += 1  # retrieve next item
         elif os.path.commonprefix([tagp, tag]) == tagp:
             # d is the child item of the last item, e.g.,
             # tagp = '--', and tag = '--*'
@@ -1320,14 +1398,17 @@ def bsmdoc_listbullet(data, *args, **kwargs):
                 # - level 1
                 html += list_txt
                 idxp, tagp_p, tagp = 0, "", ""
-                if i < len(data)-1:
+                if i < len(data) - 1:
                     # no warning for the guard item
-                    bsmdoc_warning_("potential wrong level in the list", **kwargs)
-    data.pop() # remove the guard
+                    bsmdoc_warning_("potential wrong level in the list",
+                                    **kwargs)
+    data.pop()  # remove the guard
     return html
 
+
 def bsmdoc_anchor(data, *args, **kwargs):
-    return bsmdoc_tag(bsmdoc_tag("&#x2693;", 'sup'), 'a', 'name="%s"'%data)
+    return bsmdoc_tag(bsmdoc_tag("&#x2693;", 'sup'), 'a', 'name="%s"' % data)
+
 
 def bsmdoc_readfile(filename, encoding=None, **kwargs):
     if not encoding:
@@ -1339,7 +1420,8 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
         except IOError:
             traceback.print_exc(file=sys.stdout)
             return ""
-    bsmdoc_info_("open \"%s\" with encoding \"%s\""%(filename, encoding), **kwargs)
+    bsmdoc_info_("open \"%s\" with encoding \"%s\"" % (filename, encoding),
+                 **kwargs)
     txt = ""
     fp = io.open(filename, 'r', encoding=encoding)
     txt = fp.read()
@@ -1354,6 +1436,7 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
         m = regexp.search(txt, m.start())
     txt = txt.encode().decode('unicode_escape')
     return txt
+
 
 # generate the html
 bsmdoc_conf = """
@@ -1384,6 +1467,7 @@ content = <div class="footer-text"> Last updated %(UPDATED)s by
           <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
 """
 
+
 class Bdoc(object):
     """class to generate the html file"""
     def __init__(self, lexonly, verbose):
@@ -1405,13 +1489,15 @@ class Bdoc(object):
         for c in cfg['css'].split(' '):
             if not c:
                 continue
-            html.append(bsmdoc_tag('', 'link', 'rel="stylesheet"',
-                                   'href="%s"'%c, 'type="text/css"'))
+            html.append(
+                bsmdoc_tag('', 'link', 'rel="stylesheet"', 'href="%s"' % c,
+                           'type="text/css"'))
         for j in cfg['js'].split(' '):
             if not j:
                 continue
-            html.append(bsmdoc_tag('', 'script', 'type="text/javascript"',
-                                   'language="javascript"', 'src="%s"'%j))
+            html.append(
+                bsmdoc_tag('', 'script', 'type="text/javascript"',
+                           'language="javascript"', 'src="%s"' % j))
         html.append(cfg['header:end'])
         # body
         html.append(cfg['body:begin'])
@@ -1420,7 +1506,7 @@ class Bdoc(object):
             subtitle = bsmdoc_tag(subtitle, 'div', 'subtitle')
         doctitle = cfg['doctitle']
         if doctitle:
-            doctitle = bsmdoc_tag(doctitle+subtitle, 'div', 'toptitle')
+            doctitle = bsmdoc_tag(doctitle + subtitle, 'div', 'toptitle')
         html.append(doctitle)
         html.append(parser.html)
         # reference
@@ -1439,7 +1525,7 @@ class Bdoc(object):
 
         cfg["source"] = ''
         if cfg['show_source']:
-            cfg["source"] = bsmdoc_tag('(source)', 'a', 'href="%s"'%filename)
+            cfg["source"] = bsmdoc_tag('(source)', 'a', 'href="%s"' % filename)
         html.append(cfg['footer:content'])
         html.append(cfg['footer:end'])
 
@@ -1463,6 +1549,7 @@ class Bdoc(object):
 def cli(filename, lex, encoding, verbose):
     bsmdoc = Bdoc(lex, verbose)
     bsmdoc.bsmdoc_gen(click.format_filename(filename), encoding)
+
 
 if __name__ == '__main__':
     cli()
