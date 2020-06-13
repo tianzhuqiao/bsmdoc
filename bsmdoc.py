@@ -717,7 +717,7 @@ class BParse(object):
                      | bracetext NEWLINE'''
         p[0] = p[1].strip()
         if p[0]:
-            p[0] = p[0] + ' \n'
+            p[0] = p[0] + '\n'
 
     def p_bracetext(self, p):
         '''bracetext : BRACEL sections BRACER'''
@@ -1380,7 +1380,7 @@ class Bdoc(object):
         self.verbose = verbose
         self.lexonly = lexonly
 
-    def bsmdoc_gen(self, filename, encoding=None):
+    def bsmdoc_gen(self, filename, encoding=None, output=True):
         parser = BParse(verbose=self.verbose)
         parser.run(filename, encoding, self.lexonly)
         if self.lexonly:
@@ -1436,9 +1436,14 @@ class Bdoc(object):
         html.append(cfg['body:end'])
 
         html.append(cfg['html:end'])
-        outname = os.path.splitext(filename)[0] + '.html'
-        with open(outname, 'w') as fp:
-            fp.write('\n'.join(html))
+
+        self.cfg = cfg
+        self.html = html
+        self.output_filename = os.path.splitext(filename)[0] + '.html'
+        if output:
+            with open(self.output_filename, 'w') as fp:
+                fp.write('\n'.join(html))
+
 
 @click.command()
 @click.option('--lex', is_flag=True, help="Show lexer output and exit.")
