@@ -29,6 +29,8 @@ class BConfig(object):
         self.heading_tag = {}
         # footnote list
         self.footnotes = []
+        # alias
+        self.alias = {}
         self._scan = 0
         self._rescan = False
     def __getitem__(self, item):
@@ -1020,6 +1022,14 @@ def to_int(val, default=0):
         return int(val)
     except ValueError:
         return default
+
+def bsmdoc_alias(data, *args, **kwargs):
+    cfg = kwargs.get('cfg')
+    if len(args) == 0:
+        return cfg.alias[data.strip()]
+    else:
+        cfg.alias[args[0].strip()] = data
+    return ""
 
 def bsmdoc_highlight(code, *args, **kwargs):
     args, opts = get_opts(*args)
