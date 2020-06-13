@@ -1442,7 +1442,7 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
 bsmdoc_conf = """
 [html]
 begin = <!doctype html>
-    <html lang="en">
+    <html>
 end= </html>
 
 [header]
@@ -1481,6 +1481,8 @@ class Bdoc(object):
             exit(0)
 
         cfg = parser.config
+        cfg['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z',
+                                        time.gmtime(os.path.getmtime(filename)))
         html = []
         html.append(cfg['html:begin'])
         # header
