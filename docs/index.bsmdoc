@@ -13,7 +13,6 @@
 {!config||{%
 [header]
 begin = <head>
-    <meta name="generator" content="bsmdoc">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 end = <title>%(TITLE)s</title>

@@ -10,6 +10,8 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
+__version__ = '0.0.4'
+
 
 class BConfig(object):
     """
@@ -140,7 +142,7 @@ class BConfig(object):
         self.config.set(sec, '_type_' + key, types)
 
     def load(self, txt):
-        self.config.readfp(six.StringIO(txt))
+        self.config.read_string(txt)
 
 
 class BParse(object):
@@ -1447,7 +1449,6 @@ end= </html>
 
 [header]
 begin = <head>
-    <meta name="generator" content="bsmdoc">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 end = <title>%(TITLE)s</title>
@@ -1473,20 +1474,24 @@ class Bdoc(object):
     def __init__(self, lexonly, verbose):
         self.verbose = verbose
         self.lexonly = lexonly
+        self.parser = None
+        self.cfg = None
+        self.output_filename = ""
+        self.html = ""
 
     def bsmdoc_gen(self, filename, encoding=None, output=True):
-        parser = BParse(verbose=self.verbose)
-        parser.run(filename, encoding, self.lexonly)
+        self.parser = BParse(verbose=self.verbose)
+        self.parser.run(filename, encoding, self.lexonly)
         if self.lexonly:
             exit(0)
-
-        cfg = parser.config
+        cfg = self.parser.config
         cfg['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z',
-                                        time.gmtime(os.path.getmtime(filename)))
+                                       time.gmtime(os.path.getmtime(filename)))
         html = []
         html.append(cfg['html:begin'])
         # header
         html.append(cfg['header:begin'])
+        html.append('<meta name="generator" content="bsmdoc %s">'%(__version__))
         html.append(cfg['header:content'])
         for c in cfg['css'].split(' '):
             if not c:
@@ -1510,7 +1515,7 @@ class Bdoc(object):
         if doctitle:
             doctitle = bsmdoc_tag(doctitle + subtitle, 'div', 'toptitle')
         html.append(doctitle)
-        html.append(parser.html)
+        html.append(self.parser.html)
         # reference
         if cfg.cited:
             cites = [bsmdoc_tag(x[0], 'li') for x in cfg.cited]
@@ -1547,6 +1552,7 @@ class Bdoc(object):
 @click.option('--lex', is_flag=True, help="Show lexer output and exit.")
 @click.option('--encoding', help="Set the input file encoding, e.g. 'utf-8'.")
 @click.option('--verbose', is_flag=True)
+@click.version_option(__version__)
 @click.argument('filename', type=click.Path(exists=True))
 def cli(filename, lex, encoding, verbose):
     bsmdoc = Bdoc(lex, verbose)
