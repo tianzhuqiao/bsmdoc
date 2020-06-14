@@ -24,7 +24,8 @@ body {
     margin-bottom: 50px;
     line-height: 1.6em;
 }
-#layout {
+
+.layout {
     padding-top: 1.0em;
     padding-left: 1.0em;
     padding-right: 1.0em;
@@ -38,9 +39,9 @@ body {
     margin-right: auto;
 }
 
-#layout h1:first-child,
-#layout h2:first-child,
-#layout h3:first-child {
+.layout h1:first-child,
+.layout h2:first-child,
+.layout h3:first-child {
     margin-top: -0.7em;
 }
 

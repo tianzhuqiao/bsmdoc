@@ -1059,6 +1059,8 @@ def code_format(code, obeytabs=False, gobble=0, autogobble=False):
 
 
 def bsmdoc_math(data, *args, **kwargs):
+    cfg = kwargs.get('cfg')
+    cfg['has_math'] = True
     eqn = bsmdoc_escape(data)
     if args and args[0] == 'inline':
         return '${0}$'.format(eqn)
@@ -1454,9 +1456,21 @@ begin = <head>
 end = <title>%(TITLE)s</title>
     </head>
 content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css">
+mathjs = <script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+            tags: "all"
+        }
+    };
+    </script>
+
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
+    </script>
 
 [body]
-begin = <body>
+begin = <body class="nomathjax">
     <div class="layout">
 end = </div>
     </body>
@@ -1499,6 +1513,8 @@ class Bdoc(object):
             html.append(
                 bsmdoc_tag('', 'link', 'rel="stylesheet"', 'href="%s"' % c,
                            'type="text/css"'))
+        if cfg['has_math']:
+            html.append(cfg['header:mathjs'])
         for j in cfg['js'].split(' '):
             if not j:
                 continue

@@ -3,7 +3,7 @@
 /*
 Add transition to containers so they can push in and out.
 */
-#layout,
+.layout,
 .menu {
     -webkit-transition: all 0.2s ease-out;
     -moz-transition: all 0.2s ease-out;
@@ -15,12 +15,12 @@ Add transition to containers so they can push in and out.
 /*
 This is the parent `<div>` that contains the menu and the content area.
 */
-#layout {
+.layout {
     position: relative;
     left: 0;
     padding-left: 0;
 }
-#layout.active .menu {
+.layout.active .menu {
     left: 300px;
     width: 300px;
 }
@@ -84,11 +84,13 @@ Remove all background/borders, since we are applying them to .menu.
     white-space: nowrap;
     padding-left: .5em;
 }
-.menu a: after {
+
+/*.menu a:after {
     padding-left: 0.5em;
     content: "\25B8";
     font-size: small;
-}
+}*/
+
 /*
 Add that light border to separate items into groups.
 */
@@ -118,7 +120,7 @@ Hides the menu at `48em`, but modify this based on your app's needs.
         padding-left: 2em;
         padding-right: 2em;
     }
-    #layout {
+    .layout {
         padding-left: 300px; /* left col width ".menu" */
         left: 0;
     }
@@ -134,7 +136,7 @@ Hides the menu at `48em`, but modify this based on your app's needs.
         * Tap the menu to trigger the active state.
         * Make the window large again.
     */
-    #layout.active {
+    .layout.active {
         position: relative;
         left: 300px;
     }

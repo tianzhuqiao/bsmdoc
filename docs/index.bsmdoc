@@ -3,39 +3,13 @@
 \config{image_numbering|True}
 \config{table_numbering|True}
 \config{show_source|False}
-\config{css|add|css/bsmdoc.css}
 \config{css|add|css/menu.css}
 \config{js|add|https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js}
 \config{js|add|js/bsmdoc.js js/menu.js}
 #\config{bsmdoc_conf|bsmdoc.cfg}
 
 {!config||{%
-[header]
-begin = <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-end = <title>%(TITLE)s</title>
-    </head>
-content = <script>
-    MathJax = {
-        tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            tags: "all"
-        }
-    };
-    </script>
-    <script id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
-    </script>
-[body]
-begin = <body class="nomathjax">
-    <div id="layout" class="">
-end = </div>
-    </body>
-
 [footer]
-begin = <div class="footer">
-end = </div>
 content = <div class="footer-text"> Last updated %(UPDATED)s, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 %}!}
 
