@@ -1,4 +1,4 @@
-$(window).load(function() {
+$(window).on("load", function() {
 // Cache selectors
 var lastId,
     topMenu = $(".menu"),
@@ -47,10 +47,10 @@ function update_menu() {
             topUL.find('ul').each(function(index){
                 $(this).css('display', 'none');
             });
-            menu = menuItems.filter("[href='#"+id+"']");
-            menuul = menu.closest('ul').css('display', 'inline-block');
-            menu.closest('li').children('ul').css('display', 'inline-block');
         }
+        menu = menuItems.filter("[href='#"+id+"']");
+        menuul = menu.closest('ul').css('display', 'inline-block');
+        menu.closest('li').children('ul').css('display', 'inline-block');
     }
 }
 

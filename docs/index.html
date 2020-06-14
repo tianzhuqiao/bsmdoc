@@ -4,18 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="bsmdoc 0.0.4">
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
-processClass: "mathjax",
-ignoreClass: "tex2jax_ignore|nomathjax"
-});
-MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
+<script>
+MathJax = {
+tex: {
+inlineMath: [['$', '$'], ['\\(', '\\)']],
+tags: "all"
+}
+};
+</script>
+<script id="MathJax-script" async
+src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
 </script>
 <link rel="stylesheet" href="css/bsmdoc.css" type="text/css">
 <link rel="stylesheet" href="css/menu.css" type="text/css">
-<script type="text/javascript" language="javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/javascript" language="javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript" language="javascript" src="js/bsmdoc.js"></script>
 <script type="text/javascript" language="javascript" src="js/menu.js"></script>
 <title>bsmdoc -- another technical html doc generator</title>
@@ -427,17 +429,18 @@ Fig. <a href="#img-scatter">1</a> shows a scatter diagram
 </pre></div>
 </div>
 <h1 id="sec-equation">6 Equation</h1>
-<p>Equation is rendered with <a href="http://www.mathjax.org">mathjax</a>: both inline and normal equation blocks. The <a href="http://docs.mathjax.org/en/latest/start.html">configuration</a> may look like:</p>
-<div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/x-mathjax-config&quot;</span><span class="p">&gt;</span>
-    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
-        <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span><span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[[</span><span class="s1">&#39;$&#39;</span><span class="p">,</span><span class="s1">&#39;$&#39;</span><span class="p">]]},</span>
-        <span class="nx">processClass</span><span class="o">:</span> <span class="s2">&quot;mathjax&quot;</span><span class="p">,</span>
-        <span class="nx">ignoreClass</span><span class="o">:</span> <span class="s2">&quot;tex2jax_ignore|nomathjax&quot;</span>
-    <span class="p">});</span>
-    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span> <span class="nx">TeX</span><span class="o">:</span> <span class="p">{</span> <span class="nx">equationNumbers</span><span class="o">:</span> <span class="p">{</span><span class="nx">autoNumber</span><span class="o">:</span> <span class="s2">&quot;all&quot;</span><span class="p">}</span> <span class="p">}</span> <span class="p">});</span>
+<p>Equation is rendered with <a href="http://www.mathjax.org">mathjax</a>: both inline and normal equation blocks. The <a href="http://docs.mathjax.org/en/latest/web/configuration.html">configuration</a> may look like:</p>
+<div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+    <span class="nx">MathJax</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nx">tex</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[[</span><span class="s1">&#39;$&#39;</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;\\(&#39;</span><span class="p">,</span> <span class="s1">&#39;\\)&#39;</span><span class="p">]],</span>
+            <span class="nx">tags</span><span class="o">:</span> <span class="s2">&quot;all&quot;</span>
+        <span class="p">}</span>
+<span class="p">};</span>
 <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">async</span>
-  <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML&quot;</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;MathJax-script&quot;</span> <span class="na">async</span>
+<span class="na">src</span><span class="o">=</span><span class="s">&quot;https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
 </pre></div>
 <p>Such configuration can be included in a configuration file, which will be shown in detail in Sec. <a href="#sec-template">12</a>.</p>
@@ -1016,7 +1019,7 @@ plt.plot
 </pre></div>
 <p>Then you can include the source code by</p>
 <div class="bs-example">
-<div class="syntax"><pre><span></span><span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">load</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+<div class="syntax"><pre><span></span><span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;load&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
 <span class="c1">// Cache selectors</span>
 <span class="kd">var</span> <span class="nx">lastId</span><span class="p">,</span>
     <span class="nx">topMenu</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.menu&quot;</span><span class="p">),</span>
@@ -1288,7 +1291,7 @@ Its input is a list that contains all the headings. The default implementation g
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">div</span>|<span class="nt">toptitle</span>||
 bsmdoc -- another technical html doc generator
 <span class="nt">{!</span><span class="nf">div</span>|<span class="nt">subtitle</span>||
-<span class="nt">[mailto:ben.qiao@feiyilin.com</span>|ben.qiao@feiyilin.com]
+<span class="nt">[mailto:tq@feiyilin.com</span>|tq@feiyilin.com]
 <span class="nt">!}</span>
 <span class="nt">!}</span>
 </pre></div>
@@ -1312,7 +1315,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2020-06-14 16:32:41 GMT, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2020-06-14 17:53:47 GMT, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>

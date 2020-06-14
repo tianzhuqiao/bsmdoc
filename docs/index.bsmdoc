@@ -5,8 +5,7 @@
 \config{show_source|False}
 \config{css|add|css/bsmdoc.css}
 \config{css|add|css/menu.css}
-\config{js|add|https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js}
-\config{js|add|https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML}
+\config{js|add|https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js}
 \config{js|add|js/bsmdoc.js js/menu.js}
 #\config{bsmdoc_conf|bsmdoc.cfg}
 
@@ -17,13 +16,16 @@ begin = <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 end = <title>%(TITLE)s</title>
     </head>
-content = <script type="text/x-mathjax-config">
-      MathJax.Hub.Config({
-          tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
-          processClass: "mathjax",
-          ignoreClass: "tex2jax_ignore|nomathjax"
-      });
-      MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
+content = <script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            tags: "all"
+        }
+    };
+    </script>
+    <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
     </script>
 [body]
 begin = <body class="nomathjax">

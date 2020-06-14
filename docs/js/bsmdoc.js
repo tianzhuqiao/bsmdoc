@@ -33,6 +33,10 @@ var simplePopup = (function() {
         this.showTooltip = false;
     };
 
+    function jq( myid ) {
+        return myid.replace( /(:|\.|\[|\]|,|=|@)/g, "\\$1" );
+    }
+
     simplePopup.showTooltipNow = function(thispopup) {
         thispopup.showTooltip = true;
         thispopup.tooltip.stop(true, true);
@@ -52,12 +56,28 @@ var simplePopup = (function() {
     simplePopup.prototype.mouseOver = function(e) {
         var thispopup = e.data.thispopup;
         var a = e.currentTarget;
-        var $number = $(a.hash);
+        var $number;
+        try {
+           $number = $(jq(a.hash));
+        } catch(err) {
+        }
+        if (!$number) {
+            try {
+                // mathjax3 will not ignore special characters, like ":"
+                // e.g., eqn:matrix will become "mjx-eqn-eqn%3Amatrix", and
+                // jquery fails to find it.
+                $number = $(jq(unescape(a.hash)));
+            } catch(err) {
+            }
+        }
+        if (!$number) {
+            return;
+        }
         var $root = $number.closest(thispopup.roottag);
         if(thispopup.target) {
             thispopup.target.css({
                 'background':'#fff',
-            })
+            });
             thispopup.target = false;
         }
         if(isScrolledIntoView($root)) {
@@ -65,7 +85,7 @@ var simplePopup = (function() {
             thispopup.target = $root;
             $root.css({
                 'background':'#ffa',
-            })
+            });
         } else {
             thispopup.showTooltip = true;
             var $container = $(document.body);
@@ -78,7 +98,7 @@ var simplePopup = (function() {
             });
             thispopup.tooltip.fadeIn();
         }
-    }
+    };
 
     simplePopup.prototype.mouseOut = function(e) {
         var thispopup = e.data.thispopup;
@@ -89,14 +109,14 @@ var simplePopup = (function() {
         if(thispopup.target) {
             thispopup.target.css({
                 'background':'#fff',
-            })
+            });
             thispopup.target = false;
         }
-    }
+    };
     return simplePopup;
 })();
 
-$( window ).load(function() {
+$( window ).on('load', function() {
     new simplePopup('a[href*="mjx-eqn-"]', 'div');
     new simplePopup('a[href*="img-"]', 'figure');
     new simplePopup('a[href*="tbl-"]', 'table');
