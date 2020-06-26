@@ -70,8 +70,7 @@ class BConfig(object):
         for k, _ in self.config.items('DEFAULT'):
             self.config.remove_option('DEFAULT', k)
 
-        self['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z',
-                                        time.localtime(time.time()))
+        self.set_updated(time.localtime(time.time()), True)
         self['verbose'] = self.verbose
         self['title'] = ''
         self['show_source'] = False
@@ -91,6 +90,14 @@ class BConfig(object):
         self.contents = []
         self.heading_tag = {}
         self.cited = []
+
+    def set_updated(self, t, forced=False):
+        if forced or not self['updated']:
+            self['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z', t)
+        else:
+            ct = time.strptime(self['updated'], '%Y-%m-%d %H:%M:%S %Z')
+            if ct < t:
+                self['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z', t)
 
     def get_scan(self):
         return self._scan
@@ -216,9 +223,9 @@ class BParse(object):
             args.pop('config', None)
             args.pop('heading_level', None)
             return args
-        else:
-            bsmdoc_error_('no more blocks')
-            return None
+
+        bsmdoc_error_('no more blocks')
+        return None
 
     def push_block(self, args):
         assert (isinstance(args, dict))
@@ -237,6 +244,8 @@ class BParse(object):
         self.config.reset_options()
         self.config['filename'] = self.filename
         self.config['basename'] = os.path.basename(self.filename)
+        mt = time.gmtime(os.path.getmtime(self.filename))
+        self.config.set_updated(mt, True)
         lex.lexer.lineno = 1
         yacc.parse(txt, tracking=True)
 
@@ -251,6 +260,7 @@ class BParse(object):
                 click.echo(tok)
                 tok = lex.token()
             return
+
         bsmdoc_info_("first pass scan ...", silent=not self.verbose)
         self._run(txt)
         if self.config.need_rescan():
@@ -307,12 +317,14 @@ class BParse(object):
     def t_INCLUDE(self, t):
         r'\#include[^\S\r\n]+[\S]+[\s]*$'
         filename = t.value.strip()
-        filename = filename.replace('#include', '', 1)
-        txt = bsmdoc_include(filename, silent=not self.verbose)
+        filename = filename.replace('#include', '', 1).strip()
+        txt = bsmdoc_include(filename, silent=not self.verbose, cfg=self.config)
         t.lexer.lineno += t.value.count('\n')
         if txt is not None:
             self.push_input(t, txt)
             self.filename = filename
+            if os.path.isfile(filename):
+                self.config.set_updated(time.gmtime(os.path.getmtime(filename)), False)
             return t.lexer.token()
         else:
             self._error("can't not find %s" % filename, t.lexer.lineno)
@@ -1499,8 +1511,7 @@ class Bdoc(object):
         if self.lexonly:
             exit(0)
         cfg = self.parser.config
-        cfg['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z',
-                                       time.gmtime(os.path.getmtime(filename)))
+
         html = []
         html.append(cfg['html:begin'])
         # header
