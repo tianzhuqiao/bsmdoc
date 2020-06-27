@@ -102,6 +102,9 @@ class BConfig(object):
     def get_scan(self):
         return self._scan
 
+    def next_scan(self):
+        self._scan += 1
+
     def need_rescan(self):
         return self._rescan
 
@@ -239,7 +242,10 @@ class BParse(object):
         self.block_state.append(args)
 
     def _run(self, txt):
-        self.config._scan += 1
+        # start next scan
+        self.config.next_scan()
+        # save the table of contents collected from previous scan or empty for
+        # 1st scan
         self._contents = self.config.contents
         self.config.reset_options()
         self.config['filename'] = self.filename
@@ -328,6 +334,7 @@ class BParse(object):
             return t.lexer.token()
         else:
             self._error("can't not find %s" % filename, t.lexer.lineno)
+            return None
 
     def t_MAKECONTENT(self, t):
         r'\#makecontent[^\S\r\n]*$'
@@ -336,8 +343,9 @@ class BParse(object):
             self.push_input(t, content)
             self.filename = "CONTENTS"
             return t.lexer.token()
-        else:
-            self.config.request_rescan()
+
+        self.config.request_rescan()
+        return None
 
     # comment starts with "#", except "&#"
     def t_COMMENT(self, t):
@@ -404,6 +412,7 @@ class BParse(object):
             t.type = 'RBLOCK'
             t.lexer.pop_state()
             return t
+        return None
 
     # ignore '{' if it is followed by '%';
     # ignore '%' if it is followed by '}'
@@ -878,7 +887,7 @@ def bsmdoc_include(data, **kwargs):
 
 def bsmdoc_makecontent(contents, **kwargs):
     """
-    contents is a list, each item
+    table of contents is a list, each item
     [level, text, label]
         level: 1~6
         text: the caption text
@@ -1504,12 +1513,13 @@ class Bdoc(object):
         self.cfg = None
         self.output_filename = ""
         self.html = ""
+        self.html_text = ""
 
     def bsmdoc_gen(self, filename, encoding=None, output=True):
         self.parser = BParse(verbose=self.verbose)
         self.parser.run(filename, encoding, self.lexonly)
         if self.lexonly:
-            exit(0)
+            return
         cfg = self.parser.config
 
         html = []
@@ -1569,21 +1579,25 @@ class Bdoc(object):
 
         self.cfg = cfg
         self.html = html
+        self.html_text = '\n'.join(html)
         self.output_filename = os.path.splitext(filename)[0] + '.html'
         if output:
             with open(self.output_filename, 'w') as fp:
-                fp.write('\n'.join(html))
+                fp.write(self.html_text)
 
 
 @click.command()
 @click.option('--lex', is_flag=True, help="Show lexer output and exit.")
 @click.option('--encoding', help="Set the input file encoding, e.g. 'utf-8'.")
+@click.option('--print-html', is_flag=True, help="Print the output html.")
 @click.option('--verbose', is_flag=True)
 @click.version_option(__version__)
 @click.argument('filename', type=click.Path(exists=True))
-def cli(filename, lex, encoding, verbose):
+def cli(filename, lex, encoding, print_html, verbose):
     bsmdoc = Bdoc(lex, verbose)
-    bsmdoc.bsmdoc_gen(click.format_filename(filename), encoding)
+    bsmdoc.bsmdoc_gen(click.format_filename(filename), encoding, not print_html)
+    if print_html:
+        click.echo(bsmdoc.html_text)
 
 
 if __name__ == '__main__':
