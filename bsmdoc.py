@@ -231,7 +231,7 @@ class BParse(object):
         return None
 
     def push_block(self, args):
-        assert (isinstance(args, dict))
+        assert isinstance(args, dict)
         if args['block'] == 'heading':
             self.heading_level = len(self.block_state)
         args['heading_level'] = self.heading_level
@@ -1455,10 +1455,7 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
     txt = txt.decode()
     regexp = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
     m = regexp.search(txt)
-    while m:
-        qb = '&#x' + m.group(1) + ';'
-        txt = txt[:m.start()] + qb + txt[m.end():]
-        m = regexp.search(txt, m.start())
+    txt = regexp.sub(r'&#x\1;', txt)
     txt = txt.encode().decode('unicode_escape')
     return txt
 
