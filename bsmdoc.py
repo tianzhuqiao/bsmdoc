@@ -256,7 +256,7 @@ class BParse(object):
         yacc.parse(txt, tracking=True)
 
     def run(self, filename, encoding, lexonly):
-        txt = bsmdoc_readfile(filename, encoding, silent=not self.verbose)
+        txt = _bsmdoc_readfile(filename, encoding, silent=not self.verbose)
         self.filename = filename
         if lexonly:
             # output the lexer token for debugging
@@ -869,14 +869,14 @@ class BParse(object):
             fun = ldict.get('bsmdoc_' + cmds[0], 'none')
             _bsmdoc_warning('Use decorator @BFunction to define function "%s"' % (cmds[0]))
         if fun and hasattr(fun, "__call__"):
-            return str(eval('fun(data, *cmds[1:], **kwargs)'))
+            return str(fun(data, *cmds[1:], **kwargs))
         elif fun and len(cmds) == 1 and not data \
              and isinstance(fun, six.string_types):
             # it is defined as an alias (e.g., with \newfun{bsmdoc|CONTENT}),
             # then, \bsmdoc will be replaced with CONTENT
             return fun
         else:
-            f = 'bsmdoc_%s(%s)' % (cmds[0], ",".join(cmds[1:]))
+            f = '%s(%s)' % (cmds[0], ",".join(cmds[1:]))
             _bsmdoc_warning('undefined function block "%s".' % (f), **kwargs)
         if default:
             return default
@@ -924,7 +924,7 @@ class BFunction(object):
 def bsmdoc_include(data, **kwargs):
     filename = data.strip()
     if os.path.isfile(filename):
-        return bsmdoc_readfile(filename, **kwargs)
+        return _bsmdoc_readfile(filename, **kwargs)
     return ""
 
 
@@ -995,7 +995,7 @@ def bsmdoc_config(data, *args, **kwargs):
         cfg.load(data)
     elif args[0] == 'bsmdoc_conf':
         _bsmdoc_info("read configuration from file %s..." % data, **kwargs)
-        cfg.load(bsmdoc_readfile(data, silent=kwargs.get('silent', False)))
+        cfg.load(_bsmdoc_readfile(data, silent=kwargs.get('silent', False)))
     else:
         if data.lower() in ['true', 'false']:
             data = data.lower() in ['true']
@@ -1094,7 +1094,7 @@ def bsmdoc_pre(data, *args, **kwargs):
 def bsmdoc_tag(data, *args, **kwargs):
     if len(args) >= 1:
         tag = args[0].lower()
-        style = bsmdoc_style_(args[1:])
+        style = _bsmdoc_style(args[1:])
         tag_start = tag
         tag_end = tag
         data = str(data).strip()
@@ -1111,7 +1111,7 @@ def bsmdoc_tag(data, *args, **kwargs):
     return data
 
 
-def code_format(code, obeytabs=False, gobble=0, autogobble=False):
+def _code_format(code, obeytabs=False, gobble=0, autogobble=False):
     # replace tab with 4 space
     if not obeytabs:
         code = code.replace('\t', ' ' * 4)
@@ -1145,7 +1145,7 @@ def bsmdoc_math(data, *args, **kwargs):
     if args and args[0] == 'inline':
         return '${0}$'.format(eqn)
 
-    return BFunction().div('$$\n{0}\n$$'.format(code_format(eqn, autogobble=True)),
+    return BFunction().div('$$\n{0}\n$$'.format(_code_format(eqn, autogobble=True)),
                            'mathjax')
 
 
@@ -1158,14 +1158,14 @@ def bsmdoc_div(data, *args, **kwargs):
     return BFunction().tag(data, 'div', *args, **kwargs)
 
 
-def get_opts(*args):
+def _get_opts(*args):
     opts = dict((n.strip(), v.strip())
                 for n, v in (a.split('=') for a in args if '=' in a))
     args = [a for a in args if '=' not in a]
     return args, opts
 
 
-def to_int(val, default=0):
+def _to_int(val, default=0):
     try:
         return int(val)
     except ValueError:
@@ -1184,15 +1184,15 @@ def bsmdoc_alias(data, *args, **kwargs):
 
 @BFunction('highlight')
 def bsmdoc_highlight(code, *args, **kwargs):
-    args, opts = get_opts(*args)
+    args, opts = _get_opts(*args)
     # format code
     obeytabs = 'obeytabs' in args
-    gobble = to_int(opts.get('gobble', 0))
+    gobble = _to_int(opts.get('gobble', 0))
     autogobble = 'autogobble' in args
-    code = code_format(code,
-                       obeytabs=obeytabs,
-                       gobble=gobble,
-                       autogobble=autogobble)
+    code = _code_format(code,
+                        obeytabs=obeytabs,
+                        gobble=gobble,
+                        autogobble=autogobble)
 
     lineno = 'inline' if 'lineno' in args else False
     lexer = get_lexer_by_name(args[0], stripnl=False, tabsize=4)
@@ -1319,7 +1319,7 @@ def bsmdoc_heading(data, *args, **kwargs):
     return BFunction().tag(txt, 'h%d' % level, label) + '\n'
 
 
-def bsmdoc_next_tag(sec, **kwargs):
+def _bsmdoc_next_tag(sec, **kwargs):
     cfg = kwargs['cfg']
     if cfg[sec + '_numbering']:
         cfg[sec + '_next_tag'] += 1
@@ -1329,7 +1329,7 @@ def bsmdoc_next_tag(sec, **kwargs):
     return ("", "")
 
 
-def bsmdoc_style_(args, default_class=None):
+def _bsmdoc_style(args, default_class=None):
     style = []
     style_class = []
     for a in args:
@@ -1366,7 +1366,7 @@ def bsmdoc_image(data, *args, **kwargs):
     label = cfg['v:label']
     tag = ''
     if label:
-        (tag, num) = bsmdoc_next_tag('image', **kwargs)
+        (tag, num) = _bsmdoc_next_tag('image', **kwargs)
         if cfg.get_scan() == 1 and cfg['ANCHOR%s:' % label]:
             _bsmdoc_warning('duplicated label "%s".' % (label), **kwargs)
 
@@ -1389,7 +1389,7 @@ def bsmdoc_video(data, *args, **kwargs):
     label = cfg['v:label']
     tag = ''
     if label:
-        (tag, num) = bsmdoc_next_tag('image', **kwargs)
+        (tag, num) = _bsmdoc_next_tag('image', **kwargs)
         if cfg.get_scan() == 1 and cfg['ANCHOR:' + label]:
             _bsmdoc_warning('duplicated label %s".' % (label), **kwargs)
 
@@ -1417,7 +1417,7 @@ def bsmdoc_table(data, *args, **kwargs):
     tag = ''
     # add the in-page link
     if label:
-        (tag, num) = bsmdoc_next_tag('table', **kwargs)
+        (tag, num) = _bsmdoc_next_tag('table', **kwargs)
         cfg['ANCHOR:%s' % label] = num
         label = 'id="%s"' % label
         tag = BFunction().tag(tag, 'span', 'tag')
@@ -1506,7 +1506,7 @@ def bsmdoc_anchor(data, *args, **kwargs):
     return BFunction().tag(BFunction().tag("&#x2693;", 'sup'), 'a', 'name="%s"' % data)
 
 
-def bsmdoc_readfile(filename, encoding=None, **kwargs):
+def _bsmdoc_readfile(filename, encoding=None, **kwargs):
     if not encoding:
         try:
             # encoding is not define, try to detect it
@@ -1525,7 +1525,6 @@ def bsmdoc_readfile(filename, encoding=None, **kwargs):
     txt = txt.encode('unicode_escape')
     txt = txt.decode()
     regexp = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
-    m = regexp.search(txt)
     txt = regexp.sub(r'&#x\1;', txt)
     txt = txt.encode().decode('unicode_escape')
     return txt
@@ -1655,14 +1654,14 @@ class Bdoc(object):
 
 
 @click.command()
-@click.option('--lex', is_flag=True, help="Show lexer output and exit.")
+@click.option('--lex-only', is_flag=True, help="Show lexer output and exit.")
 @click.option('--encoding', help="Set the input file encoding, e.g. 'utf-8'.")
 @click.option('--print-html', is_flag=True, help="Print the output html.")
 @click.option('--verbose', is_flag=True)
 @click.version_option(__version__)
 @click.argument('filename', type=click.Path(exists=True))
-def cli(filename, lex, encoding, print_html, verbose):
-    bsmdoc = Bdoc(lex, verbose)
+def cli(filename, lex_only, encoding, print_html, verbose):
+    bsmdoc = Bdoc(lex_only, verbose)
     bsmdoc.bsmdoc_gen(click.format_filename(filename), encoding, not print_html)
     if print_html:
         click.echo(bsmdoc.html_text)
