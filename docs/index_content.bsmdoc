@@ -20,19 +20,22 @@ $ pip install -e .
 == Get Started
 {!exec|firstRunOnly||{%
 defines = {}
+@BFunction('define')
 def bsmdoc_define(data, *args, **kwargs):
     if not args:
         return ""
     defines[args[0]] = data
     return ""
 
-bsmdoc_include_origin = bsmdoc_include
+bsmdoc_include_origin = BFunction().include
+@BFunction('include')
 def bsmdoc_include(data, *args, **kwargs):
     alias = data.strip()
     if alias and alias in defines:
         return defines[alias]
     return bsmdoc_include_origin(data, *args, **kwargs)
 
+@BFunction('example')
 def bsmdoc_example(data, *args, **kwargs):
     template = ("{!div|bs-example||\n"
                 "%s\n"
@@ -41,7 +44,8 @@ def bsmdoc_example(data, *args, **kwargs):
                 "%%}!}\n")
     return template%(data, data)
 %}!}
-{!exec||{%
+{!exec|firstRunOnly||{%
+@BFunction('helloworld')
 def bsmdoc_helloworld(data, *args, **kwargs):
     import os
     gen = True
@@ -55,6 +59,7 @@ def bsmdoc_helloworld(data, *args, **kwargs):
         if doc < html and bsmdoc < html:
             gen = False
     except:
+        traceback.print_exc(file=sys.stdout)
         gen = True
     if gen:
         os.system("bsmdoc helloworld.bsmdoc")
@@ -673,12 +678,14 @@ When bsmdoc sees the following function block
 !}
 %}!}
 
-it will search for the function with name "\tag{code|bsmdoc_command}". If found, it will execute the command with list "\tag{code|\[arg0, arg1\]}" as argument. For example, if you want to define a function block to achieve the "\tag{del|delete}" effect,
-- {first you need to define the function (e.g., "\tag{code|bsmdoc_del}"),
+it will search for the function decorated with "\tag{code|@BFunction('command')}". If found, it will execute the command with list "\tag{code|\[arg0, arg1\]}" as argument. For example, if you want to define a function block to achieve the "\tag{del|delete}" effect,
+- {first you need to define the function (e.g., "\tag{code|bsmdoc_del}") with decorator "\tag{code|@BFunction('del')}"; the function name is not important.
 {!highlight|python||{%
+@BFunction('del')
 def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%data
 %}!}{!exec||{%
+@BFunction('del')
 def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%data
 %}!}
@@ -691,7 +698,7 @@ Here \tag{code|**kwargs} are additional arguments from bsmdoc, for example
 }}
 Such info may be helpful to show debugging tips once some error happens.
 }
-- {Now the \tag{code|del} can be used as all the other blocks,
+- {Now the \tag{code|del} (the name from \tag{code|@BFunction} decorator) can be used as all the other blocks,
 
 {!div|bs-example||highlight|html||del||
 delete
@@ -702,7 +709,7 @@ delete
 %}!}
 }
 
-All \tag{code|bsmdoc_command} function should return a \tag{strong|string}, which will be sent to the next block or the html file. If the function does not need to change the html file, it should return the empty string.
+All \tag{code|command} functions shall return a \tag{strong|string}, which will be sent to the next block or the html file. If the function does not need to change the html file, it shall return the empty string.
 
 The next question is where to put the function definition? One straightforward solution is to define the above \tag{code|bsmdoc_del} function in \tag{code|bsmdoc.py} and then all the documents can use the \tag{code|del} function block. However, that also means once you need some missing features, you need to go back to the \tag{code|bsmdoc.py} and define the functions there. It may cause two potential issues:
 - {It needs to edit additional file \tag{code|bsmdoc.py} besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled;}
@@ -717,6 +724,7 @@ which will execute the \tag{code|code} automatically.
 Thus, including the following code in your doc will automatically add the \tag{code|bsmdoc_del} function just as it is defined in \tag{code|bsmdoc.py} (but be careful, since bsmdoc will call python function "\tag{code|exec()}" for this feature, it may cause some security concerns).
 {!highlight|bsmdoc||{%
 {!exec||{%
+@BFunction('del')
 def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%content
 %}!}
@@ -725,6 +733,7 @@ def bsmdoc_del(data, *args, **kwargs):
 With the \tag{code|exec} block, you can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library
 {!highlight|bsmdoc||{%
 {!exec||{%
+@BFunction('highlight')
 def bsmdoc_highlight(data, *args, **kwargs):
     ...
 %}!}
@@ -733,7 +742,8 @@ def bsmdoc_highlight(data, *args, **kwargs):
 Or in some case, you just want to use your own function for some arguments. For example, you want to call your own function to highlight the code for a specific language, and use the default function for all the others. In this case, you may try
 {!highlight|bsmdoc||{%
 {!exec||{%
-bsmdoc_highlight_raw = bsmdoc_highlight
+bsmdoc_highlight_raw = BFunction().highlight # get the current highlight function
+@BFunction('highlight')
 def bsmdoc_highlight(data, *args, **kwargs):
     if args[0] != 'mylang':
         return bsmdoc_highlight_raw(data, *args, **kwargs)
@@ -745,7 +755,8 @@ def bsmdoc_highlight(data, *args, **kwargs):
 It may work fine to compile most of your docs, until one day it fails and python complains indefinite loop. The problem here is that the above definition assumes such code will only be called once. But it is not always true for bsmdoc. As mentioned before, bsmdoc may scan the doc multiple times to solve the late-defined references. Thus, when bsmdoc executes the above code second time, \tag{code|bsmdoc_highlight_raw} will not refer to the original \tag{code|bsmdoc_highlight}, instead, it will also point to the local defined copy. The definition will be equivalent to
 {!highlight|bsmdoc||{%
 {!exec||{%
-bsmdoc_highlight_raw = bsmdoc_highlight
+bsmdoc_highlight_raw = BFunction().highlight
+@BFunction('highlight')
 def bsmdoc_highlight(data, *args, **kwargs):
     if args[0] != 'mylang':
         return bsmdoc_highlight(data, *args, **kwargs)
@@ -762,7 +773,8 @@ Several techniques can be used to solve this problem. For example, you can alway
 try:
     bsmdoc_highlight_raw
 except NameError:
-    bsmdoc_highlight_raw = bsmdoc_highlight
+    bsmdoc_highlight_raw = BFunction().highlight
+    @BFunction('highlight')
     def bsmdoc_highlight(data, *args, **kwargs):
         if args[0] != 'mylang':
             return bsmdoc_highlight(data, *args, **kwargs)
@@ -774,7 +786,8 @@ except NameError:
 Or you can tell bsmdoc to execute the code for the first scan only
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
-bsmdoc_highlight_raw = bsmdoc_highlight
+bsmdoc_highlight_raw = BFunction().highlight
+@BFunction('highlight')
 def bsmdoc_highlight(data, *args, **kwargs):
     if lang != 'mylang':
         return bsmdoc_highlight(data, *args, **kwargs)
@@ -849,9 +862,11 @@ With function block, it is easy to include source code in html doc. For example,
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
 import inspect
+import six
+@BFunction('codesnippet')
 def bsmdoc_codesnippet(data, *args, **kwargs):
     d = eval(data)
-    if isinstance(d, str):
+    if isinstance(d, six.string_types):
         return d
     else:
         return inspect.getsource(d)
@@ -860,6 +875,7 @@ def bsmdoc_codesnippet(data, *args, **kwargs):
 {!exec|firstRunOnly||{%
 import inspect
 import six
+@BFunction('codesnippet')
 def bsmdoc_codesnippet(data, *args, **kwargs):
     d = eval(data)
     if isinstance(d, six.string_types):
@@ -888,6 +904,7 @@ plt.plot
 It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write a function block to just return certain sections (e.g., a function), instead of the whole file.
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
+@BFunction('ccodesnippet')
 def bsmdoc_ccodesnippet(data, *args, **kwargs):
     with open(data.strip(), 'r') as f:
         return ''.join(f.readlines())
@@ -895,6 +912,7 @@ def bsmdoc_ccodesnippet(data, *args, **kwargs):
 %}!}
 %}!}
 {!exec|firstRunOnly||{%
+@BFunction('ccodesnippet')
 def bsmdoc_ccodesnippet(data, *args, **kwargs):
     with open(data.strip(), 'r') as f:
         return ''.join(f.readlines())
@@ -940,11 +958,11 @@ We have seen [#sec-heading|heading], [#sec-image|image], and [#sec-table|table] 
 
 == Express Function Block
 Besides the way mentioned above, there is a shortcut to define a function block, if it returns a simple string. The syntax to define a function is
-{!div|bs-demo||highlight|html||{%
+{!div|bs-demo||highlight|bsmdoc||{%
 \newfun{name|content}
 %}!}
 For example
-{!highlight|python||{%
+{!highlight|bsmdoc||{%
 \newfun{bsmdoc|\tag{strong|bsmdoc}}
 %}!}{
 \newfun{bsmdoc|\tag{strong|bsmdoc}}
@@ -991,7 +1009,8 @@ Here \tag{code|data} will be anything following \tag{code|\#include}. In the pre
 It is easy to extend the \tag{b|bsmdoc_include} function for more advanced applications, for example
 {!highlight|bsmdoc||{%
 {!exec|firstRunOnly||{%
-bsmdoc_include_raw = bsmdoc_include
+bsmdoc_include_raw = BFunction().include
+@BFunction('include')
 def bsmdoc_include(data):
     # assume 'data' has multiple sections separated by '|', in the format of
     # PATTERN | MAX LINE | FILENAME

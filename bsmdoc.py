@@ -1571,7 +1571,7 @@ content = <div class="footer-text"> Last updated %(UPDATED)s by
 """
 
 
-class Bdoc(object):
+class BDoc(object):
     """class to generate the html file"""
     def __init__(self, lexonly, verbose):
         self.verbose = verbose
@@ -1582,7 +1582,7 @@ class Bdoc(object):
         self.html = ""
         self.html_text = ""
 
-    def bsmdoc_gen(self, filename, encoding=None, output=True):
+    def gen(self, filename, encoding=None, output=True):
         self.parser = BParse(verbose=self.verbose)
         self.parser.run(filename, encoding, self.lexonly)
         if self.lexonly:
@@ -1661,8 +1661,8 @@ class Bdoc(object):
 @click.version_option(__version__)
 @click.argument('filename', type=click.Path(exists=True))
 def cli(filename, lex_only, encoding, print_html, verbose):
-    bsmdoc = Bdoc(lex_only, verbose)
-    bsmdoc.bsmdoc_gen(click.format_filename(filename), encoding, not print_html)
+    bsmdoc = BDoc(lex_only, verbose)
+    bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
     if print_html:
         click.echo(bsmdoc.html_text)
 
