@@ -1,4 +1,7 @@
-import sys, re, os, io, time
+import sys
+import re
+import os
+import time
 import traceback
 import six
 from six.moves import configparser
@@ -1519,14 +1522,12 @@ def _bsmdoc_readfile(filename, encoding=None, **kwargs):
     _bsmdoc_info("open \"%s\" with encoding \"%s\"" % (filename, encoding),
                  **kwargs)
     txt = ""
-    fp = io.open(filename, 'r', encoding=encoding)
-    txt = fp.read()
-    fp.close()
-    txt = txt.encode('unicode_escape')
-    txt = txt.decode()
-    regexp = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
-    txt = regexp.sub(r'&#x\1;', txt)
-    txt = txt.encode().decode('unicode_escape')
+    with open(filename, 'r', encoding=encoding) as fp:
+        txt = fp.read()
+        txt = txt.encode('unicode_escape').decode()
+        regexp = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
+        txt = regexp.sub(r'&#x\1;', txt)
+        txt = txt.encode().decode('unicode_escape')
     return txt
 
 
@@ -1649,7 +1650,7 @@ class BDoc(object):
         self.html_text = '\n'.join(html)
         self.output_filename = os.path.splitext(filename)[0] + '.html'
         if output:
-            with open(self.output_filename, 'w') as fp:
+            with open(self.output_filename, 'w', encoding=encoding) as fp:
                 fp.write(self.html_text)
 
 
