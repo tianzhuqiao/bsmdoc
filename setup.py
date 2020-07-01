@@ -28,7 +28,7 @@ setup(name='bsmdoc',
       python_requires='>=3.2',
       platforms=["any"],
       py_modules=['bsmdoc'],
-      install_requires=['ply', 'pygments', 'click', 'chardet', 'six'],
+      install_requires=['ply', 'pygments', 'click', 'cchardet', 'six'],
       entry_points='''
         [console_scripts]
         bsmdoc=bsmdoc:cli

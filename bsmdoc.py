@@ -7,7 +7,7 @@ import six
 from six.moves import configparser
 from ply import lex, yacc
 import click
-import chardet
+import cchardet as chardet
 
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
@@ -973,7 +973,7 @@ def _bsmdoc_info(msg, **kwargs):
         return
     info = msg
     if lineno != -1:
-        info = "%d %s" % (lineno, info)
+        info = "%d: %s" % (lineno, info)
     if filename:
         info = ' '.join([filename, info])
     click.echo(info)
@@ -997,7 +997,7 @@ def bsmdoc_config(data, *args, **kwargs):
         _bsmdoc_info("reading configuration...", **kwargs)
         cfg.load(data)
     elif args[0] == 'bsmdoc_conf':
-        _bsmdoc_info("read configuration from file %s..." % data, **kwargs)
+        _bsmdoc_info('read configuration from file "%s"...' % data, **kwargs)
         cfg.load(_bsmdoc_readfile(data, silent=kwargs.get('silent', False)))
     else:
         if data.lower() in ['true', 'false']:
@@ -1511,25 +1511,21 @@ def bsmdoc_anchor(data, *args, **kwargs):
 
 def _bsmdoc_readfile(filename, encoding=None, **kwargs):
     if not encoding:
-        try:
-            # encoding is not define, try to detect it
-            raw = open(filename.strip(), 'rb').read()
-            result = chardet.detect(raw)
-            encoding = result['encoding']
-        except IOError:
-            traceback.print_exc(file=sys.stdout)
-            return ""
+        # encoding is not define, try to detect it
+        with open(filename.strip(), 'rb') as fp:
+            raw = fp.read()
+            encoding = chardet.detect(raw)['encoding']
+
     _bsmdoc_info("open \"%s\" with encoding \"%s\"" % (filename, encoding),
                  **kwargs)
-    txt = ""
     with open(filename, 'r', encoding=encoding) as fp:
         txt = fp.read()
         txt = txt.encode('unicode_escape').decode()
         regexp = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
         txt = regexp.sub(r'&#x\1;', txt)
         txt = txt.encode().decode('unicode_escape')
-    return txt
-
+        return txt
+    return ""
 
 # generate the html
 bsmdoc_conf = """
