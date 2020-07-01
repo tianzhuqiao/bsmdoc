@@ -1660,12 +1660,14 @@ class BDoc(object):
 @click.option('--print-html', is_flag=True, help="Print the output html.")
 @click.option('--verbose', is_flag=True)
 @click.version_option(__version__)
-@click.argument('filename', type=click.Path(exists=True))
-def cli(filename, lex_only, encoding, print_html, verbose):
-    bsmdoc = BDoc(lex_only, verbose)
-    bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
-    if print_html:
-        click.echo(bsmdoc.html_text)
+@click.argument('files', nargs=-1, type=click.Path(exists=True))
+def cli(files, lex_only, encoding, print_html, verbose):
+    for filename in files:
+        bsmdoc = BDoc(lex_only, verbose)
+        bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
+        if print_html:
+            click.echo(bsmdoc.html_text)
+            click.echo('\n')
 
 
 if __name__ == '__main__':
