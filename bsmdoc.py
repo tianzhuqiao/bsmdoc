@@ -21,9 +21,6 @@ class BConfig(object):
     class to hold all the configurations
     """
     def __init__(self):
-        self.verbose = False
-        self.lex = False
-
         self.config = configparser.SafeConfigParser(delimiters=('=', ))
         self.load(bsmdoc_conf)
         # cite & reference
@@ -74,7 +71,6 @@ class BConfig(object):
             self.config.remove_option('DEFAULT', k)
 
         self.set_updated(time.localtime(time.time()), True)
-        self['verbose'] = self.verbose
         self['title'] = ''
         self['show_source'] = False
         self['heading_numbering'] = False
@@ -260,20 +256,19 @@ class BParse(object):
         lex.lexer.lineno = 1
         yacc.parse(txt, tracking=True)
 
-    def run(self, filename, encoding, lexonly):
+    def run(self, filename, encoding, lex_only):
         txt = _bsmdoc_readfile(filename, encoding, silent=not self.verbose)
         self.filename = filename
-        if lexonly:
+        if lex_only:
             # output the lexer token for debugging
             lex.input(txt)
-            tok = lex.token()
-            while tok:
+            for tok in lex.lexer:
                 click.echo(tok)
-                tok = lex.token()
-            return
+            return None
 
         while self.config.need_scan():
             self.scan(txt)
+        return self.html
 
     def pop_input(self):
         if self._input_stack:
@@ -1573,19 +1568,18 @@ content = <div class="footer-text"> Last updated %(UPDATED)s by
 
 class BDoc(object):
     """class to generate the html file"""
-    def __init__(self, lexonly, verbose):
+    def __init__(self, lex_only, verbose):
         self.verbose = verbose
-        self.lexonly = lexonly
-        self.parser = None
+        self.lex_only = lex_only
+        self.parser = BParse(verbose=self.verbose)
         self.cfg = None
         self.output_filename = ""
         self.html = ""
         self.html_text = ""
 
     def gen(self, filename, encoding=None, output=True):
-        self.parser = BParse(verbose=self.verbose)
-        self.parser.run(filename, encoding, self.lexonly)
-        if self.lexonly:
+        html_body = self.parser.run(filename, encoding, self.lex_only)
+        if html_body is None:
             return
         cfg = self.parser.config
 
@@ -1619,7 +1613,7 @@ class BDoc(object):
         if doctitle:
             doctitle = bsmdoc_tag(doctitle + subtitle, 'div', 'toptitle')
         html.append(doctitle)
-        html.append(self.parser.html)
+        html.append(html_body)
         # reference
         if cfg.cited:
             cites = [bsmdoc_tag(x[0], 'li') for x in cfg.cited]
