@@ -38,7 +38,7 @@ class BConfig(object):
         # alias
         self.alias = {}
         self._scan = 0
-        self._rescan = False
+        self._need_scan = True # at least scan once
 
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
@@ -107,14 +107,15 @@ class BConfig(object):
 
     def next_scan(self):
         self._scan += 1
+        self._need_scan = False
 
-    def need_rescan(self):
-        return self._rescan
+    def need_scan(self):
+        return self._need_scan
 
-    def request_rescan(self):
+    def request_scan(self):
         """request for a second scan, return false if it is the 2nd scan now"""
         if self._scan == 1:
-            self._rescan = True
+            self._need_scan = True
             return True
         return False
 
@@ -244,9 +245,10 @@ class BParse(object):
         self.config.set_vars({})
         self.block_state.append(args)
 
-    def _run(self, txt):
+    def scan(self, txt):
         # start next scan
         self.config.next_scan()
+        _bsmdoc_info("scan %d ..." % (self.config.get_scan()), silent=not self.verbose)
         # save the table of contents collected from previous scan or empty for
         # 1st scan
         self._contents = self.config.contents
@@ -270,12 +272,8 @@ class BParse(object):
                 tok = lex.token()
             return
 
-        _bsmdoc_info("first pass scan ...", silent=not self.verbose)
-        self._run(txt)
-        if self.config.need_rescan():
-            # 2nd scan to resolve the references
-            _bsmdoc_info("second pass scan ...", silent=not self.verbose)
-            self._run(txt)
+        while self.config.need_scan():
+            self.scan(txt)
 
     def pop_input(self):
         if self._input_stack:
@@ -301,6 +299,11 @@ class BParse(object):
         kwargs = {'filename': self.filename, 'lineno': line}
         _bsmdoc_error(msg, **kwargs)
 
+    def _scan_info(self):
+        return {'silent': not self.verbose,
+                'include': self.filename,
+                'cfg': self.config,
+                'indent': len(self._input_stack)}
     # lexer
     def t_error(self, t):
         self._error("illegal character '%s'" % (t.value[0]), t.lexer.lineno)
@@ -327,7 +330,9 @@ class BParse(object):
         r'\#include[^\S\r\n]+[\S]+[\s]*$'
         filename = t.value.strip()
         filename = filename.replace('#include', '', 1).strip()
-        txt = BFunction().include(filename, silent=not self.verbose, cfg=self.config)
+        kwargs = self._scan_info()
+        kwargs['lineno'] = t.lexer.lineno
+        txt = BFunction().include(filename, **kwargs)
         t.lexer.lineno += t.value.count('\n')
         if txt is not None:
             self.push_input(t, txt)
@@ -347,7 +352,7 @@ class BParse(object):
             self.filename = "CONTENTS"
             return t.lexer.token()
 
-        self.config.request_rescan()
+        self.config.request_scan()
         return None
 
     # comment starts with "#", except "&#"
@@ -829,7 +834,7 @@ class BParse(object):
             if not v:
                 v = s[1:]
                 # do not find the anchor, wait for the 2nd scan
-                if not self.config.request_rescan():
+                if not self.config.request_scan():
                     kwargs = {'lineno': p.lineno(2), 'filename': self.filename}
                     _bsmdoc_warning("broken anchor '%s'" % v, **kwargs)
         p[0] = bsmdoc_tag(v, 'a', 'href="%s"' % s)
@@ -857,13 +862,8 @@ class BParse(object):
             click.echo("error: ", p)
 
     def cmd_helper(self, cmds, data, default='', lineno=-1, inline=False):
-        kwargs = {
-            'lineno': lineno,
-            'inline': inline,
-            'silent': not self.verbose,
-            'filename': self.filename,
-            'cfg': self.config
-        }
+        kwargs = self._scan_info()
+        kwargs.update({'lineno': lineno, 'inline': inline})
         fun = BFunction.get(cmds[0])
         if not fun:
             # search global function bsmdoc_* to be compatible with previous
@@ -967,8 +967,9 @@ def bsmdoc_unescape(data, *args, **kwargs):
 
 def _bsmdoc_info(msg, **kwargs):
     lineno = kwargs.get('lineno', -1)
-    filename = kwargs.get('filename', '')
+    filename = kwargs.get('filename', '') or kwargs.get('include', '')
     silent = kwargs.get('silent', False)
+    indent = kwargs.get('indent', 0)
     if silent:
         return
     info = msg
@@ -976,6 +977,8 @@ def _bsmdoc_info(msg, **kwargs):
         info = "%d: %s" % (lineno, info)
     if filename:
         info = ' '.join([filename, info])
+    if indent:
+        info = '    ' * indent + info
     click.echo(info)
 
 
@@ -994,10 +997,10 @@ def bsmdoc_config(data, *args, **kwargs):
     cfg = kwargs['cfg']
     if len(args) <= 0:
         # configuration as text
-        _bsmdoc_info("reading configuration...", **kwargs)
+        _bsmdoc_info("reading configuration ...", **kwargs)
         cfg.load(data)
     elif args[0] == 'bsmdoc_conf':
-        _bsmdoc_info('read configuration from file "%s"...' % data, **kwargs)
+        _bsmdoc_info('read configuration from file "%s" ...' % data, **kwargs)
         cfg.load(_bsmdoc_readfile(data, silent=kwargs.get('silent', False)))
     else:
         if data.lower() in ['true', 'false']:
@@ -1048,7 +1051,7 @@ def bsmdoc_ref(data, *args, **kwargs):
     v = cfg['ANCHOR:' + data]
     if v:
         return BFunction().tag(v, 'a', 'href="#%s"' % data)
-    elif not cfg.request_rescan() and not data.startswith('eq'):
+    elif not cfg.request_scan() and not data.startswith('eq'):
         # do not find the anchor, wait for the 2nd scan
         _bsmdoc_warning("Probably broken anchor '%s'" % data, **kwargs)
     # can not find the anchor, assume its a equation reference for now
@@ -1216,7 +1219,7 @@ def bsmdoc_cite(data, *args, **kwargs):
     ref_tag = 1  # the index of the reference
     cite_tag = 1  # the index of citation of the reference
     if not ref:
-        if not cfg.request_rescan():
+        if not cfg.request_scan():
             _bsmdoc_error("Can't find the reference: %s" % data, **kwargs)
         return ""
     i = 0
