@@ -218,7 +218,7 @@ class BParse(object):
             return self.block_state[-1]
         return None
 
-    def pop_block(self):
+    def pop_block(self, lineno=-1):
         if self.block_state:
             args = self.block_state.pop()
             self.heading_level = args['heading_level']
@@ -226,8 +226,7 @@ class BParse(object):
             args.pop('config', None)
             args.pop('heading_level', None)
             return args
-
-        _bsmdoc_error('no more blocks')
+        self._error('no more blocks', lineno=lineno)
         return None
 
     def push_block(self, args):
@@ -244,7 +243,7 @@ class BParse(object):
     def scan(self, txt):
         # start next scan
         self.config.next_scan()
-        _bsmdoc_info("scan %d ..." % (self.config.get_scan()), silent=not self.verbose)
+        self._info("scan %d ..." % (self.config.get_scan()))
         # save the table of contents collected from previous scan or empty for
         # 1st scan
         self._contents = self.config.contents
@@ -290,18 +289,29 @@ class BParse(object):
         self.config['lineno'] = t.lexer.lineno
         return self.config
 
-    def _error(self, msg, line=-1):
-        kwargs = {'filename': self.filename, 'lineno': line}
-        _bsmdoc_error(msg, **kwargs)
+    def _info(self, msg, **kwargs):
+        info = self._scan_info(**kwargs)
+        _bsmdoc_info(msg, **info)
 
-    def _scan_info(self):
-        return {'silent': not self.verbose,
+    def _warning(self, msg, **kwargs):
+        info = self._scan_info(**kwargs)
+        _bsmdoc_warning(msg, **info)
+
+    def _error(self, msg, **kwargs):
+        info = self._scan_info(**kwargs)
+        _bsmdoc_error(msg, **info)
+
+    def _scan_info(self, **kwargs):
+        info = {'silent': not self.verbose,
                 'include': self.filename,
                 'cfg': self.config,
                 'indent': len(self._input_stack)}
+        info.update(kwargs)
+        return info
+
     # lexer
     def t_error(self, t):
-        self._error("illegal character '%s'" % (t.value[0]), t.lexer.lineno)
+        self._error("illegal character '%s'" % (t.value[0]), lineno=t.lexer.lineno)
         t.lexer.skip(1)
 
     def t_eof(self, t):
@@ -325,19 +335,16 @@ class BParse(object):
         r'\#include[^\S\r\n]+[\S]+[\s]*$'
         filename = t.value.strip()
         filename = filename.replace('#include', '', 1).strip()
-        kwargs = self._scan_info()
-        kwargs['lineno'] = t.lexer.lineno
+        kwargs = self._scan_info(lineno=t.lexer.lineno)
         txt = BFunction().include(filename, **kwargs)
         t.lexer.lineno += t.value.count('\n')
-        if txt is not None:
+        if txt:
             self.push_input(t, txt)
             self.filename = filename
             if os.path.isfile(filename):
                 self.config.set_updated(time.gmtime(os.path.getmtime(filename)), False)
             return t.lexer.token()
-        else:
-            self._error("can't not find %s" % filename, t.lexer.lineno)
-            return None
+        return None
 
     def t_MAKECONTENT(self, t):
         r'\#makecontent[^\S\r\n]*$'
@@ -815,8 +822,22 @@ class BParse(object):
         '''inlineblock : INLINEEQ'''
         p[0] = self.cmd_helper(["math", "inline"], p[1], lineno=p.lineno(1))
 
+    def check_anchor(self, anchor, lineno=-1):
+        # internal anchor
+        v = self.config['ANCHOR:%s' % anchor]
+        if not v:
+            v = anchor
+            # do not find the anchor, wait for the 2nd scan
+            if not self.config.request_scan():
+                self._warning("broken anchor '%s'" % v, lineno=lineno)
+
+        return v
+
     def p_inlineblock_link_withname(self, p):
         '''inlineblock : BRACKETL sections TCELL sections BRACKETR'''
+        s = p[2].strip()
+        if s[0] == "#":
+            s = self.check_anchor(s[1:], lineno=p.lineno(2))
         p[0] = bsmdoc_tag(p[4], 'a', 'href="%s"' % p[2])
 
     def p_inlineblock_link(self, p):
@@ -825,13 +846,7 @@ class BParse(object):
         v = s
         if s[0] == '#':
             # internal anchor
-            v = self.config['ANCHOR:%s' % s[1:]]
-            if not v:
-                v = s[1:]
-                # do not find the anchor, wait for the 2nd scan
-                if not self.config.request_scan():
-                    kwargs = {'lineno': p.lineno(2), 'filename': self.filename}
-                    _bsmdoc_warning("broken anchor '%s'" % v, **kwargs)
+            v = self.check_anchor(s[1:], lineno=p.lineno(2))
         p[0] = bsmdoc_tag(v, 'a', 'href="%s"' % s)
 
     def p_plaintext_multi(self, p):
@@ -852,20 +867,19 @@ class BParse(object):
     def p_error(self, p):
         blk = self.top_block()
         if blk:
-            self._error("unmatched block '%s'" % (blk['block']), blk['lineno'])
+            self._error('unmatched block "%s"' % (blk['block']), lineno=blk['lineno'])
         else:
             click.echo("error: ", p)
 
     def cmd_helper(self, cmds, data, default='', lineno=-1, inline=False):
-        kwargs = self._scan_info()
-        kwargs.update({'lineno': lineno, 'inline': inline})
+        kwargs = self._scan_info(lineno=lineno, inline=inline)
         fun = BFunction.get(cmds[0])
         if not fun:
             # search global function bsmdoc_* to be compatible with previous
             # version
             ldict = lex.get_caller_module_dict(1)
             fun = ldict.get('bsmdoc_' + cmds[0], 'none')
-            _bsmdoc_warning('Use decorator @BFunction to define function "%s"' % (cmds[0]))
+            self._warning('use decorator @BFunction to define function "%s"' % (cmds[0]), lineno=lineno)
         if fun and hasattr(fun, "__call__"):
             return str(fun(data, *cmds[1:], **kwargs))
         elif fun and len(cmds) == 1 and not data \
@@ -874,8 +888,7 @@ class BParse(object):
             # then, \bsmdoc will be replaced with CONTENT
             return fun
         else:
-            f = '%s(%s)' % (cmds[0], ",".join(cmds[1:]))
-            _bsmdoc_warning('undefined function block "%s".' % (f), **kwargs)
+            self._warning('undefined function block "%s".' % cmds[0], lineno=lineno)
         if default:
             return default
         return data
@@ -923,6 +936,8 @@ def bsmdoc_include(data, **kwargs):
     filename = data.strip()
     if os.path.isfile(filename):
         return _bsmdoc_readfile(filename, **kwargs)
+    else:
+        _bsmdoc_error("can't not find %s" % filename, **kwargs)
     return ""
 
 
@@ -1047,8 +1062,8 @@ def bsmdoc_ref(data, *args, **kwargs):
     if v:
         return BFunction().tag(v, 'a', 'href="#%s"' % data)
     elif not cfg.request_scan() and not data.startswith('eq'):
-        # do not find the anchor, wait for the 2nd scan
-        _bsmdoc_warning("Probably broken anchor '%s'" % data, **kwargs)
+        # not find the anchor for the 2nd scan
+        _bsmdoc_warning("probably broken anchor '%s'" % data, **kwargs)
     # can not find the anchor, assume its a equation reference for now
     return BFunction().eqref(data, *args, **kwargs)
 
@@ -1215,7 +1230,7 @@ def bsmdoc_cite(data, *args, **kwargs):
     cite_tag = 1  # the index of citation of the reference
     if not ref:
         if not cfg.request_scan():
-            _bsmdoc_error("Can't find the reference: %s" % data, **kwargs)
+            _bsmdoc_error("can't find the reference: %s" % data, **kwargs)
         return ""
     i = 0
     for i, c in enumerate(cfg.cited):
@@ -1504,6 +1519,9 @@ def bsmdoc_listbullet(data, *args, **kwargs):
 
 @BFunction('anchor')
 def bsmdoc_anchor(data, *args, **kwargs):
+    data = data.strip()
+    cfg = kwargs.get('cfg')
+    cfg['ANCHOR:%s' % data] = data
     return BFunction().tag(BFunction().tag("&#x2693;", 'sup'), 'a', 'name="%s"' % data)
 
 
