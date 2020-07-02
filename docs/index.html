@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="bsmdoc 0.0.4">
+<meta name="generator" content="bsmdoc 0.0.6">
 <link rel="stylesheet" href="css/bsmdoc.css" type="text/css">
 <link rel="stylesheet" href="css/menu.css" type="text/css">
 <script>
@@ -90,7 +90,7 @@ bsmdoc -- another technical html doc generator <a href="https://github.com/tianz
 <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc 0.0.4&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc 0.0.6&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;css/bsmdoc.css&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/css&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
@@ -836,10 +836,11 @@ As you may have already figured out, the <code>command</code> section is defined
     content
 <span class="nt">!}</span>
 </pre></div>
-<p>it will search for the function with name "<code>bsmdoc_command</code>". If found, it will execute the command with list "<code>[arg0, arg1]</code>" as argument. For example, if you want to define a function block to achieve the "<del>delete</del>" effect,</p>
+<p>it will search for the function decorated with "<code>@BFunction('command')</code>". If found, it will execute the command with list "<code>[arg0, arg1]</code>" as argument. For example, if you want to define a function block to achieve the "<del>delete</del>" effect,</p>
 <ul>
-<li><p>first you need to define the function (e.g., "<code>bsmdoc_del</code>"),</p>
-<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<li><p>first you need to define the function (e.g., "<code>bsmdoc_del</code>") with decorator "<code>@BFunction('del')</code>"; the function name is not important.</p>
+<div class="syntax"><pre><span></span><span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;del&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">data</span>
 </pre></div>
 <p>Here <code>**kwargs</code> are additional arguments from bsmdoc, for example</p>
@@ -862,7 +863,7 @@ As you may have already figured out, the <code>command</code> section is defined
 </tbody>
 </table>
 <p>Such info may be helpful to show debugging tips once some error happens.</p></li>
-<li><p>Now the <code>del</code> can be used as all the other blocks,</p>
+<li><p>Now the <code>del</code> (the name from <code>@BFunction</code> decorator) can be used as all the other blocks,</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">del</span><span class="p">&gt;</span>delete<span class="p">&lt;/</span><span class="nt">del</span><span class="p">&gt;</span>
 </pre></div>
@@ -874,7 +875,7 @@ delete
 </pre></div>
 </div></li>
 </ul>
-<p>All <code>bsmdoc_command</code> function should return a <strong>string</strong>, which will be sent to the next block or the html file. If the function does not need to change the html file, it should return the empty string.</p>
+<p>All <code>command</code> functions shall return a <strong>string</strong>, which will be sent to the next block or the html file. If the function does not need to change the html file, it shall return the empty string.</p>
 <p>The next question is where to put the function definition? One straightforward solution is to define the above <code>bsmdoc_del</code> function in <code>bsmdoc.py</code> and then all the documents can use the <code>del</code> function block. However, that also means once you need some missing features, you need to go back to the <code>bsmdoc.py</code> and define the functions there. It may cause two potential issues:</p>
 <ul>
 <li>It needs to edit additional file <code>bsmdoc.py</code> besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled;</li>
@@ -888,19 +889,22 @@ delete
 <p>which will execute the <code>code</code> automatically.
 Thus, including the following code in your doc will automatically add the <code>bsmdoc_del</code> function just as it is defined in <code>bsmdoc.py</code> (but be careful, since bsmdoc will call python function "<code>exec()</code>" for this feature, it may cause some security concerns).</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;del&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">content</span>
 <span class="nt">%}!}</span>
 </pre></div>
 <p>With the <code>exec</code> block, you can replace all the predefined blocks with this method. For example, you can define your code highlight function block so that you can highlight your own language or with other library</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;highlight&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="o">...</span>
 <span class="nt">%}!}</span>
 </pre></div>
 <p>Or in some case, you just want to use your own function for some arguments. For example, you want to call your own function to highlight the code for a specific language, and use the default function for all the others. In this case, you may try</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
-<span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
+<span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">BFunction</span><span class="p">()</span><span class="o">.</span><span class="n">highlight</span> <span class="c1"># get the current highlight function</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;highlight&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">bsmdoc_highlight_raw</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -910,7 +914,8 @@ Thus, including the following code in your doc will automatically add the <code>
 </pre></div>
 <p>It may work fine to compile most of your docs, until one day it fails and python complains indefinite loop. The problem here is that the above definition assumes such code will only be called once. But it is not always true for bsmdoc. As mentioned before, bsmdoc may scan the doc multiple times to solve the late-defined references. Thus, when bsmdoc executes the above code second time, <code>bsmdoc_highlight_raw</code> will not refer to the original <code>bsmdoc_highlight</code>, instead, it will also point to the local defined copy. The definition will be equivalent to</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
-<span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
+<span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">BFunction</span><span class="p">()</span><span class="o">.</span><span class="n">highlight</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;highlight&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -924,7 +929,8 @@ Thus, including the following code in your doc will automatically add the <code>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">bsmdoc_highlight_raw</span>
 <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-    <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
+    <span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">BFunction</span><span class="p">()</span><span class="o">.</span><span class="n">highlight</span>
+    <span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;highlight&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -934,7 +940,8 @@ Thus, including the following code in your doc will automatically add the <code>
 </pre></div>
 <p>Or you can tell bsmdoc to execute the code for the first scan only</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
-<span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">bsmdoc_highlight</span>
+<span class="n">bsmdoc_highlight_raw</span> <span class="o">=</span> <span class="n">BFunction</span><span class="p">()</span><span class="o">.</span><span class="n">highlight</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;highlight&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">lang</span> <span class="o">!=</span> <span class="s1">&#39;mylang&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">bsmdoc_highlight</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -985,9 +992,11 @@ Thus, including the following code in your doc will automatically add the <code>
 <p>With function block, it is easy to include source code in html doc. For example, to import the python source code in your doc, you can define the following function block</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;codesnippet&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_codesnippet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">d</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">d</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
@@ -1012,6 +1021,7 @@ plt.plot
 </div>
 <p>It can be easily extended to include arbitrary code. For example, the following block returns the content of a source file. Of course, you can write a function block to just return certain sections (e.g., a function), instead of the whole file.</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;ccodesnippet&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_ccodesnippet</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">())</span>
@@ -1113,11 +1123,11 @@ js/menu.js
 <h2 id="sec-10-4">10.4 Express Function Block</h2>
 <p>Besides the way mentioned above, there is a shortcut to define a function block, if it returns a simple string. The syntax to define a function is</p>
 <div class="bs-demo">
-<div class="syntax"><pre><span></span>\newfun{name|content}
+<div class="syntax"><pre><span></span><span class="nf">\newfun</span><span class="nt">{name</span>|content<span class="nt">}</span>
 </pre></div>
 </div>
 <p>For example</p>
-<div class="syntax"><pre><span></span>\<span class="n">newfun</span><span class="p">{</span><span class="n">bsmdoc</span><span class="o">|</span>\<span class="n">tag</span><span class="p">{</span><span class="n">strong</span><span class="o">|</span><span class="n">bsmdoc</span><span class="p">}}</span>
+<div class="syntax"><pre><span></span><span class="nf">\newfun</span><span class="nt">{bsmdoc</span>|<span class="nt">\tag{strong</span>|bsmdoc<span class="nt">}</span>}
 </pre></div>
 <p>Once it is defined, it can be used as</p>
 <div class="bs-example">
@@ -1137,9 +1147,10 @@ js/menu.js
 <p>Only the headings with automatic numbering will be included in the content list. <b>makecontent</b> will also trigger bsmdoc to scan the doc twice.</p>
 <p><b>makecontent</b> is implemented by a function <b>bsmdoc_makecontent</b>.
 Its input is a list that contains all the headings. The default implementation generates an un-ordered list</p>
-<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_makecontent</span><span class="p">(</span><span class="n">contents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="syntax"><pre><span></span><span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;makecontent&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">bsmdoc_makecontent</span><span class="p">(</span><span class="n">contents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    contents is a list, each item</span>
+<span class="sd">    table of contents is a list, each item</span>
 <span class="sd">    [level, text, label]</span>
 <span class="sd">        level: 1~6</span>
 <span class="sd">        text: the caption text</span>
@@ -1161,16 +1172,20 @@ Its input is a list that contains all the headings. The default implementation g
 </pre></div>
 <p>bsmdoc will replace the line <b>#include chapter1.bsmdoc</b> with the content of the file <b>chappter1.bsmdoc</b>.</p>
 <p>The <code>#include</code> is implemented with function <b>bsmdoc_include</b></p>
-<div class="syntax"><pre><span></span><span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="syntax"><pre><span></span><span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;include&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">bsmdoc_readfile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_bsmdoc_readfile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_bsmdoc_error</span><span class="p">(</span><span class="s2">&quot;can&#39;t not find </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 </pre></div>
 <p>Here <code>data</code> will be anything following <code>#include</code>. In the previous example, it will be "<b>chapter1.bsmdoc</b>" or "<b>chapter2.bsmdoc</b>". If the file is opened successfully, by default <b>bsmdoc_include</b> will return the filename and its content.</p>
 <p>It is easy to extend the <b>bsmdoc_include</b> function for more advanced applications, for example</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>|<span class="nt">firstRunOnly</span>||<span class="nt">{%</span>
-<span class="n">bsmdoc_include_raw</span> <span class="o">=</span> <span class="n">bsmdoc_include</span>
+<span class="n">bsmdoc_include_raw</span> <span class="o">=</span> <span class="n">BFunction</span><span class="p">()</span><span class="o">.</span><span class="n">include</span>
+<span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;include&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_include</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
     <span class="c1"># assume &#39;data&#39; has multiple sections separated by &#39;|&#39;, in the format of</span>
     <span class="c1"># PATTERN | MAX LINE | FILENAME</span>
@@ -1328,7 +1343,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2020-06-14 22:11:22 GMT, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2020-07-02 21:50:29 GMT, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>

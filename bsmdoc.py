@@ -13,7 +13,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 
 class BConfig(object):
