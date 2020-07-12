@@ -1016,20 +1016,14 @@ def bsmdoc_config(data, *args, **kwargs):
         if data.lower() in ['true', 'false']:
             data = data.lower() in ['true']
         else:
-            try:
-                data = int(data)
-            except ValueError:
-                try:
-                    data = float(data)
-                except ValueError:
-                    pass
+           data = _try_to_number(data)
         key = args[0].lower()
         if key in ['label', 'caption']:
             _bsmdoc_warning(
                 '\\config{{{0}|}} is depreciated, use \\{0}{{}} instead'.
                 format(key), **kwargs)
             key = 'v:' + key
-        if len(args) > 1 and args[1].lower() == 'add':
+        if len(args) > 1 and args[1].lower().strip() == 'add':
             cfg[key] = cfg[key] + ' ' + data
         else:
             cfg[key] = data
@@ -1174,19 +1168,37 @@ def bsmdoc_div(data, *args, **kwargs):
     return BFunction().tag(data, 'div', *args, **kwargs)
 
 
-def _get_opts(*args):
-    opts = dict((n.strip(), v.strip())
-                for n, v in (a.split('=') for a in args if '=' in a))
-    args = [a for a in args if '=' not in a]
-    return args, opts
+def _bsmdoc_parse_args(*args):
+    # convert string args
+    # for any arg in args, if '=' is in arg, i.e., 'key=value', and key is a
+    # valid python identifier, it will be convert to {'key': 'value'}
+    # otherwise arg is untouched
+    opts = []
+    kwargs = {}
+    for arg in args:
+        if '=' in arg:
+            tmp = arg.split('=')
+            key = tmp[0].strip()
+            if key.isidentifier():
+                kwargs[key] = _try_to_number(''.join(tmp[1:]).strip())
+                continue
+        opts.append(_try_to_number(arg))
+
+    return opts, kwargs
 
 
-def _to_int(val, default=0):
+def _try_to_number(val, default=None):
+    '''try to convert val to a number if possible'''
+    data = val
     try:
-        return int(val)
+        data = int(data)
     except ValueError:
-        return default
-
+        try:
+            data = float(data)
+        except ValueError:
+            if default is not None:
+                data = default
+    return data
 
 @BFunction('alias')
 def bsmdoc_alias(data, *args, **kwargs):
@@ -1200,10 +1212,10 @@ def bsmdoc_alias(data, *args, **kwargs):
 
 @BFunction('highlight')
 def bsmdoc_highlight(code, *args, **kwargs):
-    args, opts = _get_opts(*args)
+    args, opts = _bsmdoc_parse_args(*args)
     # format code
     obeytabs = 'obeytabs' in args
-    gobble = _to_int(opts.get('gobble', 0))
+    gobble = opts.get('gobble', 0)
     autogobble = 'autogobble' in args
     code = _code_format(code,
                         obeytabs=obeytabs,
