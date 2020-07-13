@@ -349,6 +349,10 @@ p + div.codeblock {
     border-bottom: 1px solid #ccc;
     border-radius: 0;
 }
+.syntax .lineno {
+    color: #aaa;
+    padding-right: 15px;
+}
 
 .syntaxtable pre {
     border: None;
@@ -357,9 +361,25 @@ p + div.codeblock {
 .syntaxtable .linenos {
     background: #eee;
     padding-right: 0;
+    width: 40px;
 }
 .syntaxtable .linenos pre {
     background: #eee
+}
+.syntaxtable .linenodiv pre {
+    border: none;
+    border-radius: 0;
+    border-right: solid 1px;
+    color: #aaa;
+    word-wrap: normal;
+}
+.syntaxtable .linenodiv pre code {
+    white-space: pre;
+}
+.syntaxtable .code {
+    border: none;
+    border-radius: 0;
+    word-wrap: normal;
 }
 
 table {
