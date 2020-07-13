@@ -3,6 +3,7 @@ import re
 import os
 import time
 import traceback
+from ast import literal_eval
 import six
 from six.moves import configparser
 from ply import lex, yacc
@@ -878,9 +879,14 @@ class BParse(object):
             # search global function bsmdoc_* to be compatible with previous
             # version
             ldict = lex.get_caller_module_dict(1)
-            fun = ldict.get('bsmdoc_' + cmds[0], 'none')
-            self._warning('use decorator @BFunction to define function "%s"' % (cmds[0]), lineno=lineno)
+            fun = ldict.get('bsmdoc_' + cmds[0], None)
+            if fun:
+                self._warning('use decorator @BFunction to define function "%s"' %
+                              (cmds[0]), lineno=lineno)
         if fun and hasattr(fun, "__call__"):
+            # parse arguments
+            fun_args, fun_kwargs = _bsmdoc_parse_args(*cmds[1:])
+            kwargs.update({'fun_args': fun_args, 'fun_kwargs': fun_kwargs})
             return str(fun(data, *cmds[1:], **kwargs))
         elif fun and len(cmds) == 1 and not data \
              and isinstance(fun, six.string_types):
@@ -1016,7 +1022,7 @@ def bsmdoc_config(data, *args, **kwargs):
         if data.lower() in ['true', 'false']:
             data = data.lower() in ['true']
         else:
-           data = _try_to_number(data)
+            data = _try_to_number(data)
         key = args[0].lower()
         if key in ['label', 'caption']:
             _bsmdoc_warning(
@@ -1103,7 +1109,10 @@ def bsmdoc_pre(data, *args, **kwargs):
 @BFunction('tag')
 def bsmdoc_tag(data, *args, **kwargs):
     if len(args) >= 1:
-        tag = args[0].lower()
+        tag = args[0].lower().strip()
+        if not tag:
+            _bsmdoc_warning("empty tag", **kwargs)
+            return data
         style = _bsmdoc_style(args[1:])
         tag_start = tag
         tag_end = tag
@@ -1180,7 +1189,10 @@ def _bsmdoc_parse_args(*args):
             tmp = arg.split('=')
             key = tmp[0].strip()
             if key.isidentifier():
-                kwargs[key] = _try_to_number(''.join(tmp[1:]).strip())
+                try:
+                    kwargs[key] = literal_eval(''.join(tmp[1:]))
+                except:
+                    kwargs[key] = ''.join(tmp[1:]).strip()
                 continue
         opts.append(_try_to_number(arg))
 
@@ -1212,7 +1224,7 @@ def bsmdoc_alias(data, *args, **kwargs):
 
 @BFunction('highlight')
 def bsmdoc_highlight(code, *args, **kwargs):
-    args, opts = _bsmdoc_parse_args(*args)
+    args, opts = kwargs['fun_args'], kwargs['fun_kwargs']
     # format code
     obeytabs = 'obeytabs' in args
     gobble = opts.get('gobble', 0)
@@ -1222,9 +1234,13 @@ def bsmdoc_highlight(code, *args, **kwargs):
                         gobble=gobble,
                         autogobble=autogobble)
 
-    lineno = 'inline' if 'lineno' in args else False
     lexer = get_lexer_by_name(args[0], stripnl=False, tabsize=4)
-    formatter = HtmlFormatter(linenos=lineno, cssclass="syntax")
+    for key in ['obeytabs', 'gobble', 'autogobble']:
+        opts.pop(key, None)
+    if "cssclass" not in opts:
+        opts['cssclass'] = 'syntax'
+    # forward all the other args to HtmlFormatter
+    formatter = HtmlFormatter(**opts)
     # pygments will replace '&' with '&amp;', which will make the unicode
     # (e.g., &#xNNNN) shown incorrectly.
     txt = highlight(BFunction().unescape(code), lexer, formatter)
