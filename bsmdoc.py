@@ -202,6 +202,8 @@ class BParse(object):
         lex.lex(module=self, reflags=re.M)
         yacc.yacc(module=self, debug=verbose)
 
+        # add function block \__version__ = __version__
+        BFunction('__version__')(__version__)
         self.html = ""
         self.config = BConfig()
         self.verbose = verbose
