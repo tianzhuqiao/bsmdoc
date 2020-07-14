@@ -548,6 +548,33 @@ int main ()
 #include example_highlight_cpp
 }
 
+The \tag{code|highlight} block supports a couple of options to format the code:
+- \tag{b|obeytabs}: to replace \tag{b|tab} with 4 space
+- {\tag{b|gobble=N}: remove the first N characters from each line.
+{!define|example_highlight_gobble||example||{%
+{!highlight|python|gobble=4||{%
+    print("Hello World")
+%}!}
+%}!}
+#include example_highlight_gobble
+}
+- \tag{b|autogobble}: remove leading common white space from each line.
+- {All other keyword arguments will be forwarded to [https://pygments.org/docs/formatters/|HtmlFormatter]. The following example turns on the line number, and highlights 6th line.
+{!define|example_highlight_cpp_lineno||example||{%
+{!highlight|C++|linenos=table|hl_lines=(6,)||{%
+#include <iostream>
+using namespace std;
+
+int main ()
+{
+    cout << "Hello World!";
+    return 0;
+}
+%}!}
+%}!}
+#include example_highlight_cpp_lineno
+}
+
 It is also possible to use other packages for syntax highlighting, which will be discussed in detail in Sec. [#sec-funblock].
 
 = Raw Text Block
@@ -655,7 +682,7 @@ As you may have already figured out, the \tag{code|command} section is defined a
 command|arg0|arg1|arg2|...|argN||
 %}!}
 
-The command can have arbitrary number of arguments, which are separated by "\tag{code|\|}". And the command is always terminated by "\tag{code|\|\|}". It is also possible to combine multiple commands
+The command can have arbitrary number of arguments, which are separated by "\tag{code|\|}". And the command is always terminated by "\tag{code|\|\|}". It is also possible to combine multiple commands, e.g.,
 
 {!highlight|bsmdoc||{%
 command0|arg0|arg1|arg2||command1|arg0|arg1|arg2||
@@ -679,26 +706,43 @@ When bsmdoc sees the following function block
 %}!}
 
 it will search for the function decorated with "\tag{code|@BFunction('command')}". If found, it will execute the command with list "\tag{code|\[arg0, arg1\]}" as argument. For example, if you want to define a function block to achieve the "\tag{del|delete}" effect,
-- {first you need to define the function (e.g., "\tag{code|bsmdoc_del}") with decorator "\tag{code|@BFunction('del')}"; the function name is not important.
+- {first you need to define the function (e.g., "\tag{code|bsmdoc_del}") with decorator "\tag{code|@BFunction('del')}"; the function name (\tag{code|bsmdoc_del}) is not important.
 {!highlight|python||{%
 @BFunction('del')
 def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%data
-%}!}{!exec||{%
+%}!}{!exec|firstRunOnly||{%
 @BFunction('del')
 def bsmdoc_del(data, *args, **kwargs):
     return "<del>%s</del>"%data
 %}!}
+\tag{code|*args} will have all the arguments from the function block. For example, if \tag{code|del} is called as
+{!highlight|bsmdoc||{%
+{!del|arg0|arg1||
+    content
+!}
+%}!}
+then bsmdoc will call \tag{code|bsmdoc_del} by
+{!highlight|python||{%
+bsmdoc_del("content", "arg0", "arg1", **kwargs)
+%}!}
+
 Here \tag{code|**kwargs} are additional arguments from bsmdoc, for example
 {{
     argument|description||+
     inline| \tag{code|True} if it is a inline block (we will discuss the inline block shortly).||-
     filename| the current filename||-
     lineno| the line number of the start of the function block||-
+    fun_args| the list string arguments from function block||-
+    fun_kwargs| the dict of keyword arguments from function block||-
 }}
 Such info may be helpful to show debugging tips once some error happens.
+
+bsmdoc will also parse the arguments from the function. All string arguments will be in list \tag{b|fun_args} (e.g., \tag{b|'args0'}) and keyword arguments will be in dict \tag{b|fun_kwargs} (e.g., argument \tag{b|key=value} will be convert to \tag{b|fun_kwargs\[key\]=value}). In this case, if \tag{b|value} is a number, it will be convert to a number, e.g., \tag{b|"answer=42"} will be \tag{b|fun_kwargs\['answer'\]=42}; otherwise, \tag{b|value} will be a string, e.g., \tag{b|"today=sunday"} will be \tag{b|fun_kwargs\['today'\]='sunday'}.
+
+For a argument to be recognized as keyword argument, first, it has to have an "\tag{code|\=}" in it; second, the string to the left of the first "\tag{code|\=}" shall be a valid python identifier.
 }
-- {Now the \tag{code|del} (the name from \tag{code|@BFunction} decorator) can be used as all the other blocks,
+- {Now \tag{code|del} (the name from \tag{code|@BFunction} decorator) can be used as all the other blocks,
 
 {!div|bs-example||highlight|html||del||
 delete
@@ -711,8 +755,8 @@ delete
 
 All \tag{code|command} functions shall return a \tag{strong|string}, which will be sent to the next block or the html file. If the function does not need to change the html file, it shall return the empty string.
 
-The next question is where to put the function definition? One straightforward solution is to define the above \tag{code|bsmdoc_del} function in \tag{code|bsmdoc.py} and then all the documents can use the \tag{code|del} function block. However, that also means once you need some missing features, you need to go back to the \tag{code|bsmdoc.py} and define the functions there. It may cause two potential issues:
-- {It needs to edit additional file \tag{code|bsmdoc.py} besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled;}
+The next question is where to put the function definition? One straightforward solution is to define the above \tag{code|bsmdoc_del} function in \tag{b|bsmdoc.py} and then all the documents can use the \tag{code|del} function block. However, that also means once you need some missing features, you need to go back to the \tag{b|bsmdoc.py} and define the functions there. It may cause two potential issues:
+- {It needs to edit additional file \tag{b|bsmdoc.py} besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled;}
 - How about two docs need slightly different implementation of some function? You may end up either using some slightly different (but not straightforward) function names, or adding additional arguments to the function blocks.
 Neither way is scalable. bsmdoc provides the third choice: the function block can be defined in the same doc where it is called. To achieve that, bsmdoc define a special \tag{code|exec} block
 {!highlight|bsmdoc||{%
@@ -721,7 +765,7 @@ code
 %}!}
 %}!}
 which will execute the \tag{code|code} automatically.
-Thus, including the following code in your doc will automatically add the \tag{code|bsmdoc_del} function just as it is defined in \tag{code|bsmdoc.py} (but be careful, since bsmdoc will call python function "\tag{code|exec()}" for this feature, it may cause some security concerns).
+Thus, including the following code in your doc will automatically add the \tag{code|bsmdoc_del} function just as it is defined in \tag{b|bsmdoc.py} (but be careful, since bsmdoc will call python function "\tag{code|exec()}" for this feature, it may cause some security concerns).
 {!highlight|bsmdoc||{%
 {!exec||{%
 @BFunction('del')
@@ -988,7 +1032,7 @@ Only the headings with automatic numbering will be included in the content list.
 \tag{b|makecontent} is implemented by a function \tag{b|bsmdoc_makecontent}.
  Its input is a list that contains all the headings. The default implementation generates an un-ordered list
 {!highlight|python||codesnippet||
-bsmdoc_makecontent
+BFunction().makecontent.func_closure
 !}
 
 When the doc becomes large, you can split your doc into several docs and includes them in the top doc with the "\tag{code|\#include}" directive. For example, suppose you are writing a book, and have created \tag{b|chappter1.bsmdoc}, \tag{b|chapter2.bsmdoc}, .... Then, you can include all the chapters in your \tag{b|book.bsmdoc}
@@ -1002,7 +1046,7 @@ bsmdoc will replace the line \tag{b|\#include chapter1.bsmdoc} with the content 
 
 The \tag{code|\#include} is implemented with function \tag{b|bsmdoc_include}
 {!highlight|python||codesnippet||
-bsmdoc_include_origin
+bsmdoc_include_origin.func_closure
 !}
 Here \tag{code|data} will be anything following \tag{code|\#include}. In the previous example, it will be "\tag{b|chapter1.bsmdoc}" or "\tag{b|chapter2.bsmdoc}". If the file is opened successfully, by default \tag{b|bsmdoc_include} will return the filename and its content.
 
