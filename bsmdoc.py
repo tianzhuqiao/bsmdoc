@@ -310,6 +310,8 @@ class BParse(object):
                 'cfg': self.config,
                 'indent': len(self._input_stack)}
         info.update(kwargs)
+        # update the scan info for BFunction, so it can show the debug info
+        BFunction._kwargs = dict(info)
         return info
 
     # lexer
@@ -886,17 +888,10 @@ class BParse(object):
                 self._warning('use decorator @BFunction to define function "%s"' %
                               (cmds[0]), lineno=lineno)
         if fun and hasattr(fun, "__call__"):
-            # parse arguments
-            fun_args, fun_kwargs = _bsmdoc_parse_args(*cmds[1:])
-            kwargs.update({'fun_args': fun_args, 'fun_kwargs': fun_kwargs})
-            return str(fun(data, *cmds[1:], **kwargs))
-        elif fun and len(cmds) == 1 and not data \
-             and isinstance(fun, six.string_types):
-            # it is defined as an alias (e.g., with \newfun{bsmdoc|CONTENT}),
-            # then, \bsmdoc will be replaced with CONTENT
-            return fun
-        else:
-            self._warning('undefined function block "%s".' % cmds[0], lineno=lineno)
+            return fun(data, *cmds[1:], **kwargs)
+
+        self._warning('undefined function block "%s".' % cmds[0], lineno=lineno)
+
         if default:
             return default
         return data
@@ -904,6 +899,7 @@ class BParse(object):
 
 class BFunction(object):
     _interfaces = {}
+    _kwargs = {}
 
     def __init__(self, cmd=None):
         self.cmd = cmd
@@ -930,8 +926,29 @@ class BFunction(object):
         if not name:
             raise NameError('Name for function block is missing!')
 
-        BFunction._interfaces[name] = intf
-        return intf
+        if name in BFunction._interfaces and BFunction._interfaces[name].func_closure != intf:
+            # if interface(name) is to be overwritten by something different
+            _bsmdoc_info('overwrite function block "%s"' % (name), **BFunction._kwargs)
+
+        def wrap(data, *args, **kwargs):
+            if hasattr(intf, '__call__'):
+                # parse the args from function block, and add it to kwargs
+                fun_args, fun_kwargs = _bsmdoc_parse_args(*args)
+                kwargs.update({'fun_args': fun_args, 'fun_kwargs': fun_kwargs})
+                return str(intf(data, *args, **kwargs))
+            elif intf and isinstance(intf, six.string_types):
+                # it is defined as an alias (e.g., with \newfun{bsmdoc|CONTENT}),
+                # then, \bsmdoc will be replaced with CONTENT
+                return intf
+            else:
+                _bsmdoc_error('unsupported function block "%s"' % (name), **BFunction._kwargs)
+
+            return ''
+
+        wrap.func_closure = intf
+        BFunction._interfaces[name] = wrap
+
+        return wrap
 
     def __getattr__(self, intf):
         if BFunction.exists(intf):
@@ -992,7 +1009,7 @@ def _bsmdoc_info(msg, **kwargs):
         return
     info = msg
     if lineno != -1:
-        info = "%d: %s" % (lineno, info)
+        info = "%3d: %s" % (lineno, info)
     if filename:
         info = ' '.join([filename, info])
     if indent:
@@ -1019,7 +1036,7 @@ def bsmdoc_config(data, *args, **kwargs):
         cfg.load(data)
     elif args[0] == 'bsmdoc_conf':
         _bsmdoc_info('read configuration from file "%s" ...' % data, **kwargs)
-        cfg.load(_bsmdoc_readfile(data, silent=kwargs.get('silent', False)))
+        cfg.load(_bsmdoc_readfile(data, **kwargs))
     else:
         if data.lower() in ['true', 'false']:
             data = data.lower() in ['true']
@@ -1090,14 +1107,14 @@ def bsmdoc_newfun(data, *args, **kwargs):
         _bsmdoc_error("invalid function definition (%s, %s)" % (args[0], data),
                       **kwargs)
         return ''
-    if not re.match("^[A-Za-z0-9_-]*$", args[0]):
+    name = args[0].strip()
+    if not name.isidentifier():
         _bsmdoc_error(
             "invalid function name: %s which should only contain letter, number, '-' and '_'"
             % (args[0]), **kwargs)
 
-    BFunction(args[0].strip())(data)
+    BFunction(name)(data)
     return ""
-    #return bsmdoc_exec('bsmdoc_{0}="{1}"'.format(args[0], data), [], **kwargs)
 
 
 @BFunction('pre')
