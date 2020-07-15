@@ -559,7 +559,7 @@ The \tag{code|highlight} block supports a couple of options to format the code:
 #include example_highlight_gobble
 }
 - \tag{b|autogobble}: remove leading common white space from each line.
-- {All other keyword arguments will be forwarded to [https://pygments.org/docs/formatters/|HtmlFormatter]. The following example turns on the line number, and highlights 6th line.
+- {All other keyword arguments will be forwarded to [https://pygments.org/docs/formatters/|HtmlFormatter]. The following example turns on the line number, and highlights line 6.
 {!define|example_highlight_cpp_lineno||example||{%
 {!highlight|C++|linenos=table|hl_lines=(6,)||{%
 #include <iostream>

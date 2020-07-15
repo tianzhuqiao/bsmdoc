@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="bsmdoc 0.0.6">
+<meta name="generator" content="bsmdoc 0.0.7">
 <link rel="stylesheet" href="css/bsmdoc.css" type="text/css">
 <link rel="stylesheet" href="css/menu.css" type="text/css">
 <script>
@@ -58,7 +58,7 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
 </div>
 <div class="main">
 <div class="toptitle">
-bsmdoc -- another technical html doc generator <a href="https://github.com/tianzhuqiao/bsmdoc"><img src="image/github.svg" alt="image/github.svg" width="32" height="32"></a>
+bsmdoc -- another technical html doc generator (ver 0.0.7) <a href="https://github.com/tianzhuqiao/bsmdoc"><img src="image/github.svg" alt="image/github.svg" width="32" height="32"></a>
 </div>
 <div class="content">
 <h1 id="sec-1">1 What is bsmdoc?</h1>
@@ -90,7 +90,7 @@ bsmdoc -- another technical html doc generator <a href="https://github.com/tianz
 <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1&quot;</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc 0.0.6&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;generator&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;bsmdoc 0.0.7&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;css/bsmdoc.css&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text/css&quot;</span><span class="p">&gt;</span>
 <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
@@ -732,6 +732,55 @@ int main ()
 </pre></div>
 </div></li>
 </ul>
+<p>The <code>highlight</code> block supports a couple of options to format the code:</p>
+<ul>
+<li><b>obeytabs</b>: to replace <b>tab</b> with 4 space</li>
+<li><p><b>gobble=N</b>: remove the first N characters from each line.</p>
+<div class="bs-example">
+<div class="syntax"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s2">&quot;Hello World&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">highlight</span>|<span class="nt">python</span>|<span class="nt">gobble=4</span>||<span class="nt">{%</span>
+    print(&quot;Hello World&quot;)
+<span class="nt">%}!}</span>
+</pre></div>
+</div></li>
+<li><b>autogobble</b>: remove leading common white space from each line.</li>
+<li><p>All other keyword arguments will be forwarded to <a href="https://pygments.org/docs/formatters/">HtmlFormatter</a>. The following example turns on the line number, and highlights line 6.</p>
+<div class="bs-example">
+<table class="syntaxtable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8</pre></div></td><td class="code"><div class="syntax"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">()</span>
+<span class="p">{</span>
+<span class="hll">    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Hello World!&quot;</span><span class="p">;</span>
+</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</td></tr></table>
+</div>
+<div class="bs-example-src">
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">highlight</span>|<span class="nt">C++</span>|<span class="nt">linenos=table</span>|<span class="nt">hl_lines=(6,)</span>||<span class="nt">{%</span>
+#include &lt;iostream&gt;
+using namespace std;
+
+int main ()
+{
+    cout &lt;&lt; &quot;Hello World!&quot;;
+    return 0;
+}
+<span class="nt">%}!}</span>
+</pre></div>
+</div></li>
+</ul>
 <p>It is also possible to use other packages for syntax highlighting, which will be discussed in detail in Sec. <a href="#sec-funblock">10</a>.</p>
 <h1 id="sec-9">9 Raw Text Block</h1>
 <p>Sometimes you may want to skip the parsing from bsmdoc. For example, to highlight the code, it is basically not a good idea to let bsmdoc parse the code. Instead, the raw data should be sent to the code highlighting block. In another example, you may have seen similar syntax between the latex macro and the bsmdoc commands (e.g., both are preceded by "<code>\</code>"). If bsmdoc tries to parse these latex macros, the result is obviously not what you want. Thus, bsmdoc defines the raw text block. It basically tells bsmdoc to ignore all the rules on its content.
@@ -821,7 +870,7 @@ content
 As you may have already figured out, the <code>command</code> section is defined as</p>
 <div class="syntax"><pre><span></span>command|arg0|arg1|arg2|...|argN||
 </pre></div>
-<p>The command can have arbitrary number of arguments, which are separated by "<code>|</code>". And the command is always terminated by "<code>||</code>". It is also possible to combine multiple commands</p>
+<p>The command can have arbitrary number of arguments, which are separated by "<code>|</code>". And the command is always terminated by "<code>||</code>". It is also possible to combine multiple commands, e.g.,</p>
 <div class="syntax"><pre><span></span>command0|arg0|arg1|arg2||command1|arg0|arg1|arg2||
 </pre></div>
 <p>In this case, the commands are called from right to left. Thus in the above example, <code>command1</code> will be called first, and its result will be sent to <code>command0</code>. The result from <code>command0</code> will be sent to the html file. It is equivalently to the following nested blocks</p>
@@ -838,10 +887,18 @@ As you may have already figured out, the <code>command</code> section is defined
 </pre></div>
 <p>it will search for the function decorated with "<code>@BFunction('command')</code>". If found, it will execute the command with list "<code>[arg0, arg1]</code>" as argument. For example, if you want to define a function block to achieve the "<del>delete</del>" effect,</p>
 <ul>
-<li><p>first you need to define the function (e.g., "<code>bsmdoc_del</code>") with decorator "<code>@BFunction('del')</code>"; the function name is not important.</p>
+<li><p>first you need to define the function (e.g., "<code>bsmdoc_del</code>") with decorator "<code>@BFunction('del')</code>"; the function name (<code>bsmdoc_del</code>) is not important.</p>
 <div class="syntax"><pre><span></span><span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;del&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;&lt;del&gt;</span><span class="si">%s</span><span class="s2">&lt;/del&gt;&quot;</span><span class="o">%</span><span class="n">data</span>
+</pre></div>
+<p><code>*args</code> will have all the arguments from the function block. For example, if <code>del</code> is called as</p>
+<div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">del</span>|<span class="nt">arg0</span>|<span class="nt">arg1</span>||
+    content
+<span class="nt">!}</span>
+</pre></div>
+<p>then bsmdoc will call <code>bsmdoc_del</code> by</p>
+<div class="syntax"><pre><span></span><span class="n">bsmdoc_del</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;arg0&quot;</span><span class="p">,</span> <span class="s2">&quot;arg1&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </pre></div>
 <p>Here <code>**kwargs</code> are additional arguments from bsmdoc, for example</p>
 <table>
@@ -860,10 +917,18 @@ As you may have already figured out, the <code>command</code> section is defined
 <tr>
 <td>lineno</td><td>the line number of the start of the function block</td>
 </tr>
+<tr>
+<td>fun_args</td><td>the list string arguments from function block</td>
+</tr>
+<tr>
+<td>fun_kwargs</td><td>the dict of keyword arguments from function block</td>
+</tr>
 </tbody>
 </table>
-<p>Such info may be helpful to show debugging tips once some error happens.</p></li>
-<li><p>Now the <code>del</code> (the name from <code>@BFunction</code> decorator) can be used as all the other blocks,</p>
+<p>Such info may be helpful to show debugging tips once some error happens.</p>
+<p>bsmdoc will also parse the arguments from the function. All string arguments will be in list <b>fun_args</b> (e.g., <b>'args0'</b>) and keyword arguments will be in dict <b>fun_kwargs</b> (e.g., argument <b>key=value</b> will be convert to <b>fun_kwargs[key]=value</b>). In this case, if <b>value</b> is a number, it will be convert to a number, e.g., <b>"answer=42"</b> will be <b>fun_kwargs['answer']=42</b>; otherwise, <b>value</b> will be a string, e.g., <b>"today=sunday"</b> will be <b>fun_kwargs['today']='sunday'</b>.</p>
+<p>For a argument to be recognized as keyword argument, first, it has to have an "<code>=</code>" in it; second, the string to the left of the first "<code>=</code>" shall be a valid python identifier.</p></li>
+<li><p>Now <code>del</code> (the name from <code>@BFunction</code> decorator) can be used as all the other blocks,</p>
 <div class="bs-example">
 <div class="syntax"><pre><span></span><span class="p">&lt;</span><span class="nt">del</span><span class="p">&gt;</span>delete<span class="p">&lt;/</span><span class="nt">del</span><span class="p">&gt;</span>
 </pre></div>
@@ -876,9 +941,9 @@ delete
 </div></li>
 </ul>
 <p>All <code>command</code> functions shall return a <strong>string</strong>, which will be sent to the next block or the html file. If the function does not need to change the html file, it shall return the empty string.</p>
-<p>The next question is where to put the function definition? One straightforward solution is to define the above <code>bsmdoc_del</code> function in <code>bsmdoc.py</code> and then all the documents can use the <code>del</code> function block. However, that also means once you need some missing features, you need to go back to the <code>bsmdoc.py</code> and define the functions there. It may cause two potential issues:</p>
+<p>The next question is where to put the function definition? One straightforward solution is to define the above <code>bsmdoc_del</code> function in <b>bsmdoc.py</b> and then all the documents can use the <code>del</code> function block. However, that also means once you need some missing features, you need to go back to the <b>bsmdoc.py</b> and define the functions there. It may cause two potential issues:</p>
 <ul>
-<li>It needs to edit additional file <code>bsmdoc.py</code> besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled;</li>
+<li>It needs to edit additional file <b>bsmdoc.py</b> besides the docs you are working on. Thus the change is not local to the doc itself. If there is some mistake in the code, suddenly no doc can be compiled;</li>
 <li>How about two docs need slightly different implementation of some function? You may end up either using some slightly different (but not straightforward) function names, or adding additional arguments to the function blocks.</li>
 </ul>
 <p>Neither way is scalable. bsmdoc provides the third choice: the function block can be defined in the same doc where it is called. To achieve that, bsmdoc define a special <code>exec</code> block</p>
@@ -887,7 +952,7 @@ delete
 <span class="nt">%}!}</span>
 </pre></div>
 <p>which will execute the <code>code</code> automatically.
-Thus, including the following code in your doc will automatically add the <code>bsmdoc_del</code> function just as it is defined in <code>bsmdoc.py</code> (but be careful, since bsmdoc will call python function "<code>exec()</code>" for this feature, it may cause some security concerns).</p>
+Thus, including the following code in your doc will automatically add the <code>bsmdoc_del</code> function just as it is defined in <b>bsmdoc.py</b> (but be careful, since bsmdoc will call python function "<code>exec()</code>" for this feature, it may cause some security concerns).</p>
 <div class="syntax"><pre><span></span><span class="nt">{!</span><span class="nf">exec</span>||<span class="nt">{%</span>
 <span class="nd">@BFunction</span><span class="p">(</span><span class="s1">&#39;del&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bsmdoc_del</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1007,7 +1072,8 @@ Thus, including the following code in your doc will automatically add the <code>
 <div class="syntax"><pre><span></span><span class="nd">@docstring.copy_dedent</span><span class="p">(</span><span class="n">Axes</span><span class="o">.</span><span class="n">plot</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">scalex</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">scaley</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-        <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">scalex</span><span class="o">=</span><span class="n">scalex</span><span class="p">,</span> <span class="n">scaley</span><span class="o">=</span><span class="n">scaley</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">scalex</span><span class="o">=</span><span class="n">scalex</span><span class="p">,</span> <span class="n">scaley</span><span class="o">=</span><span class="n">scaley</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span> <span class="k">if</span> <span class="n">data</span>
+        <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="bs-example-src">
@@ -1343,7 +1409,7 @@ This is a footnote <a href="#footnote_src-1">&#8617;</a>
 </ol>
 </div>
 
-<div class="footer-text"> Last updated 2020-07-02 21:50:29 GMT, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
+<div class="footer-text"> Last updated 2020-07-15 00:41:47 GMT, by <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>  | <a href="mailto:tq@feiyilin.com">Contact</a></div>
 </div>
 </div>
 </body>
