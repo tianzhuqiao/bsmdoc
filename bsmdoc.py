@@ -90,6 +90,7 @@ class BConfig(object):
         self.contents = []
         self.heading_tag = {}
         self.cited = []
+        self.alias = {}
 
     def set_updated(self, t, forced=False):
         if forced or not self['updated']:
@@ -311,6 +312,7 @@ class BParse(object):
                 'indent': len(self._input_stack)}
         info.update(kwargs)
         # update the scan info for BFunction, so it can show the debug info
+        # (ugly, TODO)
         BFunction._kwargs = dict(info)
         return info
 
@@ -1231,11 +1233,17 @@ def _try_to_number(val, default=None):
                 data = default
     return data
 
+
 @BFunction('alias')
 def bsmdoc_alias(data, *args, **kwargs):
+    # define alias: \alias{title|this is the title}
+    # use alias: \alias{title}
     cfg = kwargs.get('cfg')
-    if len(args) == 0:
-        return cfg.alias[data.strip()]
+    if not args:
+        name = data.strip()
+        if name in cfg.alias:
+            return cfg.alias[name]
+        _bsmdoc_error('undefined alias "%s"' % (name), **kwargs)
     else:
         cfg.alias[args[0].strip()] = data
     return ""
