@@ -38,6 +38,8 @@ class BConfig(object):
         self._scan = 0
         self._need_scan = True # at least scan once
 
+        self.scan_info = {}
+
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
             items = item.split(':')
@@ -100,14 +102,14 @@ class BConfig(object):
             if ct < t:
                 self['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z', t)
 
-    def get_scan(self):
+    def get_scan(self) -> int:
         return self._scan
 
     def next_scan(self):
         self._scan += 1
         self._need_scan = False
 
-    def need_scan(self):
+    def need_scan(self) -> bool:
         return self._need_scan
 
     def request_scan(self):
@@ -121,9 +123,9 @@ class BConfig(object):
         val = ''
         if self.config.has_option(sec, key):
             val = self.config.get(sec, key)
-            if not self.config.has_option(sec, '_type_' + key):
+            if not self.config.has_option(sec, self._type_key(key)):
                 return val
-            types = self.config.get(sec, '_type_' + key)
+            types = self.config.get(sec, self._type_key(key))
             if types == 'int':
                 return self.config.getint(sec, key)
             elif types == 'float':
@@ -146,16 +148,18 @@ class BConfig(object):
             types = 'float'
         else:
             pass
-        if self.config.has_option(sec, '_type_' + key):
-            types_old = self.config.get(sec, '_type_' + key)
+        if self.config.has_option(sec, self._type_key(key)):
+            types_old = self.config.get(sec, self._type_key(key))
             if types != types_old:
                 _bsmdoc_warning("%s:%s change type from %s to %s (%s)" %
-                                (sec, key, types_old, types, val))
-        self.config.set(sec, '_type_' + key, types)
+                                (sec, key, types_old, types, val), **self.scan_info)
+        self.config.set(sec, self._type_key(key), types)
 
     def load(self, txt):
         self.config.read_string(txt)
 
+    def _type_key(self, key: str) -> str:
+        return '_type_' + key
 
 class BParse(object):
     """
@@ -313,7 +317,8 @@ class BParse(object):
         info.update(kwargs)
         # update the scan info for BFunction, so it can show the debug info
         # (ugly, TODO)
-        BFunction._kwargs = dict(info)
+        BFunction.scan_info = dict(info)
+        self.config.scan_info = dict(info)
         return info
 
     # lexer
@@ -901,7 +906,7 @@ class BParse(object):
 
 class BFunction(object):
     _interfaces = {}
-    _kwargs = {}
+    scan_info = {}
 
     def __init__(self, cmd=None):
         self.cmd = cmd
@@ -930,7 +935,7 @@ class BFunction(object):
 
         if name in BFunction._interfaces and BFunction._interfaces[name].func_closure != intf:
             # if interface(name) is to be overwritten by something different
-            _bsmdoc_info('overwrite function block "%s"' % (name), **BFunction._kwargs)
+            _bsmdoc_info('overwrite function block "%s"' % (name), **BFunction.scan_info)
 
         def wrap(data, *args, **kwargs):
             if hasattr(intf, '__call__'):
@@ -943,7 +948,7 @@ class BFunction(object):
                 # then, \bsmdoc will be replaced with CONTENT
                 return intf
             else:
-                _bsmdoc_error('unsupported function block "%s"' % (name), **BFunction._kwargs)
+                _bsmdoc_error('unsupported function block "%s"' % (name), **BFunction.scan_info)
 
             return ''
 
