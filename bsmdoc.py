@@ -4,6 +4,7 @@ import os
 import time
 import traceback
 from ast import literal_eval
+from collections.abc import Iterable
 import six
 from six.moves import configparser
 from ply import lex, yacc
@@ -22,7 +23,7 @@ class BConfig(object):
     class to hold all the configurations
     """
     def __init__(self):
-        self.config = configparser.SafeConfigParser(delimiters=('=', ))
+        self.config = configparser.ConfigParser(delimiters=('=', ))
         self.load(bsmdoc_conf)
         # cite & reference
         self.refs = {}
@@ -119,19 +120,14 @@ class BConfig(object):
             return True
         return False
 
+    def reset_scan(self):
+        self._scan = 0
+        self._need_scan = True
+
     def get_cfg(self, sec, key):
         val = ''
         if self.config.has_option(sec, key):
-            val = self.config.get(sec, key)
-            if not self.config.has_option(sec, self._type_key(key)):
-                return val
-            types = self.config.get(sec, self._type_key(key))
-            if types == 'int':
-                return self.config.getint(sec, key)
-            elif types == 'float':
-                return self.config.getfloat(sec, key)
-            elif types == 'bool':
-                return self.config.getboolean(sec, key)
+            val = _to_literal(self.config.get(sec, key))
         return val
 
     def set_cfg(self, sec, key, val):
@@ -139,27 +135,9 @@ class BConfig(object):
             # add section if necessary
             self.config.add_section(sec)
         self.config.set(sec, key, str(val))
-        types = 'string'
-        if isinstance(val, bool):
-            types = 'bool'
-        elif isinstance(val, six.integer_types):
-            types = 'int'
-        elif isinstance(val, float):
-            types = 'float'
-        else:
-            pass
-        if self.config.has_option(sec, self._type_key(key)):
-            types_old = self.config.get(sec, self._type_key(key))
-            if types != types_old:
-                _bsmdoc_warning("%s:%s change type from %s to %s (%s)" %
-                                (sec, key, types_old, types, val), **self.scan_info)
-        self.config.set(sec, self._type_key(key), types)
 
     def load(self, txt):
         self.config.read_string(txt)
-
-    def _type_key(self, key: str) -> str:
-        return '_type_' + key
 
 class BParse(object):
     """
@@ -258,13 +236,15 @@ class BParse(object):
         self.config.reset_options()
         self.config['filename'] = self.filename
         self.config['basename'] = os.path.basename(self.filename)
-        mt = time.gmtime(os.path.getmtime(self.filename))
+        if self.filename != "<input>":
+            mt = time.gmtime(os.path.getmtime(self.filename))
+        else:
+            mt = time.gmtime()
         self.config.set_updated(mt, True)
         lex.lexer.lineno = 1
         yacc.parse(txt, tracking=True)
 
-    def run(self, filename, encoding, lex_only):
-        txt = _bsmdoc_readfile(filename, encoding, silent=not self.verbose)
+    def run(self, txt, filename="<input>", lex_only=False):
         self.filename = filename
         if lex_only:
             # output the lexer token for debugging
@@ -273,6 +253,7 @@ class BParse(object):
                 click.echo(tok)
             return None
 
+        self.config.reset_scan()
         while self.config.need_scan():
             self.scan(txt)
         return self.html
@@ -1047,8 +1028,6 @@ def bsmdoc_config(data, *args, **kwargs):
     else:
         if data.lower() in ['true', 'false']:
             data = data.lower() in ['true']
-        else:
-            data = _try_to_number(data)
         key = args[0].lower()
         if key in ['label', 'caption']:
             _bsmdoc_warning(
@@ -1056,7 +1035,9 @@ def bsmdoc_config(data, *args, **kwargs):
                 format(key), **kwargs)
             key = 'v:' + key
         if len(args) > 1 and args[1].lower().strip() == 'add':
-            cfg[key] = cfg[key] + ' ' + data
+            val = _to_list(cfg[key])
+            val += data.split()
+            cfg[key] = val
         else:
             cfg[key] = data
 
@@ -1174,12 +1155,10 @@ def _code_format(code, obeytabs=False, gobble=0, autogobble=False):
     if autogobble:
         gobble = len(code[0]) - len(code[0].lstrip())
         for c in code:
-            if gobble > len(c) - len(c.lstrip()) and len(c.strip()) > 0:
+            if gobble > len(c) - len(c.lstrip()) and c.strip():
                 gobble = 0
                 break
-    for i in range(len(code)):
-        code[i] = code[i][gobble:].rstrip()
-    return '\n'.join(code)
+    return '\n'.join([c[gobble:].rstrip() for c in code])
 
 
 @BFunction('math')
@@ -1203,40 +1182,40 @@ def bsmdoc_div(data, *args, **kwargs):
     return BFunction().tag(data, 'div', *args, **kwargs)
 
 
+def _to_list(val):
+    if isinstance(val, Iterable):
+        return list(val)
+    return [val]
+
+
+def _to_literal(value):
+    try:
+        return literal_eval(value.strip())
+    except:
+        # do not strip(), otherwise the space in data will be gone, e.g.,
+        # self['image_numbering_prefix'] = 'Fig. '
+        return value
+
+
 def _bsmdoc_parse_args(*args):
     # convert string args
     # for any arg in args, if '=' is in arg, i.e., 'key=value', and key is a
     # valid python identifier, it will be convert to {'key': 'value'}
     # otherwise arg is untouched
+
     opts = []
     kwargs = {}
     for arg in args:
+        arg = arg.strip()
         if '=' in arg:
             tmp = arg.split('=')
             key = tmp[0].strip()
             if key.isidentifier():
-                try:
-                    kwargs[key] = literal_eval(''.join(tmp[1:]))
-                except:
-                    kwargs[key] = ''.join(tmp[1:]).strip()
+                kwargs[key] = _to_literal(''.join(tmp[1:]).strip())
                 continue
-        opts.append(_try_to_number(arg))
+        opts.append(_to_literal(arg))
 
     return opts, kwargs
-
-
-def _try_to_number(val, default=None):
-    '''try to convert val to a number if possible'''
-    data = val
-    try:
-        data = int(data)
-    except ValueError:
-        try:
-            data = float(data)
-        except ValueError:
-            if default is not None:
-                data = default
-    return data
 
 
 @BFunction('alias')
@@ -1646,7 +1625,7 @@ content = <div class="footer-text"> Last updated %(UPDATED)s by
 
 class BDoc(object):
     """class to generate the html file"""
-    def __init__(self, lex_only, verbose):
+    def __init__(self, lex_only=False, verbose=False):
         self.verbose = verbose
         self.lex_only = lex_only
         self.parser = BParse(verbose=self.verbose)
@@ -1654,11 +1633,20 @@ class BDoc(object):
         self.output_filename = ""
         self.html = ""
         self.html_text = ""
+        self.html_body = ""
+
+    def parse_string(self, text, encoding=None):
+        return self.parser.run(text, lex_only=self.lex_only)
+
+    def parse(self, filename, encoding=None):
+        txt = _bsmdoc_readfile(filename, encoding, silent=not self.verbose)
+        return self.parser.run(txt, filename, self.lex_only)
 
     def gen(self, filename, encoding=None, output=True):
-        html_body = self.parser.run(filename, encoding, self.lex_only)
+        html_body = self.parse(filename, encoding)
         if html_body is None:
             return
+        self.html_body = html_body
         cfg = self.parser.config
 
         html = []
@@ -1667,7 +1655,7 @@ class BDoc(object):
         html.append(cfg['header:begin'])
         html.append('<meta name="generator" content="bsmdoc %s">'%(__version__))
         html.append(cfg['header:content'])
-        for c in cfg['css'].split(' '):
+        for c in _to_list(cfg['css']):
             if not c:
                 continue
             html.append(
@@ -1675,7 +1663,7 @@ class BDoc(object):
                            'type="text/css"'))
         if cfg['has_math']:
             html.append(cfg['header:mathjs'])
-        for j in cfg['js'].split(' '):
+        for j in _to_list(cfg['js']):
             if not j:
                 continue
             html.append(
@@ -1726,10 +1714,10 @@ class BDoc(object):
 
 
 @click.command()
-@click.option('--lex-only', is_flag=True, help="Show lexer output and exit.")
-@click.option('--encoding', help="Set the input file encoding, e.g. 'utf-8'.")
-@click.option('--print-html', is_flag=True, help="Print the output html.")
-@click.option('--verbose', is_flag=True)
+@click.option('--lex-only', '-l', is_flag=True, help="Show lexer output and exit.")
+@click.option('--encoding', '-e', help="Set the input file encoding, e.g. 'utf-8'.")
+@click.option('--print-html', '-p', is_flag=True, help="Print the output html.")
+@click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
 @click.version_option(__version__)
 @click.argument('files', nargs=-1, type=click.Path(exists=True))
 def cli(files, lex_only, encoding, print_html, verbose):
