@@ -83,10 +83,14 @@ class BConfig(object):
         self['image_numbering'] = False
         self['image_numbering_prefix'] = 'Fig.'
         self['image_numbering_num_prefix'] = ''
+        self['video_numbering'] = 'image'
+        self['video_numbering_prefix'] = 'Video.'
+        self['video_numbering_num_prefix'] = ''
         self['table_numbering'] = False
         self['table_numbering_prefix'] = 'Table.'
         self['table_numbering_num_prefix'] = ''
         self['image_next_tag'] = 0
+        self['video_next_tag'] = 0
         self['table_next_tag'] = 0
 
         self.footnotes = []
@@ -1249,7 +1253,7 @@ def bsmdoc_highlight(code, *args, **kwargs):
     for key in ['obeytabs', 'gobble', 'autogobble']:
         opts.pop(key, None)
     if "cssclass" not in opts:
-        opts['cssclass'] = 'syntax'
+        opts['cssclass'] = 'syntax-inline' if kwargs.get('inline', False) else 'syntax'
     # forward all the other args to HtmlFormatter
     formatter = HtmlFormatter(**opts)
     # pygments will replace '&' with '&amp;', which will make the unicode
@@ -1408,6 +1412,20 @@ def _bsmdoc_style(args, default_class=None):
         style.append('class="%s"' % (' '.join(style_class)))
     return ' '.join(style)
 
+def _bsmdoc_prepare_numbering(sec, label, **kwargs):
+    cfg = kwargs.get('cfg')
+    tag, num = _bsmdoc_next_tag(sec, **kwargs)
+    if label:
+        if cfg.get_scan() == 1 and cfg['ANCHOR%s:' % label]:
+            _bsmdoc_warning('duplicated label "%s".' % (label), **kwargs)
+        if not num:
+            _bsmdoc_warning('{sec} numbering is off, to turn it on: \\config{{{sec}_numbering|True}}'.format(sec=sec))
+
+        cfg['ANCHOR:%s' % label] = num
+        label = 'id="%s"' % label
+    if tag:
+        tag = BFunction().tag(tag, 'span', 'tag')
+    return tag, label
 
 @BFunction('image')
 def bsmdoc_image(data, *args, **kwargs):
@@ -1419,18 +1437,11 @@ def bsmdoc_image(data, *args, **kwargs):
         return txt
     caption = cfg['v:caption']
     label = cfg['v:label']
-    tag = ''
-    if label:
-        (tag, num) = _bsmdoc_next_tag('image', **kwargs)
-        if cfg.get_scan() == 1 and cfg['ANCHOR%s:' % label]:
-            _bsmdoc_warning('duplicated label "%s".' % (label), **kwargs)
 
-        cfg['ANCHOR:%s' % label] = num
-        label = 'id="%s"' % label
-        tag = BFunction().tag(tag, 'span', 'tag')
+    tag, label = _bsmdoc_prepare_numbering('image', label, **kwargs)
     if caption:
         caption = BFunction().tag(tag + ' ' + caption, 'figcaption', "caption")
-        txt = txt + '\n' + caption
+        txt = '\n'.join([txt, caption])
     return BFunction().tag(txt, 'figure', label, 'figure')
 
 
@@ -1442,19 +1453,13 @@ def bsmdoc_video(data, *args, **kwargs):
     txt = BFunction().tag(src, 'video', '"controls"')
     caption = cfg['v:caption']
     label = cfg['v:label']
-    tag = ''
-    if label:
-        (tag, num) = _bsmdoc_next_tag('image', **kwargs)
-        if cfg.get_scan() == 1 and cfg['ANCHOR:' + label]:
-            _bsmdoc_warning('duplicated label %s".' % (label), **kwargs)
+    # if cfg['video_numbering'], use the same numbering as image
+    sec = 'image' if cfg['video_numbering'] == 'image' else 'video'
 
-        cfg['ANCHOR:%s' % label] = num
-        label = 'id="%s"' % label
-        tag = BFunction().tag(tag, 'span', 'tag')
-
+    tag, label = _bsmdoc_prepare_numbering(sec, label, **kwargs)
     if caption:
         caption = BFunction().tag(tag + ' ' + caption, 'div', 'caption')
-        txt += '\n' + caption
+        txt = '\n'.join([txt, caption])
     return BFunction().tag(txt, 'div', label, 'video')
 
 
@@ -1469,14 +1474,8 @@ def bsmdoc_table(data, *args, **kwargs):
         body = BFunction().tag(data, 'tbody')
 
     label = cfg['v:label']
-    tag = ''
-    # add the in-page link
-    if label:
-        (tag, num) = _bsmdoc_next_tag('table', **kwargs)
-        cfg['ANCHOR:%s' % label] = num
-        label = 'id="%s"' % label
-        tag = BFunction().tag(tag, 'span', 'tag')
     caption = cfg['v:caption']
+    tag, label = _bsmdoc_prepare_numbering('table', label, **kwargs)
     if caption:
         caption = BFunction().tag(tag + ' ' + caption, 'caption')
     tbl = BFunction().tag((caption + '\n ' + head + body).strip(), 'table', label)
