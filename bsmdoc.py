@@ -866,7 +866,7 @@ class BParse(object):
         if blk:
             self._error('unmatched block "%s"' % (blk['block']), lineno=blk['lineno'])
         else:
-            click.echo("error: ", p)
+            self._error('syntax %s' % (str(p)), lineno=p.lineno)
 
     def cmd_helper(self, cmds, data, default='', lineno=-1, inline=False):
         kwargs = self._scan_info(lineno=lineno, inline=inline)
