@@ -1723,16 +1723,23 @@ class BDoc(object):
 @click.argument('files', nargs=-1, type=click.Path(exists=True))
 def cli(files, lex_only, encoding, yacc_only, print_html, verbose):
     for filename in files:
-        bsmdoc = BDoc(lex_only, verbose)
-        if yacc_only:
-            click.echo(bsmdoc.parse(filename, encoding))
-            click.echo('\n')
-        else:
-            text = bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
-            if print_html:
-                click.echo(bsmdoc.html_text)
+        cur_path = os.getcwd()
+        try:
+            path, filename = os.path.split(filename)
+            if path:
+                os.chdir(path)
+            bsmdoc = BDoc(lex_only, verbose)
+            if yacc_only:
+                click.echo(bsmdoc.parse(filename, encoding))
                 click.echo('\n')
-
+            else:
+                text = bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
+                if print_html:
+                    click.echo(bsmdoc.html_text)
+                    click.echo('\n')
+        except:
+            os.chdir(cur_path)
+            traceback.print_exc(file=sys.stdout)
 
 if __name__ == '__main__':
     cli()
