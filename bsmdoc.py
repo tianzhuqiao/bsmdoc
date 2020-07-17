@@ -1003,7 +1003,7 @@ def _bsmdoc_info(msg, **kwargs):
     if lineno != -1:
         info = "%3d: %s" % (lineno, info)
     if filename:
-        info = ' '.join([filename, info])
+        info = ' '.join([click.format_filename(filename), info])
     if indent:
         info = '    ' * indent + info
     click.echo(info)
@@ -1733,7 +1733,7 @@ def cli(files, lex_only, encoding, yacc_only, print_html, verbose):
                 click.echo(bsmdoc.parse(filename, encoding))
                 click.echo('\n')
             else:
-                text = bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
+                text = bsmdoc.gen(filename, encoding, not print_html)
                 if print_html:
                     click.echo(bsmdoc.html_text)
                     click.echo('\n')
