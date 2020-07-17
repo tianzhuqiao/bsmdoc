@@ -90,7 +90,7 @@ var simplePopup = (function() {
             thispopup.showTooltip = true;
             var $container = $(document.body);
             thispopup.tooltip.bind('mouseover', {thispopup:thispopup}, thispopup.keepVisible);
-            thispopup.tooltip.bind('mouseout',  {thispopup:thispopup}, thispopup.mouseOut);
+            thispopup.tooltip.bind('mouseleave',  {thispopup:thispopup}, thispopup.mouseOut);
             thispopup.tooltip.stop(true, true);
             thispopup.tooltip.html($root[0].outerHTML);
             thispopup.tooltip.css({
@@ -119,6 +119,7 @@ var simplePopup = (function() {
 $( window ).on('load', function() {
     new simplePopup('a[href*="mjx-eqn-"]', 'div');
     new simplePopup('a[href*="img-"]', 'figure');
+    new simplePopup('a[href*="video-"]', 'div');
     new simplePopup('a[href*="tbl-"]', 'table');
     new simplePopup('a[href*="footnote-"]', 'div');
     new simplePopup('a[href*="reference-"]', 'div');
