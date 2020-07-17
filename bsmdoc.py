@@ -1011,12 +1011,12 @@ def _bsmdoc_info(msg, **kwargs):
 
 def _bsmdoc_error(msg, **kwargs):
     kwargs['silent'] = False
-    _bsmdoc_info('error: ' + msg, **kwargs)
+    _bsmdoc_info('error ' + msg, **kwargs)
 
 
 def _bsmdoc_warning(msg, **kwargs):
     kwargs['silent'] = False
-    _bsmdoc_info('warning: ' + msg, **kwargs)
+    _bsmdoc_info('warning ' + msg, **kwargs)
 
 
 @BFunction('config')
@@ -1419,7 +1419,7 @@ def _bsmdoc_prepare_numbering(sec, label, **kwargs):
         if cfg.get_scan() == 1 and cfg['ANCHOR%s:' % label]:
             _bsmdoc_warning('duplicated label "%s".' % (label), **kwargs)
         if not num:
-            _bsmdoc_warning('{sec} numbering is off, to turn it on: \\config{{{sec}_numbering|True}}'.format(sec=sec))
+            _bsmdoc_warning('{sec} numbering is off, to turn it on: \\config{{{sec}_numbering|True}}'.format(sec=sec), **kwargs)
 
         cfg['ANCHOR:%s' % label] = num
         label = 'id="%s"' % label
@@ -1710,22 +1710,28 @@ class BDoc(object):
         if output:
             with open(self.output_filename, 'w', encoding=encoding) as fp:
                 fp.write(self.html_text)
+        return self.html_text
 
 
 @click.command()
 @click.option('--lex-only', '-l', is_flag=True, help="Show lexer output and exit.")
 @click.option('--encoding', '-e', help="Set the input file encoding, e.g. 'utf-8'.")
+@click.option('--yacc-only', '-y', is_flag=True, help="Show the yacc output and exit.")
 @click.option('--print-html', '-p', is_flag=True, help="Print the output html.")
 @click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
 @click.version_option(__version__)
 @click.argument('files', nargs=-1, type=click.Path(exists=True))
-def cli(files, lex_only, encoding, print_html, verbose):
+def cli(files, lex_only, encoding, yacc_only, print_html, verbose):
     for filename in files:
         bsmdoc = BDoc(lex_only, verbose)
-        bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
-        if print_html:
-            click.echo(bsmdoc.html_text)
+        if yacc_only:
+            click.echo(bsmdoc.parse(filename, encoding))
             click.echo('\n')
+        else:
+            text = bsmdoc.gen(click.format_filename(filename), encoding, not print_html)
+            if print_html:
+                click.echo(bsmdoc.html_text)
+                click.echo('\n')
 
 
 if __name__ == '__main__':
