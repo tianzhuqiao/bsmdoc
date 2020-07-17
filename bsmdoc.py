@@ -80,18 +80,21 @@ class BConfig(object):
         self['heading_numbering'] = False
         self['heading_numbering_start'] = 1
         self['heading_in_contents'] = True
+
         self['image_numbering'] = False
         self['image_numbering_prefix'] = 'Fig.'
         self['image_numbering_num_prefix'] = ''
-        self['video_numbering'] = 'image'
+        self['image_numbering_next_tag'] = 0
+
+        self['video_numbering'] = 'image' # share numbering with image block
         self['video_numbering_prefix'] = 'Video.'
         self['video_numbering_num_prefix'] = ''
+        self['video_numbering_next_tag'] = 0
+
         self['table_numbering'] = False
         self['table_numbering_prefix'] = 'Table.'
         self['table_numbering_num_prefix'] = ''
-        self['image_next_tag'] = 0
-        self['video_next_tag'] = 0
-        self['table_next_tag'] = 0
+        self['table_numbering_next_tag'] = 0
 
         self.footnotes = []
         self.contents = []
@@ -142,6 +145,7 @@ class BConfig(object):
 
     def load(self, txt):
         self.config.read_string(txt)
+
 
 class BParse(object):
     """
@@ -1381,9 +1385,9 @@ def bsmdoc_heading(data, *args, **kwargs):
 def _bsmdoc_next_tag(sec, **kwargs):
     cfg = kwargs['cfg']
     if cfg[sec + '_numbering']:
-        cfg[sec + '_next_tag'] += 1
+        cfg[sec + '_numbering_next_tag'] += 1
         prefix = cfg[sec + '_numbering_prefix']
-        num = cfg[sec + '_numbering_num_prefix'] + str(cfg[sec + '_next_tag'])
+        num = cfg[sec + '_numbering_num_prefix'] + str(cfg[sec + '_numbering_next_tag'])
         return (str(prefix) + num + '.', num)
     return ("", "")
 
@@ -1412,6 +1416,7 @@ def _bsmdoc_style(args, default_class=None):
         style.append('class="%s"' % (' '.join(style_class)))
     return ' '.join(style)
 
+
 def _bsmdoc_prepare_numbering(sec, label, **kwargs):
     cfg = kwargs.get('cfg')
     tag, num = _bsmdoc_next_tag(sec, **kwargs)
@@ -1419,13 +1424,15 @@ def _bsmdoc_prepare_numbering(sec, label, **kwargs):
         if cfg.get_scan() == 1 and cfg['ANCHOR%s:' % label]:
             _bsmdoc_warning('duplicated label "%s".' % (label), **kwargs)
         if not num:
-            _bsmdoc_warning('{sec} numbering is off, to turn it on: \\config{{{sec}_numbering|True}}'.format(sec=sec), **kwargs)
+            fmt = '{sec} numbering is off, to turn it on: \\config{{{sec}_numbering|True}}'
+            _bsmdoc_warning(fmt.format(sec=sec), **kwargs)
 
         cfg['ANCHOR:%s' % label] = num
         label = 'id="%s"' % label
     if tag:
         tag = BFunction().tag(tag, 'span', 'tag')
     return tag, label
+
 
 @BFunction('image')
 def bsmdoc_image(data, *args, **kwargs):
@@ -1581,6 +1588,7 @@ def _bsmdoc_readfile(filename, encoding=None, **kwargs):
         return txt
     return ""
 
+
 # generate the html
 bsmdoc_conf = """
 [html]
@@ -1644,7 +1652,7 @@ class BDoc(object):
     def gen(self, filename, encoding=None, output=True):
         html_body = self.parse(filename, encoding)
         if html_body is None:
-            return
+            return ""
         self.html_body = html_body
         cfg = self.parser.config
 
@@ -1735,7 +1743,7 @@ def cli(files, lex_only, encoding, yacc_only, print_html, verbose):
             else:
                 text = bsmdoc.gen(filename, encoding, not print_html)
                 if print_html:
-                    click.echo(bsmdoc.html_text)
+                    click.echo(text)
                     click.echo('\n')
         except:
             traceback.print_exc(file=sys.stdout)
