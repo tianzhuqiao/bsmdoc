@@ -1738,8 +1738,8 @@ def cli(files, lex_only, encoding, yacc_only, print_html, verbose):
                     click.echo(bsmdoc.html_text)
                     click.echo('\n')
         except:
-            os.chdir(cur_path)
             traceback.print_exc(file=sys.stdout)
+        os.chdir(cur_path)
 
 if __name__ == '__main__':
     cli()
