@@ -20,14 +20,31 @@ def bsmdoc_highlight(code, *args, **kwargs):
     if args[0]!='bsmdoc':
         return bsmdoc_highlight_raw(code, *args, **kwargs)
     try:
+
         from pygments import highlight
         from pygments.lexers import load_lexer_from_file
         from pygments.formatters import HtmlFormatter
         lexer = load_lexer_from_file('./pyg.py', 'bLexer')
-        formatter = HtmlFormatter(linenos=False, cssclass="syntax")
+
+        args, opts = kwargs['fun_args'], kwargs['fun_kwargs']
+        # format code
+        obeytabs = 'obeytabs' in args
+        gobble = opts.get('gobble', 0)
+        autogobble = 'autogobble' in args
+        code = _code_format(code,
+                            obeytabs=obeytabs,
+                            gobble=gobble,
+                            autogobble=autogobble)
+
+        for key in ['obeytabs', 'gobble', 'autogobble']:
+            opts.pop(key, None)
+        if "cssclass" not in opts:
+            opts['cssclass'] = 'syntax-inline' if kwargs.get('inline', False) else 'syntax'
+        # forward all the other args to HtmlFormatter
+        formatter = HtmlFormatter(**opts)
         # pygments will replace '&' with '&amp;', which will make the unicode
         # (e.g., &#xNNNN) shown incorrectly.
-        txt = highlight(bsmdoc_unescape(code), lexer, formatter)
+        txt = highlight(BFunction().unescape(code), lexer, formatter)
         txt = txt.replace('&amp;#x', '&#x')
         txt = txt.replace('&amp;lt;', '&lt;')
         return txt.replace('&amp;gt', '&gt;')

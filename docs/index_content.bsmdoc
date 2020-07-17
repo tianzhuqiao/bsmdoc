@@ -245,7 +245,8 @@ All cited references will be appended to the end of the document in the citation
 %}!}
 In this case, it will not generate the link to the reference, but the reference will still be added to the reference list even if there is no explicit citation in the document.
 
-= Image \label{sec-image}
+= Image & Video \label{sec-image}
+== Image
 {!exec|firstRunOnly||{%
 import os.path
 if not os.path.isfile("image/scatter.svg"):
@@ -326,6 +327,48 @@ For example
 !}
 %}!}
 #include example_image_prefix
+
+The options to configure the image numbering
+{{
+Option | Description ||+
+image_numbering | \tag{b|True} or \tag{b|False} (default). Turn on/off numbering, e.g., \highlight{bsmdoc|{%\config{image_numbering|True}%}}||-
+image_numbering_prefix | The numbering prefix (default "\tag{b|Fig.}"). To change the prefix, e.g., \highlight{bsmdoc|{%\config{image_numbering_prefix|Image.}%}}||-
+image_numbering_num_prefix | The numbering prefix (default ""). To change the prefix, e.g., \highlight{bsmdoc|{%\config{image_numbering_num_prefix|3.}%}}||-
+}}
+
+== Video
+Video block is almost same as the image block. Its syntax is
+{!highlight|bsmdoc||{%
+{!video||
+video_file_path
+!}
+%}!}
+
+For example, to add reference to an image, you need to
+* { add a label to an image block with \tag{code|\\label} command
+{!define|example_video_label||example||{%
+{!video||
+\label{video-waves}
+\caption{Example video}
+./image/waves.mp4
+!}
+%}!}
+#include example_video_label
+}
+* { add reference to the image with \tag{code|\\ref} command
+{!define|example_video_ref||example||{%
+Fig. \ref{video-waves} shows a scatter diagram
+%}!}
+#include example_video_ref
+}
+
+The options to configure the video numbering
+{{
+Option | Description ||+
+video_numbering | \tag{b|image} (default) or \tag{b|True} or \tag{b|False}. Turn on/off numbering. If it is set to \tag{b|image}, then it will share numbering with \tag{b|image} block. ||-
+video_numbering_prefix | The numbering prefix (default "\tag{b|Video.}"). Only valid if \tag{b|video_numbering} is not \tag{b|image}.||-
+video_numbering_num_prefix | The numbering prefix (default ""). Only valid if \tag{b|video_numbering} is not \tag{b|image}.||-
+}}
 
 = Equation \label{sec-equation}
 Equation is rendered with [http://www.mathjax.org|mathjax]: both inline and normal equation blocks. The [http://docs.mathjax.org/en/latest/web/configuration.html|configuration] may look like:
@@ -441,7 +484,7 @@ bsmdoc can also add the automatic indexing to the table caption. To do that, you
 %}!}
 bsmdoc will add the automatic indexing to all the tables defined after the above line, until you explicitly turn off the configuration.
 }
-* {add the label to each table you want to add the automatic indexing
+* {add the label to each table if you want to reference it
 {!highlight|bsmdoc||{%
 \label{table_label}
 %}!}}
@@ -507,6 +550,14 @@ Table \ref{tbl-example} shows how to make a table in bsmdoc.
 #include example_table_ref
 
 If the table label text starts with "\tag{code|tbl-}", when the cursor is moved to the reference index, the table will be highlighted if it is visible; otherwise, a popup window will be displayed to show the table content.
+
+The options to configure the table numbering
+{{
+Option | Description ||+
+table_numbering | \tag{b|True} or \tag{b|False} (default). Turn on/off numbering.||-
+table_numbering_prefix | The numbering prefix (default "\tag{b|Table.}").||-
+table_numbering_num_prefix | The numbering prefix (default "").||-
+}}
 
 = Syntax Highlighting \label{sec-highlight}
 bsmdoc uses [http://pygments.org/docs/quickstart/ | Pygments] for syntax highlighting. The syntax is
@@ -1018,7 +1069,10 @@ Once it is defined, it can be used as
 {!div|bs-example-src||highlight|bsmdoc||{%
 \bsmdoc
 %}!}
-where \tag{code|\\bsmdoc} will be replaced with the result of \tag{code|{%\tag{strong|bsmdoc}%}}, i.e., \highlight{html|{%<strong>bsmdoc</strong>%}}.
+where \tag{code|\\bsmdoc} will be replaced with the result of \tag{code|{%\tag{strong|bsmdoc}%}}, i.e.,
+{!highlight|html||{%
+<strong>bsmdoc</strong>
+%}!}
 
 = Input Redirection
 bsmdoc can automatically generate the table of content with
