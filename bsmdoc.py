@@ -1015,12 +1015,12 @@ def _bsmdoc_info(msg, **kwargs):
 
 def _bsmdoc_error(msg, **kwargs):
     kwargs['silent'] = False
-    _bsmdoc_info('error ' + msg, **kwargs)
+    _bsmdoc_info('Error ' + msg, **kwargs)
 
 
 def _bsmdoc_warning(msg, **kwargs):
     kwargs['silent'] = False
-    _bsmdoc_info('warning ' + msg, **kwargs)
+    _bsmdoc_info('Warning ' + msg, **kwargs)
 
 
 @BFunction('config')
@@ -1722,14 +1722,22 @@ class BDoc(object):
 
 
 @click.command()
+@click.option('--new-project', '-n', type=click.Path(), help="Create a new project from template and exit.")
+@click.option('--new-doc', '-d', type=click.Path(), help="Create a new doc from template and exit.")
 @click.option('--lex-only', '-l', is_flag=True, help="Show lexer output and exit.")
-@click.option('--encoding', '-e', help="Set the input file encoding, e.g. 'utf-8'.")
 @click.option('--yacc-only', '-y', is_flag=True, help="Show the yacc output and exit.")
+@click.option('--encoding', '-e', help="Set the input file encoding, e.g. 'utf-8'.")
 @click.option('--print-html', '-p', is_flag=True, help="Print the output html.")
 @click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
 @click.version_option(__version__)
 @click.argument('files', nargs=-1, type=click.Path(exists=True))
-def cli(files, lex_only, encoding, yacc_only, print_html, verbose):
+def cli(new_project, new_doc, files, lex_only, encoding, yacc_only, print_html, verbose):
+    if new_project:
+        create_project(new_project, verbose)
+        return
+    elif new_doc:
+        create_doc(new_doc, verbose)
+
     for filename in files:
         cur_path = os.getcwd()
         try:
@@ -1748,6 +1756,50 @@ def cli(files, lex_only, encoding, yacc_only, print_html, verbose):
         except:
             traceback.print_exc(file=sys.stdout)
         os.chdir(cur_path)
+
+def create_project(path, verbose):
+    try:
+        os.mkdir(path)
+    except FileExistsError:
+        _bsmdoc_error("folder %s exists, choose another name!" % (path))
+        return
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    from distutils.dir_util import copy_tree
+    from distutils import log
+    log.set_verbosity(log.INFO)
+    log.set_threshold(log.INFO)
+    template = os.path.dirname(os.path.abspath(__file__))
+    template = os.path.join(template, 'docs')
+    copy_tree(os.path.join(template, 'css'), os.path.join(path, 'css'), verbose=verbose)
+    copy_tree(os.path.join(template, 'js'), os.path.join(path, 'js'), verbose=verbose)
+
+def create_doc(doc, verbose):
+    template = os.path.dirname(os.path.abspath(__file__))
+    template_content = os.path.join(template, 'docs/template_content.bsmdoc')
+    template = os.path.join(template, 'docs/template.bsmdoc')
+    text = bsmdoc_include(template, silent=not verbose)
+    if text:
+        filename, extension = os.path.splitext(doc)
+        if not extension:
+            doc = filename + '.bsmdoc'
+        if os.path.exists(doc):
+            _bsmdoc_error("file %s exists, choose another name!" % (doc))
+            return
+        doc_content = filename + '_content.bsmdoc'
+        if os.path.exists(doc):
+            _bsmdoc_error("file %s exists, choose another name!" % (doc_content))
+            return
+        text = text.replace('{template_content}', '#include %s' % (doc_content))
+        with open(doc, 'w') as fp:
+            fp.write(text)
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        from distutils.file_util import copy_file
+        from distutils import log
+        log.set_verbosity(log.INFO)
+        log.set_threshold(log.INFO)
+        copy_file(template_content, doc_content, verbose=verbose)
 
 if __name__ == '__main__':
     cli()

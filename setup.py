@@ -28,6 +28,7 @@ setup(name='bsmdoc',
       python_requires='>=3.2',
       platforms=["any"],
       py_modules=['bsmdoc'],
+      include_package_data=True,
       install_requires=['ply', 'pygments', 'click', 'cchardet', 'six'],
       entry_points='''
         [console_scripts]
