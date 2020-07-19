@@ -59,7 +59,6 @@ a:hover {
     border-bottom: 1px gray dotted;
 }
 
-
 .toptitle {
     padding-top:0.2em;
     padding-bottom: 0.2em;
@@ -70,6 +69,10 @@ a:hover {
     font-weight: 300;
 }
 
+.toptitle:empty {
+    display: none;
+}
+
 .subtitle {
     margin-top: 0.0em;
     margin-bottom: 0.0em;
@@ -78,6 +81,10 @@ a:hover {
     font-size: 45%;
     text-align:center;
     font-weight: normal;
+}
+
+.subtitle:empty {
+    display: none;
 }
 
 h1,

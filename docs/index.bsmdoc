@@ -1,11 +1,9 @@
 \config{title|bsmdoc -- another technical html doc generator}
+\config{doctitle|bsmdoc -- another technical html doc generator (ver \__version__) [https://github.com/tianzhuqiao/bsmdoc|\image{width="32"|height="32"|image/github.svg}]}
 \config{heading_numbering|True}
 \config{image_numbering|True}
 \config{table_numbering|True}
-\config{show_source|False}
-\config{css|add|css/menu.css}
-\config{js|add|https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js}
-\config{js|add|js/bsmdoc.js js/menu.js}
+\config{show_contents|True}
 #\config{bsmdoc_conf|bsmdoc.cfg}
 
 {!config||{%
@@ -52,15 +50,5 @@ def bsmdoc_highlight(code, *args, **kwargs):
         return code
 %}!}
 
-{!div|menu||
-#makecontent
-!}
-{!div|main||
-{!div|toptitle||
-bsmdoc -- another technical html doc generator (ver \__version__) [https://github.com/tianzhuqiao/bsmdoc|\image{width="32"|height="32"|image/github.svg}]
-!}
-{!div|content||
 #include index_content.bsmdoc
-!}
-!}
 

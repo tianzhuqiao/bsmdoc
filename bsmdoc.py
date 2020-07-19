@@ -24,7 +24,6 @@ class BConfig(object):
     """
     def __init__(self):
         self.config = configparser.ConfigParser(delimiters=('=', ))
-        self.load(bsmdoc_conf)
         # cite & reference
         self.refs = {}
         self.cited = []
@@ -74,12 +73,16 @@ class BConfig(object):
         for k, _ in self.config.items('DEFAULT'):
             self.config.remove_option('DEFAULT', k)
 
+        self.load(bsmdoc_conf)
         self.set_updated(time.localtime(time.time()), True)
         self['title'] = ''
+        self['doctitle'] = '%(TITLE)s'
+        self['subtitle'] = ''
         self['show_source'] = False
         self['heading_numbering'] = False
         self['heading_numbering_start'] = 1
         self['heading_in_contents'] = True
+        self['show_contents'] = False
 
         self['image_numbering'] = False
         self['image_numbering_prefix'] = 'Fig.'
@@ -200,7 +203,7 @@ class BParse(object):
         self.verbose = verbose
         self.filename = ""
         self._input_stack = []
-        self._contents = []
+        self.contents = ''
 
         # function block supports embedded block, remember the current block
         # level to print the error message correspondingly when error occurs.
@@ -240,7 +243,6 @@ class BParse(object):
         self._info("scan %d ..." % (self.config.get_scan()))
         # save the table of contents collected from previous scan or empty for
         # 1st scan
-        self._contents = self.config.contents
         self.config.reset_options()
         self.config['filename'] = self.filename
         self.config['basename'] = os.path.basename(self.filename)
@@ -264,6 +266,8 @@ class BParse(object):
         self.config.reset_scan()
         while self.config.need_scan():
             self.scan(txt)
+
+        self.contents = BFunction().makecontent(self.config.contents)
         return self.html
 
     def pop_input(self):
@@ -349,13 +353,11 @@ class BParse(object):
 
     def t_MAKECONTENT(self, t):
         r'\#makecontent[^\S\r\n]*$'
-        if self._contents:
-            content = bsmdoc_makecontent(self._contents)
-            self.push_input(t, content)
-            self.filename = "CONTENTS"
-            return t.lexer.token()
 
-        self.config.request_scan()
+        self.config['show_contents'] = True
+        self._warning(r'#makecontent is depreciated, use \config{show_contents|True}',
+                      lineno=t.lexer.lineno)
+
         return None
 
     # comment starts with "#", except "&#"
@@ -977,9 +979,9 @@ def bsmdoc_makecontent(contents, **kwargs):
     call = []
     for c in contents:
         # the text has been parsed, so ignore the parsing here
-        txt = '[#{0}|{{%{1}%}}]'.format(c[2], c[1])
-        call.append('-' * (c[0] - first_level + 1) + txt)
-    return '\n'.join(call)
+        txt = BFunction().tag(c[1], 'a', 'href="#%s"' % c[2])
+        call.append(['-' * (c[0] - first_level + 1), txt])
+    return BFunction().listbullet(call)
 
 
 @BFunction('escape')
@@ -1591,6 +1593,10 @@ def _bsmdoc_readfile(filename, encoding=None, **kwargs):
 
 # generate the html
 bsmdoc_conf = """
+[DEFAULT]
+css = ['css/bsmdoc.css', 'css/menu.css']
+js = ['js/bsmdoc.js', 'js/menu.js']
+
 [html]
 begin = <!DOCTYPE html>
     <html>
@@ -1598,29 +1604,39 @@ end= </html>
 
 [header]
 begin = <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 end = <title>%(TITLE)s</title>
-    </head>
-content = <link rel="stylesheet" href="css/bsmdoc.css" type="text/css">
+      </head>
+content =
 mathjs = <script>
-    MathJax = {
-        tex: {
-            inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-            tags: "all"
-        }
-    };
-    </script>
-
-    <script id="MathJax-script" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
-    </script>
+            MathJax = {
+                tex: {
+                    inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                    tags: "all"
+                }
+            };
+         </script>
+         <script id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
+         </script>
+jqueryjs = <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+                   integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+                   crossorigin="anonymous">
+           </script>
 
 [body]
 begin = <body class="nomathjax">
-    <div class="layout">
+        <div class="layout">
 end = </div>
-    </body>
+      </body>
+content = <div class="menu">%(CONTENTS)s</div>
+          <div class="main">
+            <div class="toptitle">%(DOCTITLE)s
+                <div class="subtitle">%(SUBTITLE)s</div>
+            </div>
+            <div class="content">%(ARTICLE)s</div>
+          </div>
 
 [footer]
 begin = <div class="footer">
@@ -1642,7 +1658,7 @@ class BDoc(object):
         self.html_text = ""
         self.html_body = ""
 
-    def parse_string(self, text, encoding=None):
+    def parse_string(self, text):
         return self.parser.run(text, lex_only=self.lex_only)
 
     def parse(self, filename, encoding=None):
@@ -1653,6 +1669,7 @@ class BDoc(object):
         html_body = self.parse(filename, encoding)
         if html_body is None:
             return ""
+
         self.html_body = html_body
         cfg = self.parser.config
 
@@ -1661,32 +1678,44 @@ class BDoc(object):
         # header
         html.append(cfg['header:begin'])
         html.append('<meta name="generator" content="bsmdoc %s">'%(__version__))
-        html.append(cfg['header:content'])
+        if cfg['header:content']:
+            html.append(cfg['header:content'])
         for c in _to_list(cfg['css']):
             if not c:
                 continue
             html.append(
-                bsmdoc_tag('', 'link', 'rel="stylesheet"', 'href="%s"' % c,
-                           'type="text/css"'))
+                BFunction().tag('', 'link', 'rel="stylesheet"', 'href="%s"' % c,
+                                'type="text/css"'))
         if cfg['has_math']:
             html.append(cfg['header:mathjs'])
+        if cfg['header:jqueryjs']:
+            html.append(cfg['header:jqueryjs'])
         for j in _to_list(cfg['js']):
             if not j:
                 continue
             html.append(
-                bsmdoc_tag('', 'script', 'type="text/javascript"',
-                           'language="javascript"', 'src="%s"' % j))
+                BFunction().tag('', 'script', 'type="text/javascript"',
+                                'language="javascript"', 'src="%s"' % j))
         html.append(cfg['header:end'])
+
         # body
         html.append(cfg['body:begin'])
-        subtitle = cfg['subtitle']
-        if subtitle:
-            subtitle = bsmdoc_tag(subtitle, 'div', 'subtitle')
-        doctitle = cfg['doctitle']
-        if doctitle:
-            doctitle = bsmdoc_tag(doctitle + subtitle, 'div', 'toptitle')
-        html.append(doctitle)
+
+        # the body:content defines the main architecture of the body
+        cfg['body:contents'] = ''
+        if self.parser.config['show_contents']:
+            contents = self.parser.contents
+            if contents:
+                cfg['body:contents'] = "\n%s\n" % (contents.replace('%', '%%'))
+        cfg['body:article'] = "\n%s\n" % (html_body.replace('%', '%%'))
+        try:
+            if cfg['body:content']:
+                html_body = cfg['body:content']
+        except:
+            traceback.print_exc(file=sys.stdout)
+
         html.append(html_body)
+
         # reference
         if cfg.cited:
             cites = [bsmdoc_tag(x[0], 'li') for x in cfg.cited]
@@ -1722,7 +1751,8 @@ class BDoc(object):
 
 
 @click.command()
-@click.option('--new-project', '-n', type=click.Path(), help="Create a new project from template and exit.")
+@click.option('--new-project', '-n', type=click.Path(),
+              help="Create a new project from template and exit.")
 @click.option('--new-doc', '-d', type=click.Path(), help="Create a new doc from template and exit.")
 @click.option('--lex-only', '-l', is_flag=True, help="Show lexer output and exit.")
 @click.option('--yacc-only', '-y', is_flag=True, help="Show the yacc output and exit.")
