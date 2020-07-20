@@ -1192,8 +1192,8 @@ def bsmdoc_div(data, *args, **kwargs):
     return BFunction().tag(data, 'div', *args, **kwargs)
 
 
-def _to_list(val):
-    if isinstance(val, Iterable):
+def _to_list(val) -> list:
+    if isinstance(val, (list, tuple)):
         return list(val)
     return [val]
 
@@ -1593,10 +1593,6 @@ def _bsmdoc_readfile(filename, encoding=None, **kwargs):
 
 # generate the html
 bsmdoc_conf = """
-[DEFAULT]
-css = ['css/bsmdoc.css', 'css/menu.css']
-js = ['js/bsmdoc.js', 'js/menu.js']
-
 [html]
 begin = <!DOCTYPE html>
     <html>
@@ -1606,10 +1602,13 @@ end= </html>
 begin = <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-end = <title>%(TITLE)s</title>
-      </head>
+end = </head>
 content =
-mathjs = <script>
+bsmdoc_css = ['css/bsmdoc.css']
+bsmdoc_js = ['js/bsmdoc.js']
+menu_css = ['css/menu.css']
+menu_js = ['js/menu.js']
+mathjax = <script>
             MathJax = {
                 tex: {
                     inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
@@ -1620,29 +1619,28 @@ mathjs = <script>
          <script id="MathJax-script" async
             src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
          </script>
-jqueryjs = <script src="https://code.jquery.com/jquery-3.5.1.min.js"
-                   integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
-                   crossorigin="anonymous">
-           </script>
+jquery = <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+                 integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+                 crossorigin="anonymous"></script>
 
 [body]
 begin = <body class="nomathjax">
         <div class="layout">
 end = </div>
       </body>
-content = <div class="menu">%(CONTENTS)s</div>
-          <div class="main">
-            <div class="toptitle">%(DOCTITLE)s
-                <div class="subtitle">%(SUBTITLE)s</div>
-            </div>
-            <div class="content">%(ARTICLE)s</div>
-          </div>
+# default content is
+# %(article_menu)s
+# <div class="main">
+#     %(article_title)s
+#     %(article_content)s
+# </div>
+content =
 
 [footer]
 begin = <div class="footer">
 end = </div>
 content = <div class="footer-text"> Last updated %(UPDATED)s by
-          <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a> %(SOURCE)s.</div>
+          <a href="http://bsmdoc.feiyilin.com/">bsmdoc</a>%(SOURCE)s.</div>
 """
 
 
@@ -1677,37 +1675,75 @@ class BDoc(object):
         html.append(cfg['html:begin'])
         # header
         html.append(cfg['header:begin'])
-        html.append('<meta name="generator" content="bsmdoc %s">'%(__version__))
+        html.append('<meta name="generator" content="bsmdoc %s">' % (__version__))
         if cfg['header:content']:
             html.append(cfg['header:content'])
-        for c in _to_list(cfg['css']):
-            if not c:
+
+        css = _to_list(cfg['header:bsmdoc_css'])
+        js = []
+        # include bsmdoc.js to show popup reference window if necessary
+        jqueryjs = False
+        refjs = False
+        if cfg.config.has_section('ANCHOR'):
+            refs = ('mjx-eqn-', 'img-', 'video-', 'tbl-', 'footnote-', 'reference-')
+            for key in cfg.config.options('ANCHOR'):
+                if key.startswith(refs):
+                    refjs = jqueryjs = True
+                    break
+
+        if refjs:
+            js += _to_list(cfg['header:bsmdoc_js'])
+
+        if self.parser.config['show_contents']:
+            # menu.css shall be after bsmdoc.css as it will change the layout
+            css += _to_list(cfg['header:menu_css'])
+            js += _to_list(cfg['header:menu_js'])
+            jqueryjs = True
+        css += _to_list(cfg['css'])
+        js += _to_list(cfg['js'])
+        for c in css:
+            if not isinstance(c, str) or not c:
                 continue
             html.append(
                 BFunction().tag('', 'link', 'rel="stylesheet"', 'href="%s"' % c,
                                 'type="text/css"'))
         if cfg['has_math']:
-            html.append(cfg['header:mathjs'])
-        if cfg['header:jqueryjs']:
-            html.append(cfg['header:jqueryjs'])
-        for j in _to_list(cfg['js']):
-            if not j:
+            html.append(cfg['header:mathjax'])
+        if jqueryjs and cfg['header:jquery']:
+            html.append(cfg['header:jquery'])
+        for j in js:
+            if not isinstance(j, str) or not j:
                 continue
             html.append(
                 BFunction().tag('', 'script', 'type="text/javascript"',
                                 'language="javascript"', 'src="%s"' % j))
+        if cfg['title']:
+            html.append(BFunction().tag(cfg['title'], 'title'))
         html.append(cfg['header:end'])
 
         # body
         html.append(cfg['body:begin'])
 
         # the body:content defines the main architecture of the body
-        cfg['body:contents'] = ''
+        article = []
+        contents = ''
         if self.parser.config['show_contents']:
             contents = self.parser.contents
             if contents:
-                cfg['body:contents'] = "\n%s\n" % (contents.replace('%', '%%'))
-        cfg['body:article'] = "\n%s\n" % (html_body.replace('%', '%%'))
+                contents = BFunction().div("\n%s\n" % (contents.replace('%', '%%')), 'menu')
+
+        cfg['body:article_menu'] = contents
+        title = self.parser.config['doctitle']
+        subtitle = self.parser.config['subtitle']
+        if title:
+            if subtitle:
+                title = title + BFunction().div(subtitle, 'subtitle')
+            title = BFunction().div(title, 'toptitle').strip()
+            article.append(title)
+        cfg['body:article_title'] = title
+        article.append(BFunction().div(html_body, 'content'))
+        cfg['body:article_content'] = html_body.replace('%', '%%').strip()
+        html_body = contents + BFunction().div('\n'.join(article), 'main').strip()
         try:
             if cfg['body:content']:
                 html_body = cfg['body:content']
@@ -1732,7 +1768,7 @@ class BDoc(object):
 
         cfg["source"] = ''
         if cfg['show_source']:
-            cfg["source"] = bsmdoc_tag('(source)', 'a', 'href="%s"' % filename)
+            cfg["source"] = ' ' + bsmdoc_tag('(source)', 'a', 'href="%s"' % filename)
         html.append(cfg['footer:content'])
         html.append(cfg['footer:end'])
 

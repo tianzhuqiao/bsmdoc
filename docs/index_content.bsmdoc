@@ -11,9 +11,9 @@ def bsmdoc_codesnippet(data, *args, **kwargs):
 %}!}
 = What is bsmdoc?
 bsmdoc is a tool to generate technical static html docs:
--\tag{b|Light-weighted}: keep the 'core' as small as possible;
--\tag{b|Highly extendable}: extend the tool to solve your own problem easily;
--\tag{b|Single file doc}: generate images, equations in a single file.
+-\tag{b|Light-weighted};
+-\tag{b|Highly extendable};
+-\tag{b|Single file doc}: generate everything in a single file.
 
 bsmdoc splits the whole doc into blocks (e.g., equation block, paragraph block, heading block, ...). In the following sections, we will show each block in detail, as well as the way to extend the existing blocks.
 
