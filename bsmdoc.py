@@ -4,7 +4,6 @@ import os
 import time
 import traceback
 from ast import literal_eval
-from collections.abc import Iterable
 import six
 from six.moves import configparser
 from ply import lex, yacc
@@ -1840,9 +1839,10 @@ def create_project(path, verbose):
     copy_tree(os.path.join(template, 'css'), os.path.join(path, 'css'), verbose=verbose)
     copy_tree(os.path.join(template, 'js'), os.path.join(path, 'js'), verbose=verbose)
 
+    create_doc(os.path.join(path, 'index'), verbose)
+
 def create_doc(doc, verbose):
     template = os.path.dirname(os.path.abspath(__file__))
-    template_content = os.path.join(template, 'docs/template_content.bsmdoc')
     template = os.path.join(template, 'docs/template.bsmdoc')
     text = bsmdoc_include(template, silent=not verbose)
     if text:
@@ -1852,20 +1852,16 @@ def create_doc(doc, verbose):
         if os.path.exists(doc):
             _bsmdoc_error("file %s exists, choose another name!" % (doc))
             return
-        doc_content = filename + '_content.bsmdoc'
-        if os.path.exists(doc):
-            _bsmdoc_error("file %s exists, choose another name!" % (doc_content))
-            return
-        text = text.replace('{template_content}', '#include %s' % (doc_content))
-        with open(doc, 'w') as fp:
-            fp.write(text)
         import logging
         logging.basicConfig(level=logging.INFO)
         from distutils.file_util import copy_file
         from distutils import log
         log.set_verbosity(log.INFO)
         log.set_threshold(log.INFO)
-        copy_file(template_content, doc_content, verbose=verbose)
+        copy_file(template, doc, verbose=verbose)
+
+        bsmdoc = BDoc(False, verbose)
+        bsmdoc.gen(doc)
 
 if __name__ == '__main__':
     cli()

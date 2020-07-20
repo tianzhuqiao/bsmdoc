@@ -1,0 +1,9 @@
+\newfun{title|Title}
+\config{title|\title}
+\config{doctitle|\title}
+\config{heading_numbering|True}
+\config{image_numbering|True}
+\config{table_numbering|True}
+\config{show_contents|True}
+
+= Hello World
