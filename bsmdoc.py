@@ -491,7 +491,7 @@ class BParse(object):
 
     def t_link_WORD(self, t):
         r'(?:\\(\W)|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\n\|\{\}\[\]\\])+'
-        t.value = bsmdoc_escape(t.value)
+        t.value = BFunction().escape(t.value)
         t.value = re.sub(r'(\\)(.)', r'\2', t.value)
         return t
 
@@ -519,7 +519,7 @@ class BParse(object):
     # default state, ignore, '!}', '%}', '|', '[', ']', '{', '}', '\n', ' ', '#', '$'
     def t_WORD(self, t):
         r'(?:\\(\W)|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]\\])+'
-        t.value = bsmdoc_escape(t.value)
+        t.value = BFunction().escape(t.value)
         t.value = re.sub(r'(\\)(.)', r'\2', t.value)
         return t
 
@@ -631,7 +631,7 @@ class BParse(object):
         if not p[1].strip():
             p[0] = ""
         elif len(self.block_state) == self.heading_level and p[1].endswith('\n'):
-            p[0] = bsmdoc_tag(p[1].strip(), 'p') + '\n'
+            p[0] = BFunction().tag(p[1].strip(), 'p') + '\n'
         else:
             p[0] = p[1]
 
@@ -677,14 +677,14 @@ class BParse(object):
 
     def p_trow(self, p):
         '''trow : vtext TROW rowsep'''
-        row = ''.join([bsmdoc_tag(t.strip(), 'td') for t in p[1]])
-        p[0] = bsmdoc_tag(row, 'tr')
+        row = ''.join([BFunction().tag(t.strip(), 'td') for t in p[1]])
+        p[0] = BFunction().tag(row, 'tr')
 
     def p_thead(self, p):
         '''thead : vtext THEAD rowsep'''
         # THEAD indicates the current row is header
-        tr = ''.join([bsmdoc_tag(t.strip(), 'th') for t in p[1]])
-        p[0] = bsmdoc_tag(tr, 'tr')
+        tr = ''.join([BFunction().tag(t.strip(), 'th') for t in p[1]])
+        p[0] = BFunction().tag(tr, 'tr')
 
     def p_rowsep(self, p):
         '''rowsep : rowsep SPACE
@@ -840,7 +840,7 @@ class BParse(object):
         s = p[2].strip()
         if s[0] == "#":
             s = self.check_anchor(s[1:], lineno=p.lineno(2))
-        p[0] = bsmdoc_tag(p[4], 'a', 'href="%s"' % p[2])
+        p[0] = BFunction().tag(p[4], 'a', 'href="%s"' % p[2])
 
     def p_inlineblock_link(self, p):
         '''inlineblock : BRACKETL sections BRACKETR'''
@@ -849,7 +849,7 @@ class BParse(object):
         if s[0] == '#':
             # internal anchor
             v = self.check_anchor(s[1:], lineno=p.lineno(2))
-        p[0] = bsmdoc_tag(v, 'a', 'href="%s"' % s)
+        p[0] = BFunction().tag(v, 'a', 'href="%s"' % s)
 
     def p_plaintext_multi(self, p):
         '''plaintext : plaintext WORD
@@ -1753,21 +1753,21 @@ class BDoc(object):
 
         # reference
         if cfg.cited:
-            cites = [bsmdoc_tag(x[0], 'li') for x in cfg.cited]
-            cites = bsmdoc_tag('\n'.join(cites), 'ol')
-            cites = bsmdoc_tag(cites, 'div', 'reference')
+            cites = [BFunction().tag(x[0], 'li') for x in cfg.cited]
+            cites = BFunction().tag('\n'.join(cites), 'ol')
+            cites = BFunction().tag(cites, 'div', 'reference')
             html.append(cites)
 
         html.append(cfg['footer:begin'])
         if cfg.footnotes:
-            foots = [bsmdoc_tag(x, 'li') for x in cfg.footnotes]
-            foots = bsmdoc_tag('\n'.join(foots), 'ol')
-            foots = bsmdoc_tag(foots, 'div', 'footnote')
+            foots = [BFunction().tag(x, 'li') for x in cfg.footnotes]
+            foots = BFunction().tag('\n'.join(foots), 'ol')
+            foots = BFunction().tag(foots, 'div', 'footnote')
             html.append(foots)
 
         cfg["source"] = ''
         if cfg['show_source']:
-            cfg["source"] = ' ' + bsmdoc_tag('(source)', 'a', 'href="%s"' % filename)
+            cfg["source"] = ' ' + BFunction().tag('(source)', 'a', 'href="%s"' % filename)
         html.append(cfg['footer:content'])
         html.append(cfg['footer:end'])
 
@@ -1788,20 +1788,27 @@ class BDoc(object):
 @click.command()
 @click.option('--new-project', '-n', type=click.Path(),
               help="Create a new project from template and exit.")
+@click.option('--update-project', '-u', type=click.Path(),
+              help="Update project (css, js) and exit.")
 @click.option('--new-doc', '-d', type=click.Path(), help="Create a new doc from template and exit.")
 @click.option('--lex-only', '-l', is_flag=True, help="Show lexer output and exit.")
 @click.option('--yacc-only', '-y', is_flag=True, help="Show the yacc output and exit.")
 @click.option('--encoding', '-e', help="Set the input file encoding, e.g. 'utf-8'.")
-@click.option('--print-html', '-p', is_flag=True, help="Print the output html.")
+@click.option('--print-html', '-p', is_flag=True, help="Print the output html without saving to file.")
 @click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
 @click.version_option(__version__)
 @click.argument('files', nargs=-1, type=click.Path(exists=True))
-def cli(new_project, new_doc, files, lex_only, encoding, yacc_only, print_html, verbose):
+def cli(new_project, update_project, new_doc, files, lex_only, encoding,
+        yacc_only, print_html, verbose):
     if new_project:
-        create_project(new_project, verbose)
+        new_prj(new_project, verbose)
+        return
+    elif update_project:
+        update_prj(update_project, verbose)
         return
     elif new_doc:
         create_doc(new_doc, verbose)
+        return
 
     for filename in files:
         cur_path = os.getcwd()
@@ -1822,7 +1829,7 @@ def cli(new_project, new_doc, files, lex_only, encoding, yacc_only, print_html, 
             traceback.print_exc(file=sys.stdout)
         os.chdir(cur_path)
 
-def create_project(path, verbose):
+def new_prj(path, verbose):
     try:
         os.mkdir(path)
     except FileExistsError:
@@ -1841,10 +1848,25 @@ def create_project(path, verbose):
 
     create_doc(os.path.join(path, 'index'), verbose)
 
+def update_prj(path, verbose):
+    if not os.path.isdir(path):
+        _bsmdoc_error("folder %s doesn't exist, choose another name!" % (path))
+        return
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    from distutils.dir_util import copy_tree
+    from distutils import log
+    log.set_verbosity(log.INFO)
+    log.set_threshold(log.INFO)
+    template = os.path.dirname(os.path.abspath(__file__))
+    template = os.path.join(template, 'docs')
+    copy_tree(os.path.join(template, 'css'), os.path.join(path, 'css'), verbose=verbose)
+    copy_tree(os.path.join(template, 'js'), os.path.join(path, 'js'), verbose=verbose)
+
 def create_doc(doc, verbose):
     template = os.path.dirname(os.path.abspath(__file__))
     template = os.path.join(template, 'docs/template.bsmdoc')
-    text = bsmdoc_include(template, silent=not verbose)
+    text = BFunction().include(template, silent=not verbose)
     if text:
         filename, extension = os.path.splitext(doc)
         if not extension:
