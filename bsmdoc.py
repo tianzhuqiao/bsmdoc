@@ -81,7 +81,7 @@ class BConfig(object):
         self['heading_numbering'] = False
         self['heading_numbering_start'] = 1
         self['heading_in_contents'] = True
-        self['show_contents'] = False
+        self['show_table_of_contents'] = False
 
         self['image_numbering'] = False
         self['image_numbering_prefix'] = 'Fig.'
@@ -353,8 +353,8 @@ class BParse(object):
     def t_MAKECONTENT(self, t):
         r'\#makecontent[^\S\r\n]*$'
 
-        self.config['show_contents'] = True
-        self._warning(r'#makecontent is depreciated, use \config{show_contents|True}',
+        self.config['show_table_of_contents'] = True
+        self._warning(r'#makecontent is depreciated, use \config{show_table_of_contents|True}',
                       lineno=t.lexer.lineno)
 
         return None
@@ -401,6 +401,13 @@ class BParse(object):
         t.type = 'INLINEEQ'
         t.lexer.lineno += t.value.count('\n')
         t.value = t.value[1:-1]
+        return t
+
+    def t_INLINE_EQN2(self, t):
+        r'\\\([^\n]*?\\\)'
+        t.type = 'INLINEEQ'
+        t.lexer.lineno += t.value.count('\n')
+        t.value = t.value[2:-2]
         return t
 
     # marks to ignore parsing, and it supports nested statement ('{%{% %}%}')
@@ -516,9 +523,16 @@ class BParse(object):
         t.value = ' '
         return t
 
+    def t_escape_WORD(self, t):
+        r'(?:\\(\W))+'
+        t.value = BFunction().escape(t.value)
+        t.value = re.sub(r'(\\)(.)', r'\2', t.value)
+        t.type = 'WORD'
+        return t
+
     # default state, ignore, '!}', '%}', '|', '[', ']', '{', '}', '\n', ' ', '#', '$'
     def t_WORD(self, t):
-        r'(?:\\(\W)|(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]\\])+'
+        r'(?:(\!(?!\}))|(\%(?!\}))|(?<=\&)\#|[^ \$\%\!\#\n\|\{\}\[\]\\])+'
         t.value = BFunction().escape(t.value)
         t.value = re.sub(r'(\\)(.)', r'\2', t.value)
         return t
@@ -1176,7 +1190,7 @@ def bsmdoc_math(data, *args, **kwargs):
     cfg['has_math'] = True
     eqn = BFunction().escape(data)
     if args and args[0] == 'inline':
-        return '${0}$'.format(eqn)
+        return '\\({0}\\)'.format(eqn)
 
     return BFunction().div('$$\n{0}\n$$'.format(_code_format(eqn, autogobble=True)),
                            'mathjax')
@@ -1610,7 +1624,7 @@ menu_js = ['js/menu.js']
 mathjax = <script>
             MathJax = {
                 tex: {
-                    inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                    inlineMath: [['\\\\(', '\\\\)']],
                     tags: "all"
                 }
             };
@@ -1693,7 +1707,7 @@ class BDoc(object):
         if refjs:
             js += _to_list(cfg['header:bsmdoc_js'])
 
-        if self.parser.config['show_contents']:
+        if self.parser.config['show_table_of_contents']:
             # menu.css shall be after bsmdoc.css as it will change the layout
             css += _to_list(cfg['header:menu_css'])
             js += _to_list(cfg['header:menu_js'])
@@ -1726,7 +1740,7 @@ class BDoc(object):
         # the body:content defines the main architecture of the body
         article = []
         contents = ''
-        if self.parser.config['show_contents']:
+        if self.parser.config['show_table_of_contents']:
             contents = self.parser.contents
             if contents:
                 contents = BFunction().div("\n%s\n" % (contents.replace('%', '%%')), 'menu')

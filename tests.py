@@ -235,7 +235,7 @@ class TestBsmdoc(unittest.TestCase):
 
     def test_equation(self):
         text = r'''$f=ma$'''
-        output = r'''$f=ma$'''
+        output = r'''\(f=ma\)'''
 
         self.run_test(text, output)
 
