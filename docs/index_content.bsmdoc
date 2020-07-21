@@ -84,12 +84,34 @@ def bsmdoc_helloworld(data, *args, **kwargs):
 %}!}
 }
 * {Compile the file
-{!highlight|bash||{%
+{!highlight|console||{%
 $ bsmdoc helloworld.bsmdoc
 %}!}}
 * {It will generate \tag{strong|helloworld.html} in the same folder, which may look like
 {!highlight|html||helloworld||
 !}
+}
+== 1-minute Tutorial
+bsmdoc also provides some commands to create html project and doc.
+* {First, create a project
+{!highlight|console||{%
+$ bsmdoc --new-project myprj
+%}!}
+The above command will
+** create a folder \tag{b|myprj};
+** copy the default css and javascript files to it;
+** create a \tag{b|index.bsmdoc} from template.
+}
+* {Now, you can update the \tag{b|index.bsmdoc} and then compile it
+{!highlight|console||{%
+$ bsmdoc index.bsmdoc
+%}!}
+}
+* {Add a new doc from template
+{!highlight|console||{%
+$ bsmdoc --new-doc page
+%}!}
+It will create the \tag{page.bsmdoc} in current folder from template.
 }
 
 = Heading \label{sec-heading}
@@ -151,10 +173,10 @@ Sec. \ref{sec-heading}...
 \config{heading_in_contents|True}
 \config{heading_numbering|True}
 
-bsmdoc can automatically generate the table of contents from the
+bsmdoc will generate the table of contents from the
 headings, if the following configuration is enabled
 {!highlight|bsmdoc||{%
-\config{show_contents|True}
+\config{show_table_of_contents|True}
 %}!}
 
 Only the headings with automatic numbering will be included in the content list.
@@ -250,13 +272,13 @@ footnote example\footnote{This is a footnote}.
 
 bsmdoc will automatically add indexing to each footnote. When you move the cursor to the footnote link, the footnote content will be shown in a popup window. So you may not need to go to the end of the page to see the footnote content. The [#sec-image|image], [#sec-equation|equation] and [#sec-table|table] blocks support similar feature.
 
-==Reference And Citation
+==Reference & Citation
 bsmdoc has an easy way to add references and citations. For example, the following command will add a book reference
 \reference{Simon|Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001}
 {!highlight|bsmdoc||{%
 \reference{Simon|Simon Haykin, "Adaptive Filter Theory," Prentice Hall, 4th edition, Sep. 2001}
 %}!}
-\tag{strong|Simon} before \tag{code|\|} is the alias, which can be used to cite it, e.g.,
+\tag{strong|Simon} before "\tag{code|\|}" is the alias, which can be used to cite it, e.g.,
 {!define|example_citation||example||{%
 The LMS algorithm in \cite{Simon}...
 %}!}
@@ -270,7 +292,7 @@ All cited references will be appended to the end of the document in the citation
 In this case, it will not generate the link to the reference, but the reference will still be added to the reference list even if there is no explicit citation in the document.
 
 = Image & Video \label{sec-image}
-== Image
+== Image \label{sec-image-image}
 {!exec|firstRunOnly||{%
 import os.path
 if not os.path.isfile("image/scatter.svg"):
@@ -389,7 +411,7 @@ Fig. \ref{video-waves} shows a scatter diagram
 The options to configure the video numbering
 {{
 Option | Description ||+
-video_numbering | \tag{b|image} (default) or \tag{b|True} or \tag{b|False}. Turn on/off numbering. If it is set to \tag{b|image}, then it will share numbering with \tag{b|image} block. ||-
+video_numbering | \tag{b|image} (default) or \tag{b|True} or \tag{b|False}. Turn on/off numbering. If it is set to \tag{b|image}, then it will share numbering with [#sec-image-image|image] block. ||-
 video_numbering_prefix | The numbering prefix (default "\tag{b|Video.}"). Only valid if \tag{b|video_numbering} is not \tag{b|image}.||-
 video_numbering_num_prefix | The numbering prefix (default ""). Only valid if \tag{b|video_numbering} is not \tag{b|image}.||-
 }}
@@ -400,7 +422,7 @@ Equation is rendered with [http://www.mathjax.org|mathjax]: both inline and norm
 <script>
     MathJax = {
         tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            inlineMath: [['\\(', '\\)']],
             tags: "all"
         }
 };
@@ -413,10 +435,10 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
 
 Such configuration can be included in a configuration file, which will be shown in detail in Sec. [#sec-template].
 
-bmdoc looks for "\tag{code|$...$}" as delimiters for inline equation block
+bsmdoc looks for "\tag{code|\\\(...\\\)}" (or "\tag{code|\$...\$}") as delimiters for inline equation block
 
 {!define|example_equation||example||{%
-Newton's second law is often stated as $F=ma$, which means the force ($F$) acting on an object is equal to the mass ($m$) of an object times its acceleration ($a$).
+Newton's second law is often stated as \(F=ma\), which means the force (\(F\)) acting on an object is equal to the mass ($m$) of an object times its acceleration ($a$).
 %}!}
 #include example_equation
 

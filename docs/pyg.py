@@ -89,6 +89,7 @@ class bLexer(RegexLexer):
             # equation
             (r'\$\$.*\$\$', Name.Tag),
             (r'\$[^\$]*\$', Name.Tag),
+            (r'\\\([^\n]*?\\\)', Name.Tag),
             # raw block
             (r'\{\%', Name.Tag, "rawblock"),
             # function block
@@ -102,6 +103,7 @@ class bLexer(RegexLexer):
             # link
             (r'(\[)([^\]\|]+)(\|)([^\]\|]*)(\])', bygroups(Name.Tag, Name.Tag, Text, String, Name.Tag)),
             (r'(\[)([^\]]*)(\])', bygroups(Name.Tag, Name.Tag,Name.Tag)),
+            (r'True|False', Keyword),
             #(r'.*\n', Text),
             ]
     }
