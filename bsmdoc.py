@@ -1843,24 +1843,17 @@ def cli(new_project, update_project, new_doc, files, lex_only, encoding,
             traceback.print_exc(file=sys.stdout)
         os.chdir(cur_path)
 
+
 def new_prj(path, verbose):
     try:
         os.mkdir(path)
     except FileExistsError:
         _bsmdoc_error("folder %s exists, choose another name!" % (path))
         return
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    from distutils.dir_util import copy_tree
-    from distutils import log
-    log.set_verbosity(log.INFO)
-    log.set_threshold(log.INFO)
-    template = os.path.dirname(os.path.abspath(__file__))
-    template = os.path.join(template, 'docs')
-    copy_tree(os.path.join(template, 'css'), os.path.join(path, 'css'), verbose=verbose)
-    copy_tree(os.path.join(template, 'js'), os.path.join(path, 'js'), verbose=verbose)
 
+    update_prj(path, verbose)
     create_doc(os.path.join(path, 'index'), verbose)
+
 
 def update_prj(path, verbose):
     if not os.path.isdir(path):
@@ -1876,6 +1869,7 @@ def update_prj(path, verbose):
     template = os.path.join(template, 'docs')
     copy_tree(os.path.join(template, 'css'), os.path.join(path, 'css'), verbose=verbose)
     copy_tree(os.path.join(template, 'js'), os.path.join(path, 'js'), verbose=verbose)
+
 
 def create_doc(doc, verbose):
     template = os.path.dirname(os.path.abspath(__file__))

@@ -100,7 +100,8 @@ $ bsmdoc --new-project myprj
 The above command will
 ** create a folder \tag{b|myprj};
 ** copy the default css and javascript files to it;
-** create a \tag{b|index.bsmdoc} from template.
+** create a \tag{b|index.bsmdoc} from template;
+** compile the above \tag{b|index.bsmdoc} to generate \tag{b|index.html}.
 }
 * {Now, you can update the \tag{b|index.bsmdoc} and then compile it
 {!highlight|console||{%
@@ -109,9 +110,9 @@ $ bsmdoc index.bsmdoc
 }
 * {Add a new doc from template
 {!highlight|console||{%
-$ bsmdoc --new-doc page
+$ bsmdoc --new-doc myprj/page
 %}!}
-It will create the \tag{page.bsmdoc} in current folder from template.
+It will create the \tag{b|page.bsmdoc} in folder \tag{b|myprj} from template and compile it.
 }
 
 = Heading \label{sec-heading}

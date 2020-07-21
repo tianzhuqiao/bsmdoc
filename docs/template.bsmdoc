@@ -4,6 +4,6 @@
 \config{heading_numbering|True}
 \config{image_numbering|True}
 \config{table_numbering|True}
-\config{show_contents|True}
+\config{show_table_of_contents|True}
 
 = Hello World
