@@ -1866,14 +1866,14 @@ def update_prj(path, verbose):
     log.set_verbosity(log.INFO)
     log.set_threshold(log.INFO)
     template = os.path.dirname(os.path.abspath(__file__))
-    template = os.path.join(template, 'docs')
+    template = os.path.join(template, 'template')
     copy_tree(os.path.join(template, 'css'), os.path.join(path, 'css'), verbose=verbose)
     copy_tree(os.path.join(template, 'js'), os.path.join(path, 'js'), verbose=verbose)
 
 
 def create_doc(doc, verbose):
     template = os.path.dirname(os.path.abspath(__file__))
-    template = os.path.join(template, 'docs/template.bsmdoc')
+    template = os.path.join(template, 'template/template.bsmdoc')
     text = BFunction().include(template, silent=not verbose)
     if text:
         filename, extension = os.path.splitext(doc)

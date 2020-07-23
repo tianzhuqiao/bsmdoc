@@ -1,6 +1,6 @@
 import codecs
 import os.path
-from setuptools import setup
+from setuptools import setup, find_packages
 
 def read(rel_path):
     here = os.path.abspath(os.path.dirname(__file__))
@@ -17,7 +17,7 @@ def get_version(rel_path):
         raise RuntimeError("Unable to find version string.")
 
 setup(name='bsmdoc',
-      version=get_version('bsmdoc.py'),
+      version=get_version('./bsmdoc/bsmdoc.py'),
       description='another technical html doc generator',
       long_description=read("README.md"),
       long_description_content_type="text/markdown",
@@ -27,11 +27,12 @@ setup(name='bsmdoc',
       license="MIT",
       python_requires='>=3.2',
       platforms=["any"],
-      py_modules=['bsmdoc'],
+      packages=find_packages(),
+      package_data={'bsmdoc': ['template/*', 'template/css/*', 'template/js/*']},
       include_package_data=True,
       install_requires=['ply', 'pygments', 'click', 'cchardet', 'six'],
       entry_points='''
         [console_scripts]
-        bsmdoc=bsmdoc:cli
+        bsmdoc=bsmdoc.bsmdoc:cli
       '''
      )
