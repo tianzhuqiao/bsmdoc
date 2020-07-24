@@ -30,9 +30,9 @@ setup(name='bsmdoc',
       packages=find_packages(),
       package_data={'bsmdoc': ['template/*.bsmdoc', 'template/css/*.css', 'template/js/*.js']},
       include_package_data=True,
-      install_requires=['ply', 'pygments', 'click', 'cchardet', 'six'],
+      install_requires=['ply', 'pygments', 'click', 'click_default_group', 'cchardet', 'six'],
       entry_points='''
         [console_scripts]
-        bsmdoc=bsmdoc.main:cli
+        bsmdoc=bsmdoc.__main__:cli
       '''
      )
