@@ -28,7 +28,7 @@ setup(name='bsmdoc',
       python_requires='>=3.2',
       platforms=["any"],
       packages=find_packages(),
-      package_data={'bsmdoc': ['template/*', 'template/css/*', 'template/js/*']},
+      package_data={'bsmdoc': ['template/*.bsmdoc', 'template/css/*.css', 'template/js/*.js']},
       include_package_data=True,
       install_requires=['ply', 'pygments', 'click', 'cchardet', 'six'],
       entry_points='''
