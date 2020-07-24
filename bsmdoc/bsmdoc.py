@@ -73,7 +73,7 @@ class BConfig(object):
             self.config.remove_option('DEFAULT', k)
 
         self.load(bsmdoc_conf)
-        self.set_updated(time.localtime(time.time()), True)
+        self.set_updated(time.gmtime(), True)
         self['title'] = ''
         self['doctitle'] = '%(TITLE)s'
         self['subtitle'] = ''
@@ -105,12 +105,13 @@ class BConfig(object):
         self.alias = {}
 
     def set_updated(self, t, forced=False):
+        time_format = '%Y-%m-%d %H:%M:%S UTC'
         if forced or not self['updated']:
-            self['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z', t)
+            self['updated'] = time.strftime(time_format, t)
         else:
-            ct = time.strptime(self['updated'], '%Y-%m-%d %H:%M:%S %Z')
+            ct = time.strptime(self['updated'], time_format)
             if ct < t:
-                self['updated'] = time.strftime('%Y-%m-%d %H:%M:%S %Z', t)
+                self['updated'] = time.strftime(time_format, t)
 
     def get_scan(self) -> int:
         return self._scan
