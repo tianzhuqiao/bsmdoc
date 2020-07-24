@@ -33,6 +33,6 @@ setup(name='bsmdoc',
       install_requires=['ply', 'pygments', 'click', 'cchardet', 'six'],
       entry_points='''
         [console_scripts]
-        bsmdoc=bsmdoc.bsmdoc:cli
+        bsmdoc=bsmdoc.main:cli
       '''
      )
