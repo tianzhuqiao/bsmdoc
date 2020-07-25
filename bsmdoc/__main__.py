@@ -25,7 +25,7 @@ def cli():
 @click.option('--print-html', '-p', is_flag=True,
               help="Print the output html without saving to file.")
 @click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
-@click.argument('files', nargs=-1, type=click.Path(exists=True))
+@click.argument('files', nargs=-1, type=click.Path(exists=True, dir_okay=False))
 def gen_html(files, lex_only, encoding, yacc_only, print_html, verbose):
     for filename in files:
         cur_path = os.getcwd()
