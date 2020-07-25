@@ -25,7 +25,7 @@ def cli():
 @click.option('--print-html', '-p', is_flag=True,
               help="Print the output html without saving to file.")
 @click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
-@click.argument('files', nargs=-1, type=click.Path(exists=True, dir_okay=False))
+@click.argument('files', nargs=-1, type=click.Path(exists=True, dir_okay=False, allow_dash=True))
 def gen_html(files, lex_only, encoding, yacc_only, print_html, verbose):
     for filename in files:
         cur_path = os.getcwd()
@@ -86,7 +86,8 @@ def new_doc(files, force, verbose):
         if not extension:
             doc = filename + '.bsmdoc'
         if not force and os.path.exists(doc):
-            _bsmdoc_error('file %s exists, choose another name or overwrite with "--force"!' % (doc))
+            fmt = 'file %s exists, choose another name or overwrite with "--force"!'
+            _bsmdoc_error(fmt % (doc))
             return
         copy_file(template, doc, update=not force, verbose=verbose)
 

@@ -246,7 +246,7 @@ class BParse(object):
         self.config.reset_options()
         self.config['filename'] = self.filename
         self.config['basename'] = os.path.basename(self.filename)
-        if self.filename != "<input>":
+        if os.path.isfile(self.filename):
             mt = time.gmtime(os.path.getmtime(self.filename))
         else:
             mt = time.gmtime()
@@ -1587,7 +1587,7 @@ def bsmdoc_anchor(data, *args, **kwargs):
 
 
 def _bsmdoc_readfile(filename, encoding=None, **kwargs):
-    if not encoding:
+    if not encoding and filename != '-':
         # encoding is not define, try to detect it
         with open(filename.strip(), 'rb') as fp:
             raw = fp.read()
@@ -1595,7 +1595,7 @@ def _bsmdoc_readfile(filename, encoding=None, **kwargs):
 
     _bsmdoc_info("open \"%s\" with encoding \"%s\"" % (filename, encoding),
                  **kwargs)
-    with open(filename, 'r', encoding=encoding) as fp:
+    with click.open_file(filename, 'r', encoding=encoding) as fp:
         txt = fp.read()
         txt = txt.encode('unicode_escape').decode()
         regexp = re.compile(r'\\u([a-zA-Z0-9]{4})', re.M + re.S)
@@ -1793,8 +1793,11 @@ class BDoc(object):
         self.cfg = cfg
         self.html = html
         self.html_text = '\n'.join(html)
-        self.output_filename = os.path.splitext(filename)[0] + '.html'
+        if filename == '-':
+            self.output_filename = filename
+        else:
+            self.output_filename = os.path.splitext(filename)[0] + '.html'
         if output:
-            with open(self.output_filename, 'w', encoding=encoding) as fp:
+            with click.open_file(self.output_filename, 'w', encoding=encoding) as fp:
                 fp.write(self.html_text)
         return self.html_text
