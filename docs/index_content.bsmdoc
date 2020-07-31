@@ -92,27 +92,28 @@ $ bsmdoc helloworld.bsmdoc
 !}
 }
 == 1-minute Tutorial
-bsmdoc also provides some commands to create html project and doc.
+bsmdoc also provides some commands to create project and .bsmdoc.
 * {First, create a project
 {!highlight|console||{%
-$ bsmdoc --new-project myprj
+$ mkdir myprj
+$ cd myprj
+$ bsmdoc init
 %}!}
-The above command will
-** create a folder \tag{b|myprj};
-** copy the default css and javascript files to it;
-** create a \tag{b|index.bsmdoc} from template;
-** compile the above \tag{b|index.bsmdoc} to generate \tag{b|index.html}.
+The last command will
+** copy the default css and javascript files to the current folder;
+** create \tag{b|index.bsmdoc} from template;
+** generate \tag{b|index.html} from \tag{b|index.bsmdoc}.
 }
-* {Now, you can update the \tag{b|index.bsmdoc} and then compile it
+* {Now, you can update the \tag{b|index.bsmdoc} and then regenerate the html
 {!highlight|console||{%
 $ bsmdoc index.bsmdoc
 %}!}
 }
-* {Add a new doc from template
+* {Add a new doc from template to current folder
 {!highlight|console||{%
-$ bsmdoc --new-doc myprj/page
+$ bsmdoc new page
 %}!}
-It will create the \tag{b|page.bsmdoc} in folder \tag{b|myprj} from template and compile it.
+It will create the \tag{b|page.bsmdoc} from template.
 }
 
 = Heading \label{sec-heading}
