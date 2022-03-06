@@ -98,6 +98,8 @@ class BConfig(object):
         self['table_numbering_num_prefix'] = ''
         self['table_numbering_next_tag'] = 0
 
+        self['has_equation_ref'] = False
+
         self.footnotes = []
         self.contents = []
         self.heading_tag = {}
@@ -1081,6 +1083,7 @@ def bsmdoc_caption(data, *args, **kwargs):
 # deal with the equation reference: \ref{} or \eqref{}
 @BFunction('eqref')
 def bsmdoc_eqref(data, *args, **kwargs):
+    BFunction().config('true', 'has_equation_ref', *args, **kwargs)
     return "\\ref{%s}" % data
 
 
@@ -1696,8 +1699,9 @@ class BDoc(object):
         css = _to_list(cfg['header:bsmdoc_css'])
         js = []
         # include bsmdoc.js to show popup reference window if necessary
-        jqueryjs = False
-        refjs = False
+        refjs = self.parser.config['has_equation_ref']
+        jqueryjs = refjs
+
         if cfg.config.has_section('ANCHOR'):
             refs = ('mjx-eqn-', 'img-', 'video-', 'tbl-', 'footnote-', 'reference-')
             for key in cfg.config.options('ANCHOR'):
