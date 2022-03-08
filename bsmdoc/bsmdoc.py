@@ -1357,7 +1357,7 @@ def bsmdoc_footnote(data, *args, **kwargs):
     fn = BFunction().div(data, 'id="%s"' % dec)
     cfg.footnotes.append(fn)
     tag = BFunction().tag(tag, 'sup')
-    return BFunction().tag(tag, 'a', 'name="%s"' % src, 'href="#%s"' % dec)
+    return BFunction().tag(tag, 'a', 'id="%s"' % src, 'href="#%s"' % dec)
 
 
 @BFunction('heading')
@@ -1586,7 +1586,7 @@ def bsmdoc_anchor(data, *args, **kwargs):
     data = data.strip()
     cfg = kwargs.get('cfg')
     cfg['ANCHOR:%s' % data] = data
-    return BFunction().tag(BFunction().tag("&#x2693;", 'sup'), 'a', 'name="%s"' % data)
+    return BFunction().tag(BFunction().tag("&#x2693;", 'sup'), 'a', 'id="%s"' % data)
 
 
 def _bsmdoc_readfile(filename, encoding=None, **kwargs):
