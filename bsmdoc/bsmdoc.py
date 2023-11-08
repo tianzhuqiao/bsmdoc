@@ -1627,18 +1627,21 @@ menu_css = ['css/menu.css']
 menu_js = ['js/menu.js']
 mathjax = <script>
             MathJax = {
+                loader: {
+                    load: ['[tex]/tagformat']
+                },
                 tex: {
+                    packages: {'[+]': ['tagformat']},
                     inlineMath: [['\\\\(', '\\\\)']],
-                    tags: "all"
+                    tags: "all",
+                    tagformat: {
+                        id: (id) => 'mjx-eqn-' + id.replace(/\s/g, '_'),
+                    }
                 }
             };
          </script>
-         <script id="MathJax-script" async
-            src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
-         </script>
-jquery = <script src="https://code.jquery.com/jquery-3.5.1.min.js"
-                 integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
-                 crossorigin="anonymous"></script>
+         <script src=" https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js "></script>
+jquery = <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
 [body]
 begin = <body class="nomathjax">
