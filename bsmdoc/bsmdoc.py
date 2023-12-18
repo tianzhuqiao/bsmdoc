@@ -1476,7 +1476,7 @@ def bsmdoc_video(data, *args, **kwargs):
     cfg = kwargs['cfg']
     src = BFunction().tag("", 'source', 'src="%s"' % data)
     src += "\nYour browser does not support the video tag."
-    txt = BFunction().tag(src, 'video', '"controls"')
+    txt = BFunction().tag(src, 'video', '"controls"', *args)
     caption = cfg['v:caption']
     label = cfg['v:label']
     # if cfg['video_numbering'], use the same numbering as image
