@@ -405,7 +405,7 @@ For example, to add reference to an image, you need to
 }
 * { add reference to the image with \tag{code|\\ref} command
 {!define|example_video_ref||example||{%
-Fig. \ref{video-waves} shows a scatter diagram
+Vid. \ref{video-waves} shows a scatter diagram
 %}!}
 #include example_video_ref
 }
