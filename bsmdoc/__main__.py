@@ -94,5 +94,15 @@ def new_doc(files, force, verbose):
         bsmdoc = BDoc(False, verbose)
         bsmdoc.gen(doc)
 
+
+@cli.command('update', help='Update the CSS/JS files',
+             short_help='Update the CSS/JS files.')
+@click.option('--force', is_flag=True, help="Overwrite if file exits.")
+@click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
+@click.argument('folders', nargs=-1, type=click.Path(exists=True, file_okay=False))
+def update_doc(folders, force, verbose):
+    for folder in folders:
+        update_prj(folder, force=force, verbose=verbose)
+
 if __name__ == '__main__':
     cli()
