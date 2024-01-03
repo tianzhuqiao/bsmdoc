@@ -1101,6 +1101,18 @@ def bsmdoc_ref(data, *args, **kwargs):
     # can not find the anchor, assume its a equation reference for now
     return BFunction().eqref(data, *args, **kwargs)
 
+@BFunction('eval')
+def bsmdoc_eval(data, *args, **kwargs):
+    cfg = kwargs.get('cfg')
+    # check if it only needs to execute the code for the 1st scan
+    if args and args[0] == "firstRunOnly" and cfg.get_scan() > 1:
+        return ''
+    try:
+        return eval(data, globals())
+    except:
+        _bsmdoc_error("bsmdoc_eval('%s',%s)" % (data, args), **kwargs)
+        traceback.print_exc(file=sys.stdout)
+    return ''
 
 @BFunction('exec')
 def bsmdoc_exec(data, *args, **kwargs):
@@ -1318,6 +1330,7 @@ def bsmdoc_cite(data, *args, **kwargs):
     #
     cite_id_prefix = 'cite-%d-' % (ref_tag)
     ref_id = 'reference-%d' % ref_tag
+    cfg['ANCHOR:%s' % ref_id] = ref_id
     # add the reference to the list, which will show at the end of the page
     cite_all = []
     for c in six.moves.range(1, cite_tag + 1):
@@ -1357,6 +1370,7 @@ def bsmdoc_footnote(data, *args, **kwargs):
     fn = BFunction().div(data, 'id="%s"' % dec)
     cfg.footnotes.append(fn)
     tag = BFunction().tag(tag, 'sup')
+    cfg['ANCHOR:%s' % dec] = dec
     return BFunction().tag(tag, 'a', 'id="%s"' % src, 'href="#%s"' % dec)
 
 
