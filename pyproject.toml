@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=67.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bsmdoc"
+authors = [
+  { name="Tianzhu Qiao", email="tq@feiyilin.com" },
+]
+license-files = ["LICENSE"]
+description='bsmdoc is a tool to generate static technical html doc'
+readme = "README.md"
+requires-python = ">=3.0"
+classifiers = [
+    "Operating System :: OS Independent",
+]
+dependencies = ['ply', 'pygments', 'click', 'click_default_group', 'cchardet', 'six', 'auto_click_auto'
+      ]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "bsmdoc.__version__"}
+
+[project.urls]
+"Homepage" = "https://bsmdoc.feiyilin.com"
+
+[project.gui-scripts]
+bsmdoc = "bsmdoc.__main__:cli"
+
+[tool.setuptools.packages]
+find = {}
+
+
+[options]
+include_package_data = true
+
+[tool.setuptools.package-data]
+'bsmdoc' = ['template/*.bsmdoc', 'template/css/*.css', 'template/js/*.js']

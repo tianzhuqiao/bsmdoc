@@ -13,8 +13,7 @@ import cchardet as chardet
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
-
-__version__ = '0.0.9'
+from .version import __version__
 
 
 class BConfig(object):

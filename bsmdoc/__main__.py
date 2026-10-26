@@ -2,16 +2,13 @@ import os
 import sys
 import traceback
 import logging
-from distutils.dir_util import copy_tree
-from distutils.file_util import copy_file
-from distutils import log
+import shutil
 import click
 from click_default_group import DefaultGroup
-from .bsmdoc import BDoc, _bsmdoc_error, __version__
+from .bsmdoc import BDoc, _bsmdoc_error
+from .version import __version__
 
 logging.basicConfig(level=logging.INFO)
-log.set_verbosity(log.INFO)
-log.set_threshold(log.INFO)
 
 @click.group(cls=DefaultGroup, default='html', default_if_no_args=True)
 @click.version_option(__version__)
@@ -47,8 +44,8 @@ def gen_html(files, lex_only, encoding, yacc_only, print_html, verbose):
         os.chdir(cur_path)
 
 
-@cli.command('init', help='Init a project from template by copying css/js files.',
-             short_help='Init a project from template by copying css/js files.')
+@cli.command('init', help='Initialize a project from template by copying css/js files.',
+             short_help='Initialize a project from template by copying css/js files.')
 @click.option('--no-index', is_flag=True, help="Do not include index.bsmdoc.")
 @click.option('--force', is_flag=True, help="Overwrite if file exits.")
 @click.option('--verbose', '-v', is_flag=True, help="Show more logging.")
@@ -66,10 +63,8 @@ def update_prj(path, force, verbose):
 
     template = os.path.dirname(os.path.abspath(__file__))
     template = os.path.join(template, 'template')
-    copy_tree(os.path.join(template, 'css'), os.path.join(path, 'css'),
-              update=not force, verbose=verbose)
-    copy_tree(os.path.join(template, 'js'), os.path.join(path, 'js'),
-              update=not force, verbose=verbose)
+    shutil.copytree(os.path.join(template, 'css'), os.path.join(path, 'css'), dirs_exist_ok=force)
+    shutil.copytree(os.path.join(template, 'js'), os.path.join(path, 'js'), dirs_exist_ok=force)
 
 
 
@@ -89,7 +84,7 @@ def new_doc(files, force, verbose):
             fmt = 'file %s exists, choose another name or overwrite with "--force"!'
             _bsmdoc_error(fmt % (doc))
             return
-        copy_file(template, doc, update=not force, verbose=verbose)
+        shutil.copy(template, doc)
 
         bsmdoc = BDoc(False, verbose)
         bsmdoc.gen(doc)
