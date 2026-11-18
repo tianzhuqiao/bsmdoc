@@ -600,7 +600,7 @@ class BParse(object):
                | CMD bracetext
                | CMD BRACEL vtext sections BRACER
                | INLINEEQ
-               | BRACLETL sections BRACKETL
+               | BRACKETL sections BRACKETL
                | BRACKETL sections TCELL sections BRACKETR
 
     plaintext : plaintext WORD
@@ -854,7 +854,7 @@ class BParse(object):
     def p_inlineblock_link_withname(self, p):
         '''inlineblock : BRACKETL sections TCELL sections BRACKETR'''
         s = p[2].strip()
-        if s[0] == "#":
+        if s and s[0] == "#":
             s = self.check_anchor(s[1:], lineno=p.lineno(2))
         p[0] = BFunction().tag(p[4], 'a', 'href="%s"' % p[2])
 
@@ -862,7 +862,7 @@ class BParse(object):
         '''inlineblock : BRACKETL sections BRACKETR'''
         s = p[2].strip()
         v = s
-        if s[0] == '#':
+        if s and s[0] == '#':
             # internal anchor
             v = self.check_anchor(s[1:], lineno=p.lineno(2))
         p[0] = BFunction().tag(v, 'a', 'href="%s"' % s)
@@ -1130,7 +1130,7 @@ def bsmdoc_exec(data, *args, **kwargs):
 @BFunction('newfun')
 def bsmdoc_newfun(data, *args, **kwargs):
     if not args or len(args) != 1:
-        _bsmdoc_error("invalid function definition (%s, %s)" % (args[0], data),
+        _bsmdoc_error("invalid function definition (%s, %s)" % (args, data),
                       **kwargs)
         return ''
     name = args[0].strip()
@@ -1274,6 +1274,9 @@ def bsmdoc_alias(data, *args, **kwargs):
 @BFunction('highlight')
 def bsmdoc_highlight(code, *args, **kwargs):
     args, opts = kwargs['fun_args'], kwargs['fun_kwargs']
+    if not args:
+        args = ['bash']
+        _bsmdoc_warning("no language specified for highlight, use 'bash' as default", **kwargs)
     # format code
     obeytabs = 'obeytabs' in args
     gobble = opts.get('gobble', 0)
@@ -1453,7 +1456,7 @@ def _bsmdoc_prepare_numbering(sec, label, **kwargs):
     cfg = kwargs.get('cfg')
     tag, num = _bsmdoc_next_tag(sec, **kwargs)
     if label:
-        if cfg.get_scan() == 1 and cfg['ANCHOR%s:' % label]:
+        if cfg.get_scan() == 1 and cfg['ANCHOR:%s' % label]:
             _bsmdoc_warning('duplicated label "%s".' % (label), **kwargs)
         if not num:
             fmt = '{sec} numbering is off, to turn it on: \\config{{{sec}_numbering|True}}'
@@ -1648,7 +1651,7 @@ mathjax = <script>
                     inlineMath: [['\\\\(', '\\\\)']],
                     tags: "all",
                     tagformat: {
-                        id: (id) => 'mjx-eqn-' + id.replace(/\s/g, '_'),
+                        id: (id) => 'mjx-eqn-' + id.replace(/\\s/g, '_'),
                     }
                 }
             };
