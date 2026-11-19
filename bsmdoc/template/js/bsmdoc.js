@@ -57,8 +57,12 @@ var simplePopup = (function() {
         var thispopup = e.data.thispopup;
         var a = e.currentTarget;
         var $number;
+        var hash = a.hash;
+        if (hash === "") {
+            hash = $(a).attr('href') ?? $(a).attr('data-mjx-href');
+        }
         try {
-           $number = $(jq(a.hash));
+           $number = $(jq(hash));
         } catch(err) {
         }
         if (!$number) {
@@ -66,7 +70,7 @@ var simplePopup = (function() {
                 // mathjax3 will not ignore special characters, like ":"
                 // e.g., eqn:matrix will become "mjx-eqn-eqn%3Amatrix", and
                 // jquery fails to find it.
-                $number = $(jq(unescape(a.hash)));
+                $number = $(jq(unescape(hash)));
             } catch(err) {
             }
         }
@@ -124,8 +128,8 @@ var simplePopup = (function() {
 
 $( window ).on('load', function() {
     new simplePopup('a[href*="mjx-eqn-"]', 'div');
+    new simplePopup('a[data-mjx-href*="mjx-eqn-"]', 'div');
     new simplePopup('a[href*="img-"]', 'figure');
-    new simplePopup('a[href*="video-"]', 'div');
     new simplePopup('a[href*="tbl-"]', 'table');
     new simplePopup('a[href*="footnote-"]', 'div');
     new simplePopup('a[href*="reference-"]', 'div');
