@@ -1719,7 +1719,7 @@ class BDoc(object):
         js = []
         # include bsmdoc.js to show popup reference window if necessary
         refjs = self.parser.config['has_equation_ref']
-        jqueryjs = refjs
+        jqueryjs = refjs or self.parser.config['use_jquery']
 
         if cfg.config.has_section('ANCHOR'):
             refs = ('mjx-eqn-', 'img-', 'video-', 'tbl-', 'footnote-', 'reference-')
